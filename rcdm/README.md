@@ -19,6 +19,10 @@ Clone this repository, navigate to it, then run:
 ```
 pip install -e .
 ```
+To run the code on the Vector cluster, I used this command to install the right version of Pytorch and CUDA:
+```
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+```
 
 # Repository structure
 All the training and sampling scripts are located in scripts/. The SSL models that we used to compute the representations from are defined in the file ./guided_diffusion_rcdm/get_ssl_models.py. The links of the pretrained RCDM models are located in ./guided_diffusion/get_rcdm_models.py.

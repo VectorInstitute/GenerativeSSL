@@ -48,7 +48,7 @@ class RCDMInference(object):
         all_generated_images = []
         sample_fn = self.diffusion.p_sample_loop if not self.config.use_ddim else self.diffusion.ddim_sample_loop
 
-
+        print(img.shape)
         img = img.unsqueeze(0).repeat(self.config.num_images, 1, 1, 1).cuda()
         model_kwargs = {}
 

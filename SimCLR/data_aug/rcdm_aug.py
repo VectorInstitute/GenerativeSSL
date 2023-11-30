@@ -45,7 +45,6 @@ class RCDMInference(object):
         """
         print("Starting RCDM model inference...")
 
-        all_generated_images = []
         sample_fn = self.diffusion.p_sample_loop if not self.config.use_ddim else self.diffusion.ddim_sample_loop
 
         print(img.shape)
@@ -63,10 +62,10 @@ class RCDMInference(object):
         )
 
         # Convert sample to image format
-        sample = ((sample + 1) * 127.5).clamp(0, 255).to(torch.uint8)
-        sample = sample.permute(0, 2, 3, 1).contiguous()
-        all_generated_images.extend([sample for sample in sample])
-        print(all_generated_images.shape)
+        # sample = ((sample + 1) * 127.5).clamp(0, 255).to(torch.uint8)
+        # sample = sample.permute(0, 2, 3, 1).contiguous()
+        # all_generated_images.extend([sample for sample in sample])
+        print(sample.shape)
 
         print("Sampling completed!")
-        return all_generated_images
+        return sample.squeeze(0)

@@ -61,4 +61,4 @@ class RCDMInference(object):
         )
 
         print("Sampling completed!")
-        return sample.squeeze(0)
+        return sample.squeeze(0).cpu()

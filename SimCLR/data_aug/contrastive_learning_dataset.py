@@ -20,9 +20,9 @@ class ContrastiveLearningDataset:
                                               transforms.RandomHorizontalFlip(),
                                               transforms.RandomApply([color_jitter], p=0.8),
                                               transforms.RandomGrayscale(p=0.2),
-                                              RCDMInference(rcdm_config),
                                               GaussianBlur(kernel_size=int(0.1 * size)),
-                                              transforms.ToTensor()])
+                                              transforms.ToTensor(),
+                                              RCDMInference(rcdm_config)])
         return data_transforms
 
     def get_dataset(self, name, n_views):

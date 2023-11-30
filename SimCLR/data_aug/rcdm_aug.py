@@ -65,7 +65,8 @@ class RCDMInference(object):
         # sample = ((sample + 1) * 127.5).clamp(0, 255).to(torch.uint8)
         # sample = sample.permute(0, 2, 3, 1).contiguous()
         # all_generated_images.extend([sample for sample in sample])
-        print(sample.shape)
+        print(len(sample))
+        print(sample[0].shape)
 
         print("Sampling completed!")
-        return sample.squeeze(0)
+        return sample[0]

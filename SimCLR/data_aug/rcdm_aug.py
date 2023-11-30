@@ -69,4 +69,4 @@ class RCDMInference(object):
         print(sample[0].shape)
 
         print("Sampling completed!")
-        return sample[0]
+        return sample.squeeze(0)

@@ -22,7 +22,8 @@ class ContrastiveLearningDataset:
                                               transforms.RandomGrayscale(p=0.2),
                                               GaussianBlur(kernel_size=int(0.1 * size)),
                                               transforms.ToTensor(),
-                                              RCDMInference(rcdm_config)])
+                                              RCDMInference(rcdm_config),
+                                              transforms.Resize(size=(size, size))])
         return data_transforms
 
     def get_dataset(self, name, n_views):

@@ -47,7 +47,6 @@ class RCDMInference(object):
 
         sample_fn = self.diffusion.p_sample_loop if not self.config.use_ddim else self.diffusion.ddim_sample_loop
 
-        print(img.shape)
         img = img.unsqueeze(0).repeat(self.config.num_images, 1, 1, 1).cuda()
         model_kwargs = {}
 
@@ -60,13 +59,6 @@ class RCDMInference(object):
             clip_denoised=self.config.clip_denoised,
             model_kwargs=model_kwargs,
         )
-
-        # Convert sample to image format
-        # sample = ((sample + 1) * 127.5).clamp(0, 255).to(torch.uint8)
-        # sample = sample.permute(0, 2, 3, 1).contiguous()
-        # all_generated_images.extend([sample for sample in sample])
-        print(len(sample))
-        print(sample[0].shape)
 
         print("Sampling completed!")
         return sample.squeeze(0)

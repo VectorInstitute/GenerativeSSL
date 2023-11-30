@@ -2,7 +2,7 @@ import ml_collections
 
 def get_config():
     config = ml_collections.ConfigDict()
-    config.image_size = 64  # The size of the images to generate.
+    config.image_size = 128  # The size of the images to generate.
     config.class_cond = False  # If true, use class conditional generation.
     config.type_model = "simclr"  # Type of model to use (e.g., simclr, dino).
     config.use_head = False  # If true, use the projector/head for SSL representation.

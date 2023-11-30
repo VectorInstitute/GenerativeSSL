@@ -12,7 +12,7 @@ def get_config():
     config.no_shared = True  # If false, enables squeeze and excitation.
     config.clip_denoised = True  # If true, clip denoised images.
     config.attention_resolutions = "32,16,8"  # Resolutions to use for attention layers.
-    config.diffusion_steps = 1000  # Number of diffusion steps.
+    config.diffusion_steps = 20  # Number of diffusion steps.
     config.learn_sigma = True  # If true, learn the noise level.
     config.noise_schedule = "linear"  # Type of noise schedule (e.g., linear).
     config.num_channels = 256  # Number of channels in the model.

@@ -33,12 +33,12 @@ class RCDMInference(object):
         self.model.load_state_dict(trained_model, strict=True)
         self.model.to(dist_util.dev())
 
-    def __call__(self, image_batch):
+    def __call__(self, img):
         """
-        Run the RCDM model inference on a batch of images.
+        Run the RCDM model inference on an images.
 
         Args:
-            image_batch (torch.Tensor): A batch of images to process.
+            img (torch.Tensor): An image to apply RCDM to.
 
         Returns:
             List[torch.Tensor]: List of generated image tensors.
@@ -48,25 +48,25 @@ class RCDMInference(object):
         all_generated_images = []
         sample_fn = self.diffusion.p_sample_loop if not self.config.use_ddim else self.diffusion.ddim_sample_loop
 
-        for batch in image_batch:
-            batch = batch.unsqueeze(0).repeat(self.config.num_images, 1, 1, 1).cuda()
-            model_kwargs = {}
 
-            with torch.no_grad():
-                feat = self.ssl_model(batch).detach()
-                model_kwargs["feat"] = feat
-            sample = sample_fn(
-                self.model,
-                (self.config.num_images, 3, self.config.image_size, self.config.image_size),
-                clip_denoised=self.config.clip_denoised,
-                model_kwargs=model_kwargs,
-            )
+        img = img.unsqueeze(0).repeat(self.config.num_images, 1, 1, 1).cuda()
+        model_kwargs = {}
 
-            # Convert sample to image format
-            sample = ((sample + 1) * 127.5).clamp(0, 255).to(torch.uint8)
-            sample = sample.permute(0, 2, 3, 1).contiguous()
-            all_generated_images.extend([sample for sample in sample])
-            print(all_generated_images.shape)
+        with torch.no_grad():
+            feat = self.ssl_model(img).detach()
+            model_kwargs["feat"] = feat
+        sample = sample_fn(
+            self.model,
+            (self.config.num_images, 3, self.config.image_size, self.config.image_size),
+            clip_denoised=self.config.clip_denoised,
+            model_kwargs=model_kwargs,
+        )
+
+        # Convert sample to image format
+        sample = ((sample + 1) * 127.5).clamp(0, 255).to(torch.uint8)
+        sample = sample.permute(0, 2, 3, 1).contiguous()
+        all_generated_images.extend([sample for sample in sample])
+        print(all_generated_images.shape)
 
         print("Sampling completed!")
         return all_generated_images

@@ -20,7 +20,7 @@ class SimCLR(object):
         self.optimizer = kwargs['optimizer']
         self.scheduler = kwargs['scheduler']
         self.writer = SummaryWriter()
-        logging.basicConfig(filename=os.path.join(self.writer.log_dir, 'training.log'), level=logging.DEBUG)
+        logging.basicConfig(filename=os.path.join(self.writer.log_dir, 'gpu.log'), level=logging.DEBUG)
         self.criterion = torch.nn.CrossEntropyLoss().to(self.args.device)
 
     def info_nce_loss(self, features):
@@ -62,8 +62,9 @@ class SimCLR(object):
         save_config_file(self.writer.log_dir, self.args)
 
         n_iter = 0
-        logging.info(f"Start SimCLR training for {self.args.epochs} epochs.")
+        logging.info(f"Start SimCLR gpu for {self.args.epochs} epochs.")
         logging.info(f"Training with gpu: {self.args.disable_cuda}.")
+        logging.info(f"Device: {torch.device}.")
 
         for epoch_counter in range(self.args.epochs):
             for images, _ in tqdm(train_loader):

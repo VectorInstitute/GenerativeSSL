@@ -1,8 +1,6 @@
 import torch
-import sys
-sys.path.append("....")
-from rcdm.guided_diffusion_rcdm import dist_util
-from rcdm.guided_diffusion_rcdm import get_model
+from ... import rcdm.guided_diffusion_rcdm.dist_util as dist_util
+from ... import rcdm.guided_diffusion_rcdm.get_model as get_model
 from rcdm.guided_diffusion_rcdm import get_dict_rcdm_model
 from rcdm.guided_diffusion_rcdm import (
     model_and_diffusion_defaults,

@@ -12,18 +12,21 @@ class ContrastiveLearningDataset:
         self.root_folder = root_folder
 
     @staticmethod
-    def get_simclr_pipeline_transform(size, s=1):
+    def get_simclr_pipeline_transform(size, s=1, rcdm_agumentation=True):
         """Return a set of data augmentation transformations as described in the SimCLR paper."""
         color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
-        rcdm_config = get_config()
-        data_transforms = transforms.Compose([transforms.RandomResizedCrop(size=size),
-                                              transforms.RandomHorizontalFlip(),
-                                              transforms.RandomApply([color_jitter], p=0.8),
-                                              transforms.RandomGrayscale(p=0.2),
-                                              GaussianBlur(kernel_size=int(0.1 * size)),
-                                              transforms.ToTensor(),
-                                              RCDMInference(rcdm_config),
-                                              transforms.Resize(size=(size, size))])
+        transform_list = [transforms.RandomResizedCrop(size=size),
+                          transforms.RandomHorizontalFlip(),
+                          transforms.RandomApply([color_jitter], p=0.8),
+                          transforms.RandomGrayscale(p=0.2),
+                          GaussianBlur(kernel_size=int(0.1 * size)),
+                          transforms.ToTensor()]
+        if rcdm_agumentation:
+            rcdm_config = get_config()
+            transform_list.append(RCDMInference(rcdm_config))
+            transform_list.append(transforms.Resize(size=(size, size)))
+
+        data_transforms = transforms.Compose(transform_list)
         return data_transforms
 
     def get_dataset(self, name, n_views):

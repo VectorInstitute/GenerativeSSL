@@ -1,8 +1,10 @@
 import torch
-from .guided_diffusion_rcdm import dist_util
-from .guided_diffusion_rcdm.get_ssl_models import get_model
-from .guided_diffusion_rcdm.get_rcdm_models import get_dict_rcdm_model
-from .guided_diffusion_rcdm.script_util import (
+import sys
+sys.path.append("...")
+from rcdm.guided_diffusion_rcdm import dist_util
+from rcdm.guided_diffusion_rcdm import get_model
+from rcdm.guided_diffusion_rcdm import get_dict_rcdm_model
+from rcdm.guided_diffusion_rcdm import (
     model_and_diffusion_defaults,
     create_model_and_diffusion
 )

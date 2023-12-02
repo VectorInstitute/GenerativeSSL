@@ -2,9 +2,9 @@ import argparse
 import torch
 import torch.backends.cudnn as cudnn
 from torchvision import models
-from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
-from models.resnet_simclr import ResNetSimCLR
-from simclr import SimCLR
+from SimCLR.data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
+from SimCLR.models.resnet_simclr import ResNetSimCLR
+from SimCLR.simclr import SimCLR
 
 model_names = sorted(name for name in models.__dict__
                      if name.islower() and not name.startswith("__")

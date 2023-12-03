@@ -1,10 +1,10 @@
 from torchvision.transforms import transforms
-from .gaussian_blur import GaussianBlur
-from .rcdm_aug import RCDMInference
+from data_aug.gaussian_blur import GaussianBlur
+from data_aug.rcdm_aug import RCDMInference
 # from .rcdm_config import get_config
 from torchvision import transforms, datasets
-from .view_generator import ContrastiveLearningViewGenerator
-from ..exceptions.exceptions import InvalidDatasetSelection
+from data_aug.view_generator import ContrastiveLearningViewGenerator
+from exceptions.exceptions import InvalidDatasetSelection
 
 
 class ContrastiveLearningDataset:

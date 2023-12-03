@@ -1,6 +1,6 @@
 import torch
-from ...rcdm.guided_diffusion_rcdm import dist_util
-from ...rcdm.guided_diffusion_rcdm import get_model
+from rcdm.guided_diffusion_rcdm import dist_util
+from rcdm.guided_diffusion_rcdm import get_model
 from rcdm.guided_diffusion_rcdm import get_dict_rcdm_model
 from rcdm.guided_diffusion_rcdm import (
     model_and_diffusion_defaults,

@@ -1,6 +1,6 @@
 from torchvision.transforms import transforms
 from .gaussian_blur import GaussianBlur
-# from .rcdm_aug import RCDMInference
+from .rcdm_aug import RCDMInference
 # from .rcdm_config import get_config
 from torchvision import transforms, datasets
 from .view_generator import ContrastiveLearningViewGenerator

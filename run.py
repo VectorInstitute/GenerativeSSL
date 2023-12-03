@@ -5,6 +5,7 @@ from torchvision import models
 from SimCLR.data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 from SimCLR.models.resnet_simclr import ResNetSimCLR
 from SimCLR.simclr import SimCLR
+import os
 
 model_names = sorted(name for name in models.__dict__
                      if name.islower() and not name.startswith("__")
@@ -88,4 +89,5 @@ def main():
 
 
 if __name__ == "__main__":
+    print (os.getcwd())
     main()

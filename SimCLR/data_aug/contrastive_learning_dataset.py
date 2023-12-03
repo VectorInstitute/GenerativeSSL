@@ -10,7 +10,7 @@ class ContrastiveLearningDataset:
         self.root_folder = root_folder
 
     @staticmethod
-    def get_simclr_pipeline_transform(size, s=1, rcdm_agumentation=True):
+    def get_simclr_pipeline_transform(size, s=1):
         """Return a set of data augmentation transformations as described in the SimCLR paper."""
         color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
         transform_list = [transforms.RandomResizedCrop(size=size),

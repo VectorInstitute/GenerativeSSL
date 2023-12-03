@@ -34,7 +34,12 @@ class ContrastiveLearningDataset:
                                                           transform=ContrastiveLearningViewGenerator(
                                                               self.get_simclr_pipeline_transform(96),
                                                               n_views),
-                                                          download=True)}
+                                                          download=True),
+                            'imagenet': lambda: datasets.ImageNet(self.root_folder, split='train',
+                                                          transform=ContrastiveLearningViewGenerator(
+                                                              self.get_simclr_pipeline_transform(224),
+                                                              n_views),
+                                                          download=False)}
 
         try:
             dataset_fn = valid_datasets[name]

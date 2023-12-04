@@ -44,6 +44,6 @@ class GaussianBlur(object):
             img = self.blur(img)
             img = img.squeeze()
 
-        img = self.tensor_to_pil(img)
+        # img = self.tensor_to_pil(img)
 
         return img

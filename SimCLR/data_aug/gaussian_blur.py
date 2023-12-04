@@ -29,7 +29,6 @@ class GaussianBlur(object):
 
     def __call__(self, img):
         img = self.pil_to_tensor(img).unsqueeze(0)
-        print(img.shape)
 
         sigma = np.random.uniform(0.1, 2.0)
         x = np.arange(-self.r, self.r + 1)
@@ -44,6 +43,6 @@ class GaussianBlur(object):
             img = self.blur(img)
             img = img.squeeze()
 
-        # img = self.tensor_to_pil(img)
+        img = self.tensor_to_pil(img)
 
         return img

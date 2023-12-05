@@ -37,7 +37,7 @@ class ContrastiveLearningDataset:
                                                           download=True),
                             'imagenet': lambda: datasets.ImageNet(self.root_folder, split='train',
                                                           transform=ContrastiveLearningViewGenerator(
-                                                              self.get_simclr_pipeline_transform(256),
+                                                              self.get_simclr_pipeline_transform(224),
                                                               n_views))}
 
         try:

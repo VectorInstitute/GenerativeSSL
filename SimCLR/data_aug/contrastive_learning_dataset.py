@@ -29,21 +29,21 @@ class ContrastiveLearningDataset:
         data_transforms = transforms.Compose(transform_list)
         return data_transforms
 
-    def get_dataset(self, name, n_views):
+    def get_dataset(self, name, n_views, rcdm_agumentation=True):
         valid_datasets = {'cifar10': lambda: datasets.CIFAR10(self.root_folder, train=True,
                                                               transform=ContrastiveLearningViewGenerator(
-                                                                  self.get_simclr_pipeline_transform(32),
+                                                                  self.get_simclr_pipeline_transform(32, rcdm_agumentation=rcdm_agumentation),
                                                                   n_views),
                                                               download=True),
 
                           'stl10': lambda: datasets.STL10(self.root_folder, split='unlabeled',
                                                           transform=ContrastiveLearningViewGenerator(
-                                                              self.get_simclr_pipeline_transform(96),
+                                                              self.get_simclr_pipeline_transform(96 , rcdm_agumentation=rcdm_agumentation),
                                                               n_views),
                                                           download=True),
                             'imagenet': lambda: datasets.ImageNet(self.root_folder, split='train',
                                                           transform=ContrastiveLearningViewGenerator(
-                                                              self.get_simclr_pipeline_transform(256),
+                                                              self.get_simclr_pipeline_transform(256 , rcdm_agumentation=rcdm_agumentation),
                                                               n_views))}
 
         try:

@@ -1,10 +1,10 @@
 from torchvision import datasets, transforms
 from torchvision.transforms import transforms
+from torchvision import transforms, datasets
 
 from SimCLR.data_aug.gaussian_blur import GaussianBlur
 from SimCLR.data_aug.rcdm_aug import RCDMInference
 from SimCLR.data_aug.rcdm_config import get_config
-from torchvision import transforms, datasets
 from SimCLR.data_aug.view_generator import ContrastiveLearningViewGenerator
 from SimCLR.exceptions.exceptions import InvalidDatasetSelection
 

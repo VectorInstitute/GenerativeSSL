@@ -8,20 +8,35 @@ np.random.seed(0)
 
 class GaussianBlur(object):
     """blur a single image on CPU"""
+
     def __init__(self, kernel_size):
         radias = kernel_size // 2
         kernel_size = radias * 2 + 1
-        self.blur_h = nn.Conv2d(3, 3, kernel_size=(kernel_size, 1),
-                                stride=1, padding=0, bias=False, groups=3)
-        self.blur_v = nn.Conv2d(3, 3, kernel_size=(1, kernel_size),
-                                stride=1, padding=0, bias=False, groups=3)
+        self.blur_h = nn.Conv2d(
+            3,
+            3,
+            kernel_size=(kernel_size, 1),
+            stride=1,
+            padding=0,
+            bias=False,
+            groups=3,
+        )
+        self.blur_v = nn.Conv2d(
+            3,
+            3,
+            kernel_size=(1, kernel_size),
+            stride=1,
+            padding=0,
+            bias=False,
+            groups=3,
+        )
         self.k = kernel_size
         self.r = radias
 
         self.blur = nn.Sequential(
             nn.ReflectionPad2d(radias),
             self.blur_h,
-            self.blur_v
+            self.blur_v,
         )
 
         self.pil_to_tensor = transforms.ToTensor()

@@ -22,7 +22,7 @@ Before running SimCLR, make sure you choose the correct running configurations. 
 
 ```python
 
-$ python run.py -data ./datasets --dataset-name stl10 --log-every-n-steps 100 --epochs 100 
+$ python run.py -data ./datasets --dataset-name stl10 --log-every-n-steps 100 --epochs 100
 
 ```
 
@@ -32,9 +32,9 @@ For 16-bit precision GPU training, there **NO** need to to install [NVIDIA apex]
 
 ## Feature Evaluation
 
-Feature evaluation is done using a linear model protocol. 
+Feature evaluation is done using a linear model protocol.
 
-First, we learned features using SimCLR on the ```STL10 unsupervised``` set. Then, we train a linear classifier on top of the frozen features from SimCLR. The linear model is trained on features extracted from the ```STL10 train``` set and evaluated on the ```STL10 test``` set. 
+First, we learned features using SimCLR on the ```STL10 unsupervised``` set. Then, we train a linear classifier on top of the frozen features from SimCLR. The linear model is trained on features extracted from the ```STL10 train``` set and evaluated on the ```STL10 test``` set.
 
 Check the [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://github.com/sthalles/SimCLR/blob/simclr-refactor/feature_eval/mini_batch_logistic_regression_evaluator.ipynb) notebook for reproducibility.
 

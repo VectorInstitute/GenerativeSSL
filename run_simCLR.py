@@ -91,8 +91,4 @@ def main():
 
 
 if __name__ == "__main__":
-    print (os.getcwd())
-    print(sys.path)
-    # sys.path.append("..")
-    # print(sys.path)
     main()

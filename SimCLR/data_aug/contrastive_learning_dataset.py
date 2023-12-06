@@ -15,7 +15,12 @@ class ContrastiveLearningDataset:
 
     @staticmethod
     def get_simclr_pipeline_transform(size, s=1, rcdm_agumentation=True):
-        """Return a set of data augmentation transformations as described in the SimCLR paper."""
+        """Return a set of data augmentation transformations as described in the SimCLR paper.
+        
+        Args:
+            size (int): Image size.
+            s (float, optional): Magnitude of the color distortion. Defaults to 1.
+        """
         color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
         transform_list = [
             transforms.RandomResizedCrop(size=size),
@@ -55,7 +60,7 @@ class ContrastiveLearningDataset:
                 self.root_folder,
                 split="train",
                 transform=ContrastiveLearningViewGenerator(
-                    self.get_simclr_pipeline_transform(256, rcdm_agumentation=rcdm_agumentation), n_views
+                    self.get_simclr_pipeline_transform(224, rcdm_agumentation=rcdm_agumentation), n_views
                 ),
             ),
         }

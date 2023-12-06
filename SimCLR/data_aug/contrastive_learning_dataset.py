@@ -1,6 +1,5 @@
 from torchvision import datasets, transforms
 from torchvision.transforms import transforms
-from torchvision import transforms, datasets
 
 from SimCLR.data_aug.gaussian_blur import GaussianBlur
 from SimCLR.data_aug.rcdm_aug import RCDMInference

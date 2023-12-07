@@ -19,6 +19,7 @@ class ContrastiveLearningDataset:
         Args:
             size (int): Image size.
             s (float, optional): Magnitude of the color distortion. Defaults to 1.
+            rcdm_agumentation (bool, optional): Whether to use RCDM augmentation. Defaults to True.
         """
         color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
         transform_list = [

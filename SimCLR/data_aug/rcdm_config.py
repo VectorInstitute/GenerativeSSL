@@ -7,7 +7,6 @@ def get_config():
     config.type_model = "simclr"  # Type of model to use (e.g., simclr, dino).
     config.use_head = False  # If true, use the projector/head for SSL representation.
     config.model_path = ""  # Replace with the path to your model if you have one.
-    config.num_images = 1  # Number of images to generate.
     config.use_ddim = False  # If true, use DDIM sampler.
     config.no_shared = True  # If false, enables squeeze and excitation.
     config.clip_denoised = True  # If true, clip denoised images.
@@ -21,5 +20,7 @@ def get_config():
     config.resblock_updown = True  # If true, use up/down sampling in resblocks.
     config.use_fp16 = False  # If true, use 16-bit floating point precision.
     config.use_scale_shift_norm = True  # If true, use scale-shift normalization.
+    config.ssl_image_size = 224  # Size of the input images for the SSL model.
+    config.ssl_image_channels = 3  # Number of channels of the input images for the SSL model.
 
     return config

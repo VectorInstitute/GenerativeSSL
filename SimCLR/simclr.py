@@ -38,7 +38,7 @@ class SimCLR(object):
 
         # discard the main diagonal from both: labels and similarities matrix
         mask = torch.eye(similarity_matrix.shape[0], dtype=torch.bool).to(self.args.device)
-        labels = labels[~mask].view( similarity_matrix.shape[0] shape[0], -1)
+        labels = labels[~mask].view( similarity_matrix.shape[0], -1)
         similarity_matrix = similarity_matrix[~mask].view(
             similarity_matrix.shape[0], -1
         )

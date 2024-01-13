@@ -14,6 +14,8 @@ class RCDMInference:
         """
         self.config = config
 
+        print(dist_util.is_dist_avail_and_initialized())
+
         # Load SSL model
         self.ssl_model = get_model(self.config.type_model, self.config.use_head).cuda().eval()
         for p in self.ssl_model.parameters():

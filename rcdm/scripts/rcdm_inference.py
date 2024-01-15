@@ -1,8 +1,8 @@
 import torch
-from guided_diffusion_rcdm import dist_util
-from guided_diffusion_rcdm.get_ssl_models import get_model
-from guided_diffusion_rcdm.get_rcdm_models import get_dict_rcdm_model
-from guided_diffusion_rcdm.script_util import (
+from ..guided_diffusion_rcdm import dist_util
+from ..guided_diffusion_rcdm.get_ssl_models import get_model
+from ..guided_diffusion_rcdm.get_rcdm_models import get_dict_rcdm_model
+from ..guided_diffusion_rcdm.script_util import (
     model_and_diffusion_defaults,
     create_model_and_diffusion
 )
@@ -15,6 +15,7 @@ class RCDMInference:
         self.config = config
 
         print(dist_util.is_dist_avail_and_initialized())
+        print(dist_util.dev())
 
         # Load SSL model
         self.ssl_model = get_model(self.config.type_model, self.config.use_head).cuda().eval()
@@ -48,10 +49,11 @@ class RCDMInference:
         print("Starting RCDM model inference...")
 
         all_generated_images = []
+        print(self.config.use_ddim)
         sample_fn = self.diffusion.p_sample_loop if not self.config.use_ddim else self.diffusion.ddim_sample_loop
 
         for batch in image_batch:
-            batch = batch.unsqueeze(0).repeat(self.config.num_images, 1, 1, 1).cuda()
+            batch = batch.unsqueeze(0).repeat(self.config.num_images, 1, 1, 1).to(dist_util.dev())
             model_kwargs = {}
 
             with torch.no_grad():

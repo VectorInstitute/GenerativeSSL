@@ -15,7 +15,7 @@ class ContrastiveLearningDataset:
     @staticmethod
     def get_simclr_pipeline_transform(size, s=1, rcdm_agumentation=True):
         """Return a set of data augmentation transformations as described in the SimCLR paper.
-        
+
         Args:
             size (int): Image size.
             s (float, optional): Magnitude of the color distortion. Defaults to 1.
@@ -35,8 +35,7 @@ class ContrastiveLearningDataset:
             transform_list.append(RCDMInference(rcdm_config))
             transform_list.append(transforms.Resize(size=(size, size)))
 
-        data_transforms = transforms.Compose(transform_list)
-        return data_transforms
+        return transforms.Compose(transform_list)
 
     def get_dataset(self, name, n_views, rcdm_agumentation=True):
         valid_datasets = {
@@ -44,7 +43,10 @@ class ContrastiveLearningDataset:
                 self.root_folder,
                 train=True,
                 transform=ContrastiveLearningViewGenerator(
-                    self.get_simclr_pipeline_transform(32, rcdm_agumentation=rcdm_agumentation), n_views
+                    self.get_simclr_pipeline_transform(
+                        32, rcdm_agumentation=rcdm_agumentation
+                    ),
+                    n_views,
                 ),
                 download=True,
             ),
@@ -52,7 +54,10 @@ class ContrastiveLearningDataset:
                 self.root_folder,
                 split="unlabeled",
                 transform=ContrastiveLearningViewGenerator(
-                    self.get_simclr_pipeline_transform(96, rcdm_agumentation=rcdm_agumentation), n_views
+                    self.get_simclr_pipeline_transform(
+                        96, rcdm_agumentation=rcdm_agumentation
+                    ),
+                    n_views,
                 ),
                 download=True,
             ),
@@ -60,7 +65,10 @@ class ContrastiveLearningDataset:
                 self.root_folder,
                 split="train",
                 transform=ContrastiveLearningViewGenerator(
-                    self.get_simclr_pipeline_transform(224, rcdm_agumentation=rcdm_agumentation), n_views
+                    self.get_simclr_pipeline_transform(
+                        224, rcdm_agumentation=rcdm_agumentation
+                    ),
+                    n_views,
                 ),
             ),
         }

@@ -1,50 +1,51 @@
-import logging
 import os
+from datetime import datetime
 
 import torch
-import torch.nn.functional as F
+import torch.nn.functional as F  # noqa: N812
 from torch.cuda.amp import GradScaler, autocast
 from torch.utils.tensorboard import SummaryWriter
-from tqdm import tqdm
+
+from SimCLR import distributed as dist_utils
 
 from .utils import accuracy, save_checkpoint, save_config_file
-
-torch.manual_seed(0)
 
 
 class SimCLR(object):
     def __init__(self, *args, **kwargs):
         self.args = kwargs["args"]
-        self.model = kwargs["model"].to(self.args.device)
+        self.model = kwargs["model"]
         self.optimizer = kwargs["optimizer"]
         self.scheduler = kwargs["scheduler"]
+        self.device_id = kwargs["device_id"]
         self.writer = SummaryWriter()
-        logging.basicConfig(
-            filename=os.path.join(self.writer.log_dir, "gpu.log"), level=logging.DEBUG
-        )
-        self.criterion = torch.nn.CrossEntropyLoss().to(self.args.device)
+        self.criterion = torch.nn.CrossEntropyLoss().cuda(self.device_id)
 
-    def info_nce_loss(self, features):
+    def simclr_logits_and_labels(self, features):
         labels = torch.cat(
             [torch.arange(self.args.batch_size) for i in range(self.args.n_views)],
             dim=0,
         )
         labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
-        labels = labels.to(self.args.device)
+        labels = labels.cuda(self.device_id)
 
         features = F.normalize(features, dim=1)
 
         similarity_matrix = torch.matmul(features, features.T)
 
         # discard the main diagonal from both: labels and similarities matrix
-        mask = torch.eye(similarity_matrix.shape[0], dtype=torch.bool).to(self.args.device)
-        labels = labels[~mask].view( similarity_matrix.shape[0], -1)
+        mask = torch.eye(similarity_matrix.shape[0], dtype=torch.bool).cuda(
+            self.device_id
+        )
+        labels = labels[~mask].view(similarity_matrix.shape[0], -1)
         similarity_matrix = similarity_matrix[~mask].view(
             similarity_matrix.shape[0], -1
         )
 
         # select and combine multiple positives
-        positives = similarity_matrix[labels.bool()].view( similarity_matrix.shape[0], -1)
+        positives = similarity_matrix[labels.bool()].view(
+            similarity_matrix.shape[0], -1
+        )
 
         # select only the negatives the negatives
         negatives = similarity_matrix[~labels.bool()].view(
@@ -52,7 +53,7 @@ class SimCLR(object):
         )
 
         logits = torch.cat([positives, negatives], dim=1)
-        labels = torch.zeros(logits.shape[0], dtype=torch.long).to(self.args.device)
+        labels = torch.zeros(logits.shape[0], dtype=torch.long).cuda(self.device_id)
 
         logits = logits / self.args.temperature
         return logits, labels
@@ -64,19 +65,21 @@ class SimCLR(object):
         save_config_file(self.writer.log_dir, self.args)
 
         n_iter = 0
-        logging.info(f"Start SimCLR gpu for {self.args.epochs} epochs.")
-        logging.info(f"Training with gpu: {self.args.disable_cuda}.")
-        logging.info(f"Device: {torch.cuda.get_device_name()}.")
+        print(f"Start SimCLR training for {self.args.epochs} epochs.")
 
         for epoch_counter in range(self.args.epochs):
-            for images, _ in tqdm(train_loader):
-                images = torch.cat(images, dim=0)
-
-                images = images.to(self.args.device)
+            if dist_utils.is_dist_avail_and_initialized():
+                train_loader.sampler.set_epoch(epoch_counter)
+            # for images, _ in tqdm(train_loader):
+            for images, _ in train_loader:
+                now_time = datetime.now().strftime("%H:%M:%S")
+                print(f"{now_time} - Starting batch iteration: {n_iter}")
+                images = torch.cat(images, dim=0)  # noqa: PLW2901
+                images = images.cuda(self.device_id)  # noqa: PLW2901
 
                 with autocast(enabled=self.args.fp16_precision):
                     features = self.model(images)
-                    logits, labels = self.info_nce_loss(features)
+                    logits, labels = self.simclr_logits_and_labels(features)
                     loss = self.criterion(logits, labels)
 
                 self.optimizer.zero_grad()
@@ -87,12 +90,17 @@ class SimCLR(object):
                 scaler.update()
 
                 if n_iter % self.args.log_every_n_steps == 0:
+                    print(
+                        f"Calculating accuracy/loss at iteration: {n_iter}, loss: {loss}",
+                    )
                     top1, top5 = accuracy(logits, labels, topk=(1, 5))
                     self.writer.add_scalar("loss", loss, global_step=n_iter)
                     self.writer.add_scalar("acc/top1", top1[0], global_step=n_iter)
                     self.writer.add_scalar("acc/top5", top5[0], global_step=n_iter)
                     self.writer.add_scalar(
-                        "learning_rate", self.scheduler.get_lr()[0], global_step=n_iter
+                        "learning_rate",
+                        self.scheduler.get_last_lr()[0],
+                        global_step=n_iter,
                     )
 
                 n_iter += 1
@@ -100,11 +108,10 @@ class SimCLR(object):
             # warmup for the first 10 epochs
             if epoch_counter >= 10:
                 self.scheduler.step()
-            logging.debug(
-                f"Epoch: {epoch_counter}\tLoss: {loss}\tTop1 accuracy: {top1[0]}"
-            )
 
-        logging.info("Training has finished.")
+            print(f"Epoch: {epoch_counter}\tLoss: {loss}\tTop1 accuracy: {top1[0]}")
+
+        print("Training has finished.")
         # save model checkpoints
         checkpoint_name = "checkpoint_{:04d}.pth.tar".format(self.args.epochs)
         save_checkpoint(
@@ -117,6 +124,4 @@ class SimCLR(object):
             is_best=False,
             filename=os.path.join(self.writer.log_dir, checkpoint_name),
         )
-        logging.info(
-            f"Model checkpoint and metadata has been saved at {self.writer.log_dir}."
-        )
+        print(f"Model checkpoint and metadata has been saved at {self.writer.log_dir}.")

@@ -25,7 +25,7 @@ class ResNetSimCLR(nn.Module):
             model = self.resnet_dict[model_name]
         except KeyError:
             raise InvalidBackboneError(
-                "Invalid backbone architecture. Check the config file and pass one of: resnet18 or resnet50"
+                "Invalid backbone architecture. Check the config file and pass one of: resnet18 or resnet50",
             )
         else:
             return model

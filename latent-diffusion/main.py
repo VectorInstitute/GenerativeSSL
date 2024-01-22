@@ -20,6 +20,8 @@ from pytorch_lightning.utilities import rank_zero_info
 from ldm.data.base import Txt2ImgIterableBaseDataset
 from ldm.util import instantiate_from_config
 
+import wandb
+
 
 def get_parser(**parser_kwargs):
     def str2bool(v):
@@ -248,11 +250,35 @@ class SetupCallback(Callback):
         self.config = config
         self.lightning_config = lightning_config
 
+        import signal
+
+        self._term_sig_recieved = False
+        handle_signals=['SIGTERM','SIGINT']
+
+        for sig in handle_signals:
+            signal.signal(getattr(signal,sig), self.termination_handler)
+    
+    def termination_handler(self,sig_num,frame):
+        self._term_sig_recieved = True
+
     def on_keyboard_interrupt(self, trainer, pl_module):
         if trainer.global_rank == 0:
             print("Summoning checkpoint.")
             ckpt_path = os.path.join(self.ckptdir, "last.ckpt")
+            # ckpt_path = os.path.join(self.ckptdir, f"{trainer.current_epoch:04d}.ckpt")
             trainer.save_checkpoint(ckpt_path)
+    
+    def on_train_batch_start(self, trainer, pl_module, batch, batch_idx, dataloader_idx):
+        if trainer.global_rank == 0:
+            # exit on signal
+            if self._term_sig_recieved:
+                print(f'Term signal received, checkpointing...')
+                # ckpt_path = os.path.join(self.ckptdir, f"{trainer.current_epoch:04d}.ckpt")
+                ckpt_path = os.path.join(self.ckptdir, "last.ckpt")
+                trainer.save_checkpoint(ckpt_path)
+                print('Checkpoint complete, exiting.')
+                raise StopIteration
+                return
 
     def on_pretrain_routine_start(self, trainer, pl_module):
         if trainer.global_rank == 0:
@@ -295,6 +321,7 @@ class ImageLogger(Callback):
         self.batch_freq = batch_frequency
         self.max_images = max_images
         self.logger_log_images = {
+            pl.loggers.WandbLogger: self._wandb,
             pl.loggers.TestTubeLogger: self._testtube,
         }
         self.log_steps = [2 ** n for n in range(int(np.log2(self.batch_freq)) + 1)]
@@ -305,6 +332,15 @@ class ImageLogger(Callback):
         self.log_on_batch_idx = log_on_batch_idx
         self.log_images_kwargs = log_images_kwargs if log_images_kwargs else {}
         self.log_first_step = log_first_step
+
+    @rank_zero_only
+    def _wandb(self, pl_module, images, batch_idx, split):
+        # raise ValueError("No way wandb")
+        grids = dict()
+        for k in images:
+            grid = torchvision.utils.make_grid(images[k])
+            grids[f"{split}/{k}"] = wandb.Image(grid)
+        pl_module.logger.experiment.log(grids)
 
     @rank_zero_only
     def _testtube(self, pl_module, images, batch_idx, split):
@@ -556,7 +592,8 @@ if __name__ == "__main__":
                 }
             },
         }
-        default_logger_cfg = default_logger_cfgs["testtube"]
+        # default_logger_cfg = default_logger_cfgs["testtube"]
+        default_logger_cfg = default_logger_cfgs["wandb"]
         if "logger" in lightning_config:
             logger_cfg = lightning_config.logger
         else:

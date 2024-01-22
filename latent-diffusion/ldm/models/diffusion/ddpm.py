@@ -507,6 +507,7 @@ class LatentDiffusion(DDPM):
             param.requires_grad = False
 
     def instantiate_cond_stage(self, config):
+        print(self.cond_stage_trainable)
         if not self.cond_stage_trainable:
             if config == "__is_first_stage__":
                 print("Using first stage also as cond stage.")
@@ -540,6 +541,9 @@ class LatentDiffusion(DDPM):
         return denoise_grid
 
     def get_first_stage_encoding(self, encoder_posterior):
+        encoder_posterior = encoder_posterior[0]
+        # print(encoder_posterior[0].shape, encoder_posterior[1].shape)
+        # print(type(encoder_posterior))
         if isinstance(encoder_posterior, DiagonalGaussianDistribution):
             z = encoder_posterior.sample()
         elif isinstance(encoder_posterior, torch.Tensor):

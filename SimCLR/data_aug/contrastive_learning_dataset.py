@@ -3,7 +3,9 @@ from torchvision.transforms import transforms
 
 from SimCLR.data_aug.gaussian_blur import GaussianBlur
 from SimCLR.data_aug.rcdm_aug import RCDMInference
+from SimCLR.data_aug.icgan_aug import ICGANInference
 from SimCLR.data_aug.rcdm_config import get_config
+from SimCLR.data_aug.icgan_config import get_icgan_config
 from SimCLR.data_aug.view_generator import ContrastiveLearningViewGenerator
 from SimCLR.exceptions.exceptions import InvalidDatasetSelection
 
@@ -13,7 +15,7 @@ class ContrastiveLearningDataset:
         self.root_folder = root_folder
 
     @staticmethod
-    def get_simclr_pipeline_transform(size, s=1, rcdm_agumentation=True):
+    def get_simclr_pipeline_transform(size, s=1, rcdm_agumentation=True, icgan_agumentation=True, device_id=None):
         """Return a set of data augmentation transformations as described in the SimCLR paper.
 
         Args:
@@ -32,19 +34,26 @@ class ContrastiveLearningDataset:
         ]
         if rcdm_agumentation:
             rcdm_config = get_config()
-            transform_list.append(RCDMInference(rcdm_config))
+            transform_list.append(RCDMInference(rcdm_config, device_id))
+            transform_list.append(transforms.Resize(size=(size, size)))
+
+        if icgan_agumentation:
+            icgan_config = get_icgan_config()
+            transform_list.append(ICGANInference(icgan_config, device_id))
             transform_list.append(transforms.Resize(size=(size, size)))
 
         return transforms.Compose(transform_list)
 
-    def get_dataset(self, name, n_views, rcdm_agumentation=True):
+    def get_dataset(self, name, n_views, rcdm_agumentation=False, icgan_agumentation=False, device_id=None):
         valid_datasets = {
             "cifar10": lambda: datasets.CIFAR10(
                 self.root_folder,
                 train=True,
                 transform=ContrastiveLearningViewGenerator(
                     self.get_simclr_pipeline_transform(
-                        32, rcdm_agumentation=rcdm_agumentation
+                        32, rcdm_agumentation=rcdm_agumentation,
+                        icgan_agumentation=icgan_agumentation,
+                        device_id=device_id
                     ),
                     n_views,
                 ),
@@ -55,7 +64,9 @@ class ContrastiveLearningDataset:
                 split="unlabeled",
                 transform=ContrastiveLearningViewGenerator(
                     self.get_simclr_pipeline_transform(
-                        96, rcdm_agumentation=rcdm_agumentation
+                        96, rcdm_agumentation=rcdm_agumentation,
+                        icgan_agumentation=icgan_agumentation,
+                        device_id=device_id
                     ),
                     n_views,
                 ),
@@ -66,7 +77,9 @@ class ContrastiveLearningDataset:
                 split="train",
                 transform=ContrastiveLearningViewGenerator(
                     self.get_simclr_pipeline_transform(
-                        224, rcdm_agumentation=rcdm_agumentation
+                        224, rcdm_agumentation=rcdm_agumentation,
+                        icgan_agumentation=icgan_agumentation,
+                        device_id=device_id
                     ),
                     n_views,
                 ),

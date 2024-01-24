@@ -20,7 +20,7 @@ from torch.nn import Parameter as P
 import sys
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
-from BigGAN_PyTorch.sync_batchnorm import SynchronizedBatchNorm2d as SyncBN2d
+from icgan.BigGAN_PyTorch.sync_batchnorm import SynchronizedBatchNorm2d as SyncBN2d
 
 
 # Projection of x onto y

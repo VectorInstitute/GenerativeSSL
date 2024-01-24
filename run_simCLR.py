@@ -110,7 +110,9 @@ parser.add_argument(
 parser.add_argument(
     "--rcdm_agumentation", action="store_true", help="Use RCDM agumentation or not."
 )
-
+parser.add_argument(
+    "--icgan_agumentation", action="store_true", help="Use ICGAN agumentation or not."
+)
 parser.add_argument(
     "--distributed_mode", action="store_true", help="Enable distributed training"
 )
@@ -145,30 +147,31 @@ def main():
         args.n_views == 2
     ), "Only two view training is supported. Please use --n-views 2."
 
-    dataset = ContrastiveLearningDataset(args.data)
-    train_dataset = dataset.get_dataset(
-        args.dataset_name,
-        args.n_views,
-        args.rcdm_agumentation,
-    )
-
-    train_sampler = None
     if args.distributed_mode:
         dist_utils.init_distributed_mode(
             launcher=args.distributed_launcher,
             backend=args.distributed_backend,
         )
         device_id = torch.cuda.current_device()
+    else:
+        device_id = None
 
-        if dist_utils.is_dist_avail_and_initialized():
+    dataset = ContrastiveLearningDataset(args.data)
+    train_dataset = dataset.get_dataset(
+        args.dataset_name,
+        args.n_views,
+        args.rcdm_agumentation,
+        args.icgan_agumentation,
+        device_id
+    )
+    train_sampler = None
+
+    if dist_utils.is_dist_avail_and_initialized() and args.distributed_mode:
             train_sampler = DistributedSampler(
                 train_dataset,
                 seed=args.seed,
                 drop_last=True,
             )
-    else:
-        device_id = None
-
     init_fn = partial(
         worker_init_fn,
         num_workers=args.num_workers,

@@ -89,7 +89,7 @@ class Normalize(nn.Module):
         x = torch.nn.functional.normalize(x, dim=-1, p=2).detach()
         return x
 
-def get_model(model="dino", use_head=False):
+def get_model(model="dino", use_head=False, model_dir='./'):
     '''
     Select a model that will be used to compute the embeddings needed by RCDM.
     You can use any kind of model, ConvNets/MLPs, or VITs.
@@ -109,7 +109,7 @@ def get_model(model="dino", use_head=False):
                 nlayers=2,
                 use_bn=True,
         )
-        pretrained_model = torch.hub.load_state_dict_from_url("https://dl.fbaipublicfiles.com/dino/dino_resnet50_pretrain/dino_resnet50_pretrain_full_checkpoint.pth", map_location="cpu") 
+        pretrained_model = torch.hub.load_state_dict_from_url("https://dl.fbaipublicfiles.com/dino/dino_resnet50_pretrain/dino_resnet50_pretrain_full_checkpoint.pth", map_location="cpu", model_dir=model_dir) 
         pretrained_model = pretrained_model["teacher"]
         if "state_dict" in pretrained_model:
             pretrained_model = pretrained_model["state_dict"]
@@ -130,7 +130,7 @@ def get_model(model="dino", use_head=False):
     elif model == "simclr":
         embedding_model = torchvision_models.resnet50()
         embedding_model.fc = nn.Identity()
-        pretrained_model_base = torch.hub.load_state_dict_from_url("https://dl.fbaipublicfiles.com/vissl/model_zoo/simclr_rn50_1000ep_simclr_8node_resnet_16_07_20.afe428c7/model_final_checkpoint_phase999.torch", map_location="cpu")
+        pretrained_model_base = torch.hub.load_state_dict_from_url("https://dl.fbaipublicfiles.com/vissl/model_zoo/simclr_rn50_1000ep_simclr_8node_resnet_16_07_20.afe428c7/model_final_checkpoint_phase999.torch", map_location="cpu", model_dir=model_dir)
         # Load trunk
         pretrained_model = pretrained_model_base["classy_state_dict"]["base_model"]["model"]["trunk"]
         pretrained_model = {k.replace("_feature_blocks.", ""): v for k, v in pretrained_model.items()}
@@ -149,7 +149,7 @@ def get_model(model="dino", use_head=False):
     elif model == "barlow":
         embedding_model = torchvision_models.resnet50()
         embedding_model.fc = nn.Identity()
-        pretrained_model_base = torch.hub.load_state_dict_from_url("https://dl.fbaipublicfiles.com/vissl/model_zoo/barlow_twins/barlow_twins_32gpus_4node_imagenet1k_1000ep_resnet50.torch", map_location="cpu")
+        pretrained_model_base = torch.hub.load_state_dict_from_url("https://dl.fbaipublicfiles.com/vissl/model_zoo/barlow_twins/barlow_twins_32gpus_4node_imagenet1k_1000ep_resnet50.torch", map_location="cpu", model_dir=model_dir)
         # Load trunk        
         pretrained_model = pretrained_model_base["classy_state_dict"]["base_model"]["model"]["trunk"]
         pretrained_model = {k.replace("_feature_blocks.", ""): v for k, v in pretrained_model.items()}
@@ -169,7 +169,7 @@ def get_model(model="dino", use_head=False):
     elif model == "vicreg":
         embedding_model = torchvision_models.resnet50()
         embedding_model.fc = nn.Identity()
-        pretrained_model_base = torch.hub.load_state_dict_from_url("https://dl.fbaipublicfiles.com/vicreg/resnet50_fullckpt.pth", map_location="cpu")
+        pretrained_model_base = torch.hub.load_state_dict_from_url("https://dl.fbaipublicfiles.com/vicreg/resnet50_fullckpt.pth", map_location="cpu", model_dir=model_dir)
         embedding_model.classifier = nn.Identity()
         embedding_model.projector = Projector(emb=8192)
         pretrained = "resnet50_fullckpt.pth"

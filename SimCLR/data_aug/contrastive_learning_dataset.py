@@ -6,7 +6,7 @@ from SimCLR.data_aug.rcdm_aug import RCDMInference
 from SimCLR.data_aug.rcdm_config import get_config
 from SimCLR.data_aug.view_generator import ContrastiveLearningViewGenerator
 from SimCLR.exceptions.exceptions import InvalidDatasetSelection
-
+import random
 
 class ContrastiveLearningDataset:
     def __init__(self, root_folder):
@@ -21,19 +21,29 @@ class ContrastiveLearningDataset:
             s (float, optional): Magnitude of the color distortion. Defaults to 1.
             rcdm_agumentation (bool, optional): Whether to use RCDM augmentation. Defaults to True.
         """
-        color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
-        transform_list = [
-            transforms.RandomResizedCrop(size=size),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomApply([color_jitter], p=0.8),
-            transforms.RandomGrayscale(p=0.2),
-            GaussianBlur(kernel_size=int(0.1 * size)),
-            transforms.ToTensor(),
-        ]
-        if rcdm_agumentation:
+        prob = random.uniform(0, 1)
+        if prob < 0.5 and rcdm_agumentation:
             rcdm_config = get_config()
-            transform_list.append(RCDMInference(rcdm_config, device_id))
-            transform_list.append(transforms.Resize(size=(size, size)))
+            timestep_respacing = ["ddim10", "ddim25", "ddim50"]
+            rcdm_config.timestep_respacing = timestep_respacing[random.randrange(len(timestep_respacing))]
+            transform_list = [
+                transforms.Resize(size=(size,size)),
+                transforms.ToTensor(),
+                RCDMInference(rcdm_config, device_id),
+                transforms.RandomHorizontalFlip(),
+                transforms.Resize(size=(size,size)),
+            ]
+        else:
+            color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
+            transform_list = [
+                transforms.RandomResizedCrop(size=size),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomApply([color_jitter], p=0.8),
+                transforms.RandomGrayscale(p=0.2),
+                GaussianBlur(kernel_size=int(0.1 * size)),
+                transforms.ToTensor(),
+            ]
+
 
 
         return transforms.Compose(transform_list)

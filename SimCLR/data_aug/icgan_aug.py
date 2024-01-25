@@ -35,7 +35,7 @@ class ICGANInference:
         config["model_backbone"] = 'biggan'
         config["experiment_name"] = self.config.experiment_name
         G, config = inference_utils.load_model_inference(config)
-        G.cuda(self.device_id)
+        G = G.cuda(self.device_id)
         G.eval()
         return G
 
@@ -63,7 +63,7 @@ class ICGANInference:
 
     def load_feature_extractor(self, feat_ext_path):
         feature_extractor = data_utils.load_pretrained_feature_extractor(feat_ext_path, feature_extractor='selfsupervised')
-        feature_extractor.cuda(self.device_id)
+        feature_extractor = feature_extractor.cuda(self.device_id)
         feature_extractor.eval()
         return feature_extractor
 
@@ -97,6 +97,6 @@ class ICGANInference:
                                 if input_label is not None else None, instance_vector
                                 if instance_vector is not None else None)
 
-        sample = sample.detach().squeeze(0).cpu()
+        sample = sample.detach().squeeze(0)
 
         return sample

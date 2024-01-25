@@ -143,6 +143,8 @@ def main():
     args = parser.parse_args()
     print(args)
 
+    torch.multiprocessing.set_start_method("spawn") 
+
     assert (
         args.n_views == 2
     ), "Only two view training is supported. Please use --n-views 2."
@@ -185,7 +187,7 @@ def main():
         sampler=train_sampler,
         num_workers=args.num_workers,
         worker_init_fn=init_fn,
-        pin_memory=True,
+        pin_memory=False,
         drop_last=True,
     )
 

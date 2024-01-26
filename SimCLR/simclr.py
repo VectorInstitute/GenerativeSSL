@@ -19,7 +19,7 @@ class SimCLR(object):
         self.scheduler = kwargs["scheduler"]
         self.device_id = kwargs["device_id"]
         log_dir = os.path.join(self.args.model_dir, self.args.experiment_name)
-        if not os.isdir(log_dir):
+        if not os.path.exists(log_dir):
             os.mkdir(log_dir)
         self.writer = SummaryWriter(log_dir=log_dir)
         self.criterion = torch.nn.CrossEntropyLoss().cuda(self.device_id)

@@ -115,6 +115,8 @@ parser.add_argument(
 )
 parser.add_argument("--distributed_launcher", default="slurm")
 parser.add_argument("--distributed_backend", default="nccl")
+parser.add_argument("--model_dir", default="model_checkpoints")
+parser.add_argument("--experiment_name", default="simclr")
 
 
 def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> None:

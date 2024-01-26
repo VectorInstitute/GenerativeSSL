@@ -16,7 +16,7 @@ class RCDMInference(object):
         self.device_id = device_id
 
         # Load SSL model
-        self.ssl_model = get_model(self.config.type_model, self.config.use_head, self.model_dir).cuda(self.device_id).eval()
+        self.ssl_model = get_model(self.config.type_model, self.config.use_head, self.config.model_dir).cuda(self.device_id).eval()
         for p in self.ssl_model.parameters():
             p.requires_grad = False
 
@@ -29,7 +29,7 @@ class RCDMInference(object):
         )
 
         if self.config.model_path == "":
-            trained_model = get_dict_rcdm_model(self.config.type_model, self.config.use_head, self.model_dir)
+            trained_model = get_dict_rcdm_model(self.config.type_model, self.config.use_head, self.config.model_dir)
         else:
             trained_model = torch.load(self.config.model_path, map_location="cpu")
         self.model.load_state_dict(trained_model, strict=True)

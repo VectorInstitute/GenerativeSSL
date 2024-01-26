@@ -93,8 +93,9 @@ class SimCLR(object):
                 scaler.update()
 
                 if n_iter % self.args.log_every_n_steps == 0:
+                    top1, top5 = accuracy(logits, labels, topk=(1, 5))
                     print(
-                        f"Calculating accuracy/loss at iteration: {n_iter}, loss: {loss},acc: {accuracy(logits, labels, topk=(1, 5))}",
+                        f"Calculating accuracy/loss at iteration: {n_iter}, loss: {loss},acc: top1 - {top1[0]}, top5 - {top5[0]}",
                     )
                     top1, top5 = accuracy(logits, labels, topk=(1, 5))
                     self.writer.add_scalar("loss", loss, global_step=n_iter)

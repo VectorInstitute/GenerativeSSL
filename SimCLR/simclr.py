@@ -106,8 +106,9 @@ class SimCLR(object):
                         self.scheduler.get_last_lr()[0],
                         global_step=n_iter,
                     )
-                    # save model checkpoints
-                    checkpoint_name = "checkpoint_{:04d}.pth.tar".format(self.args.epochs)
+                    
+                    # save latest model checkpoints
+                    checkpoint_name = "checkpoint_final.pth.tar"
                     save_checkpoint(
                         {
                             "n_iter": n_iter,
@@ -126,6 +127,18 @@ class SimCLR(object):
                 self.scheduler.step()
 
             print(f"Epoch: {epoch_counter}\tLoss: {loss}\tTop1 accuracy: {top1[0]}")
+            # save model checkpoints after epochs
+            checkpoint_name = "checkpoint_epoch_{:04d}.pth.tar".format(epoch_counter)
+            save_checkpoint(
+                {
+                    "n_iter": n_iter,
+                    "arch": self.args.arch,
+                    "state_dict": self.model.state_dict(),
+                    "optimizer": self.optimizer.state_dict(),
+                },
+                is_best=False,
+                filename=os.path.join(self.writer.log_dir, checkpoint_name),
+            )
 
         print("Training has finished.")
 

@@ -24,6 +24,6 @@ def get_config():
     config.ssl_image_size = 224  # Size of the input images for the SSL model.
     config.ssl_image_channels = 3  # Number of channels of the input images for the SSL model.
     config.num_images = 1 # Number of images to generate.
-    config.timestep_respacing = "ddim10" # Type of timestep respacing (e.g., ddim25).
+    config.timestep_respacing = "ddim2" # Type of timestep respacing (e.g., ddim25).
 
     return config

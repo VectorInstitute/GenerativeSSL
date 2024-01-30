@@ -22,10 +22,8 @@ class ContrastiveLearningDataset:
             rcdm_agumentation (bool, optional): Whether to use RCDM augmentation. Defaults to True.
         """
         prob = random.uniform(0, 1)
-        if prob < 0.5 and rcdm_agumentation:
+        if prob < 1 and rcdm_agumentation:
             rcdm_config = get_config()
-            timestep_respacing = ["ddim10", "ddim25"]
-            rcdm_config.timestep_respacing = timestep_respacing[random.randrange(len(timestep_respacing))]
             transform_list = [
                 transforms.Resize(size=(size,size)),
                 transforms.ToTensor(),

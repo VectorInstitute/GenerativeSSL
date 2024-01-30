@@ -45,7 +45,6 @@ class RCDMInference(object):
         Returns:
             List[torch.Tensor]: List of generated image tensors.
         """
-        print("Starting RCDM model inference...")
 
         sample_fn = self.diffusion.p_sample_loop if not self.config.use_ddim else self.diffusion.ddim_sample_loop
 
@@ -62,5 +61,4 @@ class RCDMInference(object):
             model_kwargs=model_kwargs,
         )
 
-        print("Sampling completed!")
         return sample.detach().squeeze(0)

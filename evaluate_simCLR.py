@@ -75,6 +75,9 @@ parser.add_argument("--pretrained_model_file", default=None, help="Path to the p
 parser.add_argument("--linear_evaluation", 
                     action="store_true",
                     help="Whether or not to evaluate the linear evaluation of the model.")
+parser.add_argument(
+    "--log-every-n-steps", default=100, type=int, help="Log every n steps"
+)
 
 def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> None:
     """Initialize worker processes with a random seed.
@@ -191,6 +194,8 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=3e-4, weight_decay=0.0008)
     criterion = torch.nn.CrossEntropyLoss().cuda(device_id)
 
+    n_iter = 0
+
     for epoch in range(args.epochs):
         if dist_utils.is_dist_avail_and_initialized():
             train_loader.sampler.set_epoch(epoch)
@@ -207,25 +212,26 @@ def main():
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            if n_iter % args.log_every_n_steps == 0:
+                top1_train_accuracy /= counter + 1
+                top1_accuracy = 0
+                top5_accuracy = 0
+                for counter, (x_batch, y_batch) in enumerate(test_loader):
+                    x_batch = x_batch.cuda(device_id)
+                    y_batch = y_batch.cuda(device_id)
 
-        top1_train_accuracy /= counter + 1
-        top1_accuracy = 0
-        top5_accuracy = 0
-        for counter, (x_batch, y_batch) in enumerate(test_loader):
-            x_batch = x_batch.cuda(device_id)
-            y_batch = y_batch.cuda(device_id)
+                    logits = model(x_batch)
 
-            logits = model(x_batch)
+                    top1, top5 = accuracy(logits, y_batch, topk=(1, 5))
+                    top1_accuracy += top1[0]
+                    top5_accuracy += top5[0]
 
-            top1, top5 = accuracy(logits, y_batch, topk=(1, 5))
-            top1_accuracy += top1[0]
-            top5_accuracy += top5[0]
-
-        top1_accuracy /= counter + 1
-        top5_accuracy /= counter + 1
-        print(
-            f"Epoch {epoch}\tTop1 Train accuracy {top1_train_accuracy.item()}\tTop1 Test accuracy: {top1_accuracy.item()}\tTop5 test acc: {top5_accuracy.item()}",
-        )
+                top1_accuracy /= counter + 1
+                top5_accuracy /= counter + 1
+                print(
+                    f"Epoch {epoch}\t Iter {n_iter}\t Top1 Train accuracy {top1_train_accuracy.item()}\tTop1 Test accuracy: {top1_accuracy.item()}\tTop5 test acc: {top5_accuracy.item()}",
+                )
+            n_iter += 1
 
    
 

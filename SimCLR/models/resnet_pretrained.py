@@ -16,8 +16,8 @@ class PretrainedResNet(nn.Module):
             "resnet50": models.resnet50(pretrained=False, num_classes=10),
         }
 
-        self.backbone = self._get_basemodel(base_model)
-        print(self.backbone.state_dict().keys())
+        model = self._get_basemodel(base_model)
+        print(model.state_dict().keys())
 
         # load pretrained weights
         log = self._load_pretrained()
@@ -29,6 +29,7 @@ class PretrainedResNet(nn.Module):
             self._freeze_backbone()
             parameters = list(filter(lambda p: p.requires_grad, self.backbone.parameters()))
             assert len(parameters) == 2  # fc.weight, fc.bias
+        self.backbone = model
 
     def _load_pretrained(self):
         checkpoint = torch.load(self.pretrained_dir, map_location='cpu')

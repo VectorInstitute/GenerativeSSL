@@ -2,10 +2,12 @@ import argparse
 import random
 from functools import partial
 
+import os
 import torch
 from torch.nn.parallel import DistributedDataParallel as DDP  # noqa: N817
 from torch.utils.data.distributed import DistributedSampler
 from torchvision import models
+import shutil
 
 from SimCLR import distributed as dist_utils
 from SimCLR.data_aug.supervised_dataset import SupervisedDataset
@@ -78,6 +80,8 @@ parser.add_argument("--linear_evaluation",
 parser.add_argument(
     "--log-every-n-steps", default=100, type=int, help="Log every n steps"
 )
+parser.add_argument("--model_dir", default="model_checkpoints")
+parser.add_argument("--experiment_name", default="simclr")
 
 
 def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> None:
@@ -113,6 +117,11 @@ def accuracy(output, target, topk=(1,)):
             correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
+    
+def save_checkpoint(state, is_best, filename="checkpoint.pth.tar"):
+    torch.save(state, filename)
+    if is_best:
+        shutil.copyfile(filename, "model_best.pth.tar")
 
 
 def main():
@@ -203,6 +212,10 @@ def main():
 
     n_iter = 0
 
+    log_dir = os.path.join(args.model_dir, args.experiment_name)
+    if not os.path.exists(log_dir):
+        os.mkdir(log_dir)
+
     for epoch in range(args.epochs):
         if dist_utils.is_dist_avail_and_initialized():
             train_loader.sampler.set_epoch(epoch)
@@ -220,25 +233,41 @@ def main():
             loss.backward()
             optimizer.step()
             if n_iter % args.log_every_n_steps == 0:
-                top1_train_accuracy /= counter + 1
-                top1_accuracy = 0
-                top5_accuracy = 0
-                for counter, (x_batch, y_batch) in enumerate(test_loader):
-                    x_batch = x_batch.cuda(device_id)
-                    y_batch = y_batch.cuda(device_id)
-
-                    logits = model(x_batch)
-
-                    top1, top5 = accuracy(logits, y_batch, topk=(1, 5))
-                    top1_accuracy += top1[0]
-                    top5_accuracy += top5[0]
-
-                top1_accuracy /= counter + 1
-                top5_accuracy /= counter + 1
+                temp_train_acc = top1_train_accuracy / (counter + 1)
                 print(
-                    f"Epoch {epoch}\t Iter {n_iter}\t Top1 Train accuracy {top1_train_accuracy.item()}\tTop1 Test accuracy: {top1_accuracy.item()}\tTop5 test acc: {top5_accuracy.item()}",
+                    f"Iter {n_iter}\t Top1 Train accuracy {temp_train_acc.item()}",
                 )
             n_iter += 1
+
+        top1_train_accuracy /= counter + 1
+        top1_accuracy = 0
+        top5_accuracy = 0
+        for counter, (x_batch, y_batch) in enumerate(test_loader):
+            x_batch = x_batch.cuda(device_id)
+            y_batch = y_batch.cuda(device_id)
+
+            logits = model(x_batch)
+
+            top1, top5 = accuracy(logits, y_batch, topk=(1, 5))
+            top1_accuracy += top1[0]
+            top5_accuracy += top5[0]
+
+        top1_accuracy /= counter + 1
+        top5_accuracy /= counter + 1
+        print(
+            f"Epoch {n_iter}\t Top1 Train accuracy {top1_train_accuracy.item()}\tTop1 Test accuracy: {top1_accuracy.item()}\tTop5 test acc: {top5_accuracy.item()}",
+        )
+        checkpoint_name = "checkpoint_supervised_epoch_{:04d}.pth.tar".format(epoch)
+        save_checkpoint(
+            {
+                "n_iter": n_iter,
+                "arch": args.arch,
+                "state_dict": model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+            },
+            is_best=False,
+            filename=os.path.join(log_dir, checkpoint_name),
+        )
 
    
 

@@ -6,22 +6,21 @@ from ..exceptions.exceptions import InvalidBackboneError
 
 
 class PretrainedResNet(nn.Module):
-    def __init__(self, base_model, pretrained_dir, linear_eval=True):
+    def __init__(self, base_model, pretrained_dir, linear_eval=True, num_classes=10):
         super(PretrainedResNet, self).__init__()
 
         self.pretrained_dir = pretrained_dir
 
         self.resnet_dict = {
-            "resnet18": models.resnet18(pretrained=False, num_classes=10),
-            "resnet50": models.resnet50(pretrained=False, num_classes=10),
+            "resnet18": models.resnet18(pretrained=False, num_classes=num_classes),
+            "resnet50": models.resnet50(pretrained=False, num_classes=num_classes),
         }
 
         self.backbone = self._get_basemodel(base_model)
-        print(self.backbone.state_dict().keys())
 
         # load pretrained weights
         log = self._load_pretrained()
-        print(log)
+
         assert log.missing_keys == ["fc.weight", "fc.bias"]
 
         if linear_eval:
@@ -33,7 +32,6 @@ class PretrainedResNet(nn.Module):
     def _load_pretrained(self):
         checkpoint = torch.load(self.pretrained_dir, map_location='cpu')
         state_dict = checkpoint["state_dict"]
-        print(state_dict.keys())
         for k in list(state_dict.keys()):
             if k.startswith("module.backbone."):
                 if k.startswith("module.backbone") and not k.startswith("module.backbone.fc"):

@@ -79,6 +79,7 @@ parser.add_argument(
     "--log-every-n-steps", default=100, type=int, help="Log every n steps"
 )
 
+
 def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> None:
     """Initialize worker processes with a random seed.
 
@@ -179,8 +180,14 @@ def main():
         pin_memory=False,
         drop_last=False,
     )
+    if args.dataset_name == "cifar10":
+        num_classes = 10
+    elif args.dataset_name == "stl10":
+        num_classes = 10
+    elif args.dataset_name == "imagenet":
+        num_classes = 1000
 
-    model = PretrainedResNet(base_model=args.arch, pretrained_dir = args.pretrained_model_file, linear_eval=args.linear_evaluation)
+    model = PretrainedResNet(base_model=args.arch, pretrained_dir = args.pretrained_model_file, linear_eval=args.linear_evaluation, num_classes=num_classes)
 
     if args.distributed_mode and dist_utils.is_dist_avail_and_initialized():
         # set the single device scope, otherwise DistributedDataParallel will

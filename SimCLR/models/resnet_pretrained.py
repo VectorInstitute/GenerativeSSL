@@ -20,6 +20,7 @@ class PretrainedResNet(nn.Module):
 
         # load pretrained weights
         log = self._load_pretrained()
+        print(log)
         assert log.missing_keys == ["fc.weight", "fc.bias"]
 
         if linear_eval:

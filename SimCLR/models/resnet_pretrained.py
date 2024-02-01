@@ -17,6 +17,7 @@ class PretrainedResNet(nn.Module):
         }
 
         self.backbone = self._get_basemodel(base_model)
+        print(self.backbone.state_dict().keys())
 
         # load pretrained weights
         log = self._load_pretrained()
@@ -32,6 +33,7 @@ class PretrainedResNet(nn.Module):
     def _load_pretrained(self):
         checkpoint = torch.load(self.pretrained_dir, map_location='cpu')
         state_dict = checkpoint["state_dict"]
+        print(state_dict.keys())
         for k in list(state_dict.keys()):
             if k.startswith("backbone."):
                 if k.startswith("backbone") and not k.startswith("backbone.fc"):

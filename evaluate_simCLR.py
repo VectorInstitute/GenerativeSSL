@@ -67,15 +67,11 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--log-every-n-steps", default=100, type=int, help="Log every n steps"
-)
-parser.add_argument(
     "--distributed_mode", action="store_true", help="Enable distributed training"
 )
 parser.add_argument("--distributed_launcher", default="slurm")
 parser.add_argument("--distributed_backend", default="nccl")
-parser.add_argument("--model_dir", default="model_checkpoints")
-parser.add_argument("--experiment_name", default="simclr")
+parser.add_argument("--pretrained_model_file", default=None, help="Path to the pretrained model file.")
 parser.add_argument("--linear_evaluation", 
                     action="store_true",
                     help="Whether or not to evaluate the linear evaluation of the model.")
@@ -185,7 +181,7 @@ def main():
         drop_last=False,
     )
 
-    model = PretrainedResNet(base_model=args.arch, pretrained_dir = args.model_dir, linear_eval=args.linear_evaluation)
+    model = PretrainedResNet(base_model=args.arch, pretrained_dir = args.pretrained_model_file, linear_eval=args.linear_evaluation)
 
     if args.distributed_mode and dist_utils.is_dist_avail_and_initialized():
         # set the single device scope, otherwise DistributedDataParallel will

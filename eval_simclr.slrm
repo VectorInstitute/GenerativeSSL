@@ -8,8 +8,8 @@
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=4
 #SBATCH --mem-per-cpu=2G
-#SBATCH --output=./runs/eval_slurm-%N-%j.out
-#SBATCH --error=./runs/eval_slurm-%N-%j.err
+#SBATCH --output=/ssd003/projects/aieng/genssl/experiments/simclr/eval_slurm-%N-%j.out
+#SBATCH --error=/ssd003/projects/aieng/genssl/experiments/simclr/eval_slurm-%N-%j.err
 #SBATCH --qos=m
 
 PY_ARGS=${@:1}
@@ -31,7 +31,7 @@ srun python evaluate_simCLR.py \
 --distributed_mode \
 --batch-size=256 \
 --pretrained_model_file="/ssd003/projects/aieng/genssl/experiments/simclr/checkpoint_epoch_0003.pth.tar" \
---log-every-n-steps=10 \
+--log-every-n-steps=100 \
 --linear_evaluation \
 --model_dir="/ssd003/projects/aieng/genssl/experiments" \
 --experiment_name="simclr" 

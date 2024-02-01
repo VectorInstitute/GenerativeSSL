@@ -212,6 +212,9 @@ def main():
             y_batch = y_batch.cuda(device_id)
 
             logits = model(x_batch)
+            print(y_batch)
+            print(logits.shape)
+            print(logits)
             loss = criterion(logits, y_batch)
             top1 = accuracy(logits, y_batch, topk=(1,))
             top1_train_accuracy += top1[0]

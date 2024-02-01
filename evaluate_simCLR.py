@@ -117,10 +117,6 @@ def main():
 
     torch.multiprocessing.set_start_method("spawn")
 
-    assert (
-        args.n_views == 2
-    ), "Only two view training is supported. Please use --n-views 2." 
-
     if args.distributed_mode:
         dist_utils.init_distributed_mode(
             launcher=args.distributed_launcher,

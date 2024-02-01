@@ -15,7 +15,7 @@ class ContrastiveLearningDataset:
         self.root_folder = root_folder
 
     @staticmethod
-    def get_simclr_pipeline_transform(size, s=1, rcdm_agumentation=True, icgan_agumentation=True, device_id=None):
+    def get_simclr_pipeline_transform(size, s=1, rcdm_agumentation=False, icgan_agumentation=False, device_id=None):
         """Return a set of data augmentation transformations as described in the SimCLR paper.
 
         Args:
@@ -25,6 +25,10 @@ class ContrastiveLearningDataset:
         """
         color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
         transform_list = [
+            transforms.Resize(size=(size,size)),
+            transforms.ToTensor(),
+            transforms.ToPILImage(),
+            transforms.Resize(size=(size, size)),
             transforms.RandomResizedCrop(size=size),
             transforms.RandomHorizontalFlip(),
             transforms.RandomApply([color_jitter], p=0.8),
@@ -34,13 +38,11 @@ class ContrastiveLearningDataset:
         ]
         if rcdm_agumentation:
             rcdm_config = get_config()
-            transform_list.append(RCDMInference(rcdm_config, device_id))
-            transform_list.append(transforms.Resize(size=(size, size)))
+            transform_list.insert(2, RCDMInference(rcdm_config, device_id))
 
-        if icgan_agumentation:
+        elif icgan_agumentation:
             icgan_config = get_icgan_config()
-            transform_list.append(ICGANInference(icgan_config, device_id))
-            transform_list.append(transforms.Resize(size=(size, size)))
+            transform_list.insert(2, ICGANInference(icgan_config, device_id))
 
         return transforms.Compose(transform_list)
 

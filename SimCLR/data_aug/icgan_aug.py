@@ -45,11 +45,11 @@ class ICGANInference:
                 trunc_indices = noise_vector.abs() > 2*self.config.truncation
                 size = torch.count_nonzero(trunc_indices).cpu().numpy()
                 trunc = truncnorm.rvs(-2*self.config.truncation, 2*self.config.truncation, size=(1,size)).astype(np.float32)
-                noise_vector.data[trunc_indices] = torch.tensor(trunc, requires_grad=True, device='cuda')
+                noise_vector.data[trunc_indices] = torch.tensor(trunc, requires_grad=True).cuda(self.device_id)
         else:
             noise_vector = noise_vector.clamp(-2*self.config.truncation, 2*self.config.truncation)
   
-        out = self.model(noise_vector, input_label, input_features.cuda())
+        out = self.model(noise_vector, input_label, input_features.cuda(self.device_id))
         return out
 
     def normality_loss(self, vec):

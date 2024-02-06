@@ -67,10 +67,9 @@ class ICGANInference:
         feature_extractor.eval()
         return feature_extractor
 
-    def preprocess_input_image(self, input_image_path, size): 
-        pil_image = Image_PIL.open(input_image_path).convert('RGB')
+    def preprocess_input_image(self, input_image, size=224): 
         transform_list =  transforms.Compose([data_utils.CenterCropLongEdge(), transforms.Resize((size,size)), transforms.ToTensor(), transforms.Normalize(self.config.norm_mean, self.config.norm_std)])
-        tensor_image = transform_list(pil_image)
+        tensor_image = transform_list(input_image)
         tensor_image = torch.nn.functional.interpolate(tensor_image.unsqueeze(0), 224, mode="bicubic", align_corners=True)
         return tensor_image
 
@@ -82,7 +81,7 @@ class ICGANInference:
 
     def __call__(self, input_image_tensor):
         with torch.no_grad():
-            input_features, _ = self.feature_extractor(input_image_tensor.unsqueeze(0).cuda(self.device_id))
+            input_features, _ = self.feature_extractor(self.preprocess_input_image(input_image_tensor).cuda(self.device_id))
         input_features/=torch.linalg.norm(input_features, dim=-1, keepdims=True)
 
         # Create noise, instance and class vector

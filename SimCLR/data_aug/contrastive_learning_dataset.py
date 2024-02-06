@@ -25,10 +25,7 @@ class ContrastiveLearningDataset:
         """
         color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
         transform_list = [
-            transforms.Resize(size=(size,size)),
-            transforms.ToTensor(),
             transforms.ToPILImage(),
-            transforms.Resize(size=(size, size)),
             transforms.RandomResizedCrop(size=size),
             transforms.RandomHorizontalFlip(),
             transforms.RandomApply([color_jitter], p=0.8),
@@ -38,11 +35,11 @@ class ContrastiveLearningDataset:
         ]
         if rcdm_agumentation:
             rcdm_config = get_config()
-            transform_list.insert(2, RCDMInference(rcdm_config, device_id))
+            transform_list.insert(0, RCDMInference(rcdm_config, device_id))
 
         elif icgan_agumentation:
             icgan_config = get_icgan_config()
-            transform_list.insert(2, ICGANInference(icgan_config, device_id))
+            transform_list.insert(0, ICGANInference(icgan_config, device_id))
 
         return transforms.Compose(transform_list)
 

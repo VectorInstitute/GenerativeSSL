@@ -33,6 +33,10 @@ class ContrastiveLearningDataset:
             GaussianBlur(kernel_size=int(0.1 * size)),
             transforms.ToTensor(),
         ]
+
+        if rcdm_agumentation and icgan_agumentation:
+            raise ValueError("Both rcdm agumentation and icgan agumentation flags are set. Please set only one.")
+
         if rcdm_agumentation:
             rcdm_config = get_config()
             transform_list.insert(0, RCDMInference(rcdm_config, device_id))

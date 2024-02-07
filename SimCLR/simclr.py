@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from tqdm import tqdm
 
 import torch
 import torch.nn.functional as F  # noqa: N812
@@ -67,13 +68,10 @@ class SimCLR(object):
         n_iter = 0
         print(f"Start SimCLR training for {self.args.epochs} epochs.")
 
-        for epoch_counter in range(self.args.epochs):
+        for epoch_counter in tqdm(range(self.args.epochs), desc="Training Progress"):
             if dist_utils.is_dist_avail_and_initialized():
                 train_loader.sampler.set_epoch(epoch_counter)
-            # for images, _ in tqdm(train_loader):
-            for images, _ in train_loader:
-                now_time = datetime.now().strftime("%H:%M:%S")
-                print(f"{now_time} - Starting batch iteration: {n_iter}")
+            for images, _ in tqdm(train_loader):
                 images = torch.cat(images, dim=0)  # noqa: PLW2901
                 images = images.cuda(self.device_id)  # noqa: PLW2901
 

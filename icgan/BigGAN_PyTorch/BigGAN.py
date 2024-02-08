@@ -21,10 +21,10 @@ import torch.nn.functional as F
 import sys
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
-import BigGAN_PyTorch.layers as layers
+from icgan.BigGAN_PyTorch import layers as layers
 
 # from sync_batchnorm import SynchronizedBatchNorm2d as SyncBatchNorm2d
-from BigGAN_PyTorch.diffaugment_utils import DiffAugment
+from icgan.BigGAN_PyTorch.diffaugment_utils import DiffAugment
 
 # Architectures for G
 # Attention is passed in in the format '32_64' to mean applying an attention

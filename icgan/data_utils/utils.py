@@ -23,9 +23,9 @@ import shutil
 import torch.distributed as dist
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
-from data_utils.resnet import resnet50
-import data_utils.datasets_common as dset
-from data_utils.cocostuff_dataset import CocoStuff
+from icgan.data_utils.resnet import resnet50
+from icgan.data_utils import datasets_common as dset
+from icgan.data_utils.cocostuff_dataset import CocoStuff
 
 
 class CenterCropLongEdge(object):

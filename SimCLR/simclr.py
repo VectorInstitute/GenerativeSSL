@@ -1,7 +1,6 @@
 import os
 
 import torch
-import torch.nn.functional as F
 from torch.cuda.amp import GradScaler, autocast
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -20,7 +19,6 @@ class SimCLR(object):
         self.scheduler = kwargs["scheduler"]
         self.device_id = kwargs["device_id"]
         self.writer = SummaryWriter()
-        # TODO
         self.criterion = loss.SimCLRContrastiveLoss(self.args.temperature).cuda(
             self.device_id
         )

@@ -25,7 +25,7 @@ class ContrastiveLearningDataset:
         """
         color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
         transform_list = [
-            transforms.ToPILImage(),
+            # transforms.ToPILImage(),
             transforms.RandomResizedCrop(size=size),
             transforms.RandomHorizontalFlip(),
             transforms.RandomApply([color_jitter], p=0.8),

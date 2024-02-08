@@ -108,10 +108,10 @@ parser.add_argument(
     help="Number of views for contrastive learning training.",
 )
 parser.add_argument(
-    "--rcdm_agumentation", action="store_true", help="Use RCDM agumentation or not."
+    "--rcdm_augmentation", action="store_true", help="Use RCDM augmentation or not."
 )
 parser.add_argument(
-    "--icgan_agumentation", action="store_true", help="Use ICGAN agumentation or not."
+    "--icgan_augmentation", action="store_true", help="Use ICGAN augmentation or not."
 )
 parser.add_argument(
     "--distributed_mode", action="store_true", help="Enable distributed training"
@@ -162,8 +162,8 @@ def main():
     train_dataset = dataset.get_dataset(
         args.dataset_name,
         args.n_views,
-        args.rcdm_agumentation,
-        args.icgan_agumentation,
+        args.rcdm_augmentation,
+        args.icgan_augmentation,
         device_id
     )
     train_sampler = None

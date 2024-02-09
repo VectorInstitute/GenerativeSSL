@@ -28,4 +28,5 @@ nvidia-smi
 srun python run_simCLR.py \
 --fp16-precision \
 --distributed_mode \
---batch-size=32
+--batch-size=4 \
+--icgan_augmentation

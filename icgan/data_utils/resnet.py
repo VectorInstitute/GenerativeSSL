@@ -42,6 +42,7 @@
 # Copyright(c) 2015, 2016 the respective contributors
 # All rights reserved.
 import torch
+
 # from torchvision.models.utils import load_state_dict_from_url
 from torch.hub import load_state_dict_from_url
 from typing import Type, Any, Callable, Union, List, Optional
@@ -117,7 +118,7 @@ def _resnet(
     layers: List[int],
     pretrained: bool,
     progress: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> ResNet:
     model = ResNet_mine(block, layers, **kwargs)
     if pretrained:

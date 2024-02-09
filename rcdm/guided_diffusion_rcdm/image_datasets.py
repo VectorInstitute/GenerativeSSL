@@ -6,9 +6,11 @@ import blobfile as bf
 import numpy as np
 import torchvision
 from torch.utils.data import DataLoader, Dataset
+
 # from torchvision.datasets.folder import find_classes
 from .dist_util import get_rank, get_world_size
 from torchvision import datasets, transforms
+
 
 def load_data(
     *,
@@ -45,7 +47,7 @@ def load_data(
     if class_cond:
         # Assume classes are the first part of the filename,
         # before an underscore.
-        #class_names = [bf.basename(path).split("_")[0] for path in all_files]
+        # class_names = [bf.basename(path).split("_")[0] for path in all_files]
         class_names = [bf.dirname(path) for path in all_files]
         sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
         classes = [sorted_classes[x] for x in class_names]
@@ -59,7 +61,7 @@ def load_data(
         random_flip=random_flip,
     )
 
-    #return dataset
+    # return dataset
     if deterministic:
         loader = DataLoader(
             dataset, batch_size=batch_size, shuffle=False, num_workers=1, drop_last=True
@@ -68,7 +70,7 @@ def load_data(
         loader = DataLoader(
             dataset, batch_size=batch_size, shuffle=True, num_workers=1, drop_last=True
         )
-    #return loader
+    # return loader
     while True:
         yield from loader
 
@@ -95,7 +97,8 @@ def load_single_image(path):
     arr = arr.astype(np.float32) / 127.5 - 1
     arr = np.transpose(arr, [2, 0, 1])
     return arr
-    
+
+
 class ImageDataset(Dataset):
     def __init__(
         self,
@@ -139,7 +142,7 @@ class ImageDataset(Dataset):
         out_dict = {}
         if self.local_classes is not None:
             out_dict["y"] = np.array(self.local_classes[idx], dtype=np.int64)
-        # We return two images, one of size 224x224 for the SSL model and one for 
+        # We return two images, one of size 224x224 for the SSL model and one for
         # the generative model with a specific size
         return np.transpose(arr, [2, 0, 1]), np.transpose(arr2, [2, 0, 1]), out_dict
 

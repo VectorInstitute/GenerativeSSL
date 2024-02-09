@@ -143,7 +143,7 @@ def main():
     args = parser.parse_args()
     print(args)
 
-    torch.multiprocessing.set_start_method("spawn") 
+    torch.multiprocessing.set_start_method("spawn")
 
     assert (
         args.n_views == 2
@@ -164,16 +164,16 @@ def main():
         args.n_views,
         args.rcdm_augmentation,
         args.icgan_augmentation,
-        device_id
+        device_id,
     )
     train_sampler = None
 
     if dist_utils.is_dist_avail_and_initialized() and args.distributed_mode:
-            train_sampler = DistributedSampler(
-                train_dataset,
-                seed=args.seed,
-                drop_last=True,
-            )
+        train_sampler = DistributedSampler(
+            train_dataset,
+            seed=args.seed,
+            drop_last=True,
+        )
     init_fn = partial(
         worker_init_fn,
         num_workers=args.num_workers,

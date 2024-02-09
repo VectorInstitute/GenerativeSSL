@@ -401,6 +401,7 @@ def load_model_inference(config, device="cuda"):
     elif config["model_backbone"] == "stylegan2":
         import stylegan2_ada_pytorch.dnnlib as dnnlib
         import stylegan2_ada_pytorch.legacy as legacy
+
         # StyleGAN2 saves the entire network + weights in a pickle. Load it here.
         network_pkl = os.path.join(
             config["base_root"], config["experiment_name"], "best-network-snapshot.pkl"

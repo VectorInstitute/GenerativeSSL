@@ -1373,7 +1373,6 @@ def progress(items, desc="", total=None, min_delay=0.1, displaytype="s1k"):
                 end=" ",
             )
             if n > 0:
-
                 if displaytype == "s1k":  # minutes/seconds for 1000 iters
                     next_1000 = n + (1000 - n % 1000)
                     t_done = t_now - t_start

@@ -1,5 +1,6 @@
 import ml_collections
 
+
 def get_config():
     config = ml_collections.ConfigDict()
     config.image_size = 128  # The size of the images to generate.
@@ -21,6 +22,8 @@ def get_config():
     config.use_fp16 = False  # If true, use 16-bit floating point precision.
     config.use_scale_shift_norm = True  # If true, use scale-shift normalization.
     config.ssl_image_size = 224  # Size of the input images for the SSL model.
-    config.ssl_image_channels = 3  # Number of channels of the input images for the SSL model.
+    config.ssl_image_channels = (
+        3  # Number of channels of the input images for the SSL model.
+    )
 
     return config

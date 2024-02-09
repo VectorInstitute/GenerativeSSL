@@ -306,7 +306,7 @@ def setup_training_loop_kwargs(
         )  # other hyperparams behave more predictably if mbstd group size remains fixed
         spec.fmaps = 1 if res >= 512 else 0.5
         spec.lrate = 0.002 if res >= 1024 else 0.0025
-        spec.gamma = 0.0002 * (res ** 2) / spec.mb  # heuristic formula
+        spec.gamma = 0.0002 * (res**2) / spec.mb  # heuristic formula
         spec.ema = spec.mb * 10 / 32
 
     args.G_kwargs = dnnlib.EasyDict(

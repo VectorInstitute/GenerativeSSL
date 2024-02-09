@@ -24,11 +24,13 @@ from tqdm import tqdm
 import random
 import sklearn.metrics
 import torch.utils.data as data
+
 try:
     import faiss
+
     USE_FAISS = 1
 except:
-    print('Faiss library not found!')
+    print("Faiss library not found!")
     USE_FAISS = 0
 import h5py as h5
 import torch
@@ -103,29 +105,29 @@ def default_loader(path):
 class ImageFolder(data.Dataset):
     """A generic data loader where the images are arranged in this way: ::
 
-      root/dogball/xxx.png
-      root/dogball/xxy.png
-      root/dogball/xxz.png
+        root/dogball/xxx.png
+        root/dogball/xxy.png
+        root/dogball/xxz.png
 
-      root/cat/123.png
-      root/cat/nsdf3.png
-      root/cat/asd932_.png
+        root/cat/123.png
+        root/cat/nsdf3.png
+        root/cat/asd932_.png
 
-  Parameters
-  ----------
-      root: string. Root directory path.
-      transform: callable, optional. A function/transform that  takes in an PIL image
-          and returns a transformed version. E.g, ``transforms.RandomCrop``
-      target_transform: callable, optional. A function/transform that takes in the
-          target and transforms it.
-      loader: callable, optional. A function to load an image given its path.
+    Parameters
+    ----------
+        root: string. Root directory path.
+        transform: callable, optional. A function/transform that  takes in an PIL image
+            and returns a transformed version. E.g, ``transforms.RandomCrop``
+        target_transform: callable, optional. A function/transform that takes in the
+            target and transforms it.
+        loader: callable, optional. A function to load an image given its path.
 
-   Attributes
-   ----------
-      classes: list. List of the class names.
-      class_to_idx: dict. Dict with items (class_name, class_index).
-      imgs: list. List of (image path, class_index) tuples
-  """
+     Attributes
+     ----------
+        classes: list. List of the class names.
+        class_to_idx: dict. Dict with items (class_name, class_index).
+        imgs: list. List of (image path, class_index) tuples
+    """
 
     def __init__(
         self,
@@ -138,9 +140,8 @@ class ImageFolder(data.Dataset):
         longtail=False,
         subsampled=False,
         split="train",
-        **kwargs
+        **kwargs,
     ):
-
         classes, class_to_idx = find_classes(root)
         # Load pre-computed image directory walk
         if False:  # os.path.exists(os.path.join(index_filename)):
@@ -198,14 +199,14 @@ class ImageFolder(data.Dataset):
 
     def __getitem__(self, index):
         """
-    Parameters
-    ----------
-        index: int. Index
+        Parameters
+        ----------
+            index: int. Index
 
-    Returns
-    -------
-        tuple: (image, target) where target is class_index of the target class.
-    """
+        Returns
+        -------
+            tuple: (image, target) where target is class_index of the target class.
+        """
         if self.load_in_mem:
             img = self.data[index]
             target = self.labels[index]
@@ -238,118 +239,118 @@ class ImageFolder(data.Dataset):
 
 
 class ILSVRC_HDF5_feats(data.Dataset):
-    """ ILSVRC_HDF5_feats: A dataset to support I/O from an HDF5.
+    """ILSVRC_HDF5_feats: A dataset to support I/O from an HDF5.
 
-        Parameters
-        ----------
-            root :str
-                Path to the hdf5 file containing images and labels.
-            root_feats: str, optional
-                Path to the hdf5 file containing the instance features.
-            root_nns: str, optional
-                Path to the hdf5 file containing the list of nearest neighbors for each instance.
-            transform : callable, optional
-                A function/transform that  takes in an PIL image and returns a transformed version.
-                 E.g, ``transforms.RandomCrop``
-            target_transform: callable, optional
-                A function/transform that takes in the target and transforms it.
-            load_labels: bool, optional
-                Return labels for each example.
-            load_features: bool, optional
-                Return instance features and its neighbors (needed for IC-GAN).
-            load_in_mem_images: bool, optional
-                Load all images in memory.
-            load_in_mem_labels: bool, optional
-                Load all labels in memory.
-            load_in_mem_feats: bool, optional
-                Load all instance features in memory.
-            k_nn: int, optional
-                Size of the neighborhood obtained with the k-NN algorithm.
-            which_nn_balance: str, optional
-                Whether to sample an instance or a neighbor class first. By default,
-                ``instance_balance`` is used.
-                 Using ``nnclass_balance`` allows class balancing to be applied.
-            kmeans_file: str, optional
-                Path to a file where only the dataset indexes selected with k-means are stored.
-                 It reduces the amount of available data to train or test the model.
-            n_subsampled_data: int, optional
-                If other than -1, that number of data points are randomly selected from the dataset.
-                It reduces the amount of available data to train or test the model.
-            filter_hd: int, optional
-                Only used for COCO-Stuff dataset. If -1, all COCO-Stuff evaluation set is used.
-                 If 0, only images with seen class combinations are used.
-                 If 1, only images with unseen class combinations are used.
-            label_dim: int, optional
-                Dimensionality of label embeddings. Useful for the StyleGAN2 backbone code.
-            feature_dim: int, optional
-                Dimensionality of instance features embeddings. Useful for the StyleGAN2 backbone
-                 code.
-            feature_augmentation: bool, optional
-                Use the instance features of the flipped ground-truth image instances as
-                 conditioning, with a 50% probability.
-            gpu_knn: bool, optional
-                Accelerate k-NN faiss computation with GPUs.
-            apply_norm: bool, optional
-                Normalize images between [-0.5, 0.5].
-            label_onehot: bool, optional
-                Return labels as a one hot encoding. Useful for StyleGAN2 backbone code.
+    Parameters
+    ----------
+        root :str
+            Path to the hdf5 file containing images and labels.
+        root_feats: str, optional
+            Path to the hdf5 file containing the instance features.
+        root_nns: str, optional
+            Path to the hdf5 file containing the list of nearest neighbors for each instance.
+        transform : callable, optional
+            A function/transform that  takes in an PIL image and returns a transformed version.
+             E.g, ``transforms.RandomCrop``
+        target_transform: callable, optional
+            A function/transform that takes in the target and transforms it.
+        load_labels: bool, optional
+            Return labels for each example.
+        load_features: bool, optional
+            Return instance features and its neighbors (needed for IC-GAN).
+        load_in_mem_images: bool, optional
+            Load all images in memory.
+        load_in_mem_labels: bool, optional
+            Load all labels in memory.
+        load_in_mem_feats: bool, optional
+            Load all instance features in memory.
+        k_nn: int, optional
+            Size of the neighborhood obtained with the k-NN algorithm.
+        which_nn_balance: str, optional
+            Whether to sample an instance or a neighbor class first. By default,
+            ``instance_balance`` is used.
+             Using ``nnclass_balance`` allows class balancing to be applied.
+        kmeans_file: str, optional
+            Path to a file where only the dataset indexes selected with k-means are stored.
+             It reduces the amount of available data to train or test the model.
+        n_subsampled_data: int, optional
+            If other than -1, that number of data points are randomly selected from the dataset.
+            It reduces the amount of available data to train or test the model.
+        filter_hd: int, optional
+            Only used for COCO-Stuff dataset. If -1, all COCO-Stuff evaluation set is used.
+             If 0, only images with seen class combinations are used.
+             If 1, only images with unseen class combinations are used.
+        label_dim: int, optional
+            Dimensionality of label embeddings. Useful for the StyleGAN2 backbone code.
+        feature_dim: int, optional
+            Dimensionality of instance features embeddings. Useful for the StyleGAN2 backbone
+             code.
+        feature_augmentation: bool, optional
+            Use the instance features of the flipped ground-truth image instances as
+             conditioning, with a 50% probability.
+        gpu_knn: bool, optional
+            Accelerate k-NN faiss computation with GPUs.
+        apply_norm: bool, optional
+            Normalize images between [-0.5, 0.5].
+        label_onehot: bool, optional
+            Return labels as a one hot encoding. Useful for StyleGAN2 backbone code.
 
-        Attributes
-        ---------
-            root: str
-                Path to the hdf5 file containing images and labels.
-            root_feats: str
-                Path to the hdf5 file containing the instance features.
-            root_nns: str
-                Path to the hdf5 file containing the list of nearest neighbors for each
-                instance.
-            transform : callable
-                A function/transform that  takes in an PIL image and returns a transformed version.
-                E.g, ``transforms.RandomCrop``
-            target_transform: callable
-                A function/transform that takes in the target and transforms it.
-            load_labels: bool
-                Return labels for each example.
-            load_features: bool
-                Return instance features and its neighbors (needed for IC-GAN).
-            load_in_mem_images: bool
-                Load all images in memory.
-            load_in_mem_labels: bool
-                Load all labels in memory.
-            load_in_mem_feats: bool
-                Load all instance features in memory.
-            feature_augmentation: bool
-                Use the instance features of the flipped ground-truth image instances as conditioning,
-                with a 50% probability.
-            which_nn_balance: str
-                Whether to sample an instance or a neighbor class first. By default,
-                ``instance_balance`` is used. Using ``nnclass_balance`` allows class balancing to be
-                 applied.
-            apply_norm: bool
-                Normalize images between [-0.5, 0.5].
-            label_onehot: bool
-                Return labels as a one hot encoding. Useful for StyleGAN2 backbone code.
-            num_imgs: int.
-                Number of data points in the dataset.
-            data: NumPy array
-                Image data, with the shape (num_imgs, w, h, 3), where w: width and h: height.
-            labels: NumPy array
-                Label data, with the shape (num_imgs, 1).
-            feats: NumPy array
-                Instance features data, with the shape (num_imgs, 2048).
-            sample_nns: list
-                List with length ``num_imgs``, that contains a list of the ``k_nn`` neighbor indexes
-                 for each instance.
-            sample_nn_radius: NumPy array
-                Array of size (num_imgs) that stores the distance between each instance and its
-                farthest(k-th) neighbor.
-            possible_sampling_idxs: list
-                List of all effective possible data samples. By default, it is a range(0, num_imgs).
-            kmeans_samples: list
-                List of indexes for samples selected with k-means algorithm.
-            kth_values: NumPy array
-                Distances between instances and its k-th neighbor.
-        """
+    Attributes
+    ---------
+        root: str
+            Path to the hdf5 file containing images and labels.
+        root_feats: str
+            Path to the hdf5 file containing the instance features.
+        root_nns: str
+            Path to the hdf5 file containing the list of nearest neighbors for each
+            instance.
+        transform : callable
+            A function/transform that  takes in an PIL image and returns a transformed version.
+            E.g, ``transforms.RandomCrop``
+        target_transform: callable
+            A function/transform that takes in the target and transforms it.
+        load_labels: bool
+            Return labels for each example.
+        load_features: bool
+            Return instance features and its neighbors (needed for IC-GAN).
+        load_in_mem_images: bool
+            Load all images in memory.
+        load_in_mem_labels: bool
+            Load all labels in memory.
+        load_in_mem_feats: bool
+            Load all instance features in memory.
+        feature_augmentation: bool
+            Use the instance features of the flipped ground-truth image instances as conditioning,
+            with a 50% probability.
+        which_nn_balance: str
+            Whether to sample an instance or a neighbor class first. By default,
+            ``instance_balance`` is used. Using ``nnclass_balance`` allows class balancing to be
+             applied.
+        apply_norm: bool
+            Normalize images between [-0.5, 0.5].
+        label_onehot: bool
+            Return labels as a one hot encoding. Useful for StyleGAN2 backbone code.
+        num_imgs: int.
+            Number of data points in the dataset.
+        data: NumPy array
+            Image data, with the shape (num_imgs, w, h, 3), where w: width and h: height.
+        labels: NumPy array
+            Label data, with the shape (num_imgs, 1).
+        feats: NumPy array
+            Instance features data, with the shape (num_imgs, 2048).
+        sample_nns: list
+            List with length ``num_imgs``, that contains a list of the ``k_nn`` neighbor indexes
+             for each instance.
+        sample_nn_radius: NumPy array
+            Array of size (num_imgs) that stores the distance between each instance and its
+            farthest(k-th) neighbor.
+        possible_sampling_idxs: list
+            List of all effective possible data samples. By default, it is a range(0, num_imgs).
+        kmeans_samples: list
+            List of indexes for samples selected with k-means algorithm.
+        kth_values: NumPy array
+            Distances between instances and its k-th neighbor.
+    """
 
     def __init__(
         self,
@@ -374,7 +375,7 @@ class ILSVRC_HDF5_feats(data.Dataset):
         gpu_knn=True,
         apply_norm=True,
         label_onehot=False,
-        **kwargs
+        **kwargs,
     ):
         self.root = root
         self.root_feats = root_feats
@@ -548,7 +549,9 @@ class ILSVRC_HDF5_feats(data.Dataset):
         if weights is None:
             # np.random.randint is a faster function than np.random.choice.
             # If there is no sampling weights, use this one.
-            sel_idxs = np.random.randint(0, len(self.possible_sampling_idxs), size=batch_size)
+            sel_idxs = np.random.randint(
+                0, len(self.possible_sampling_idxs), size=batch_size
+            )
             sel_idxs = self.possible_sampling_idxs[sel_idxs]
         else:
             sel_idxs = np.random.choice(
@@ -746,7 +749,7 @@ class ILSVRC_HDF5_feats(data.Dataset):
 
     @staticmethod
     def _get_kth_value_accurate(distances, k, axis=-1):
-        """ Find k nearest neighbor
+        """Find k nearest neighbor
         Parameters
         ---------
         distances: NumPy array
@@ -778,7 +781,7 @@ class ILSVRC_HDF5_feats(data.Dataset):
         return img
 
     def _get_instance_features_and_nn(self, index):
-        """ Builds a quadruplet of neighbor image, its label, conditioning instance features, radii.
+        """Builds a quadruplet of neighbor image, its label, conditioning instance features, radii.
 
         Returns
         ----------

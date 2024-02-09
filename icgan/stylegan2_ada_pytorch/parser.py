@@ -6,6 +6,7 @@
 
 from argparse import ArgumentParser
 
+
 def get_parser():
     parser = ArgumentParser(description="StyleGANv2")
     # General options.

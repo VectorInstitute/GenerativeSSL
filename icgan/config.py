@@ -1,6 +1,7 @@
 import ml_collections
 import torch
 
+
 def get_config():
     config = ml_collections.ConfigDict()
     config.num_samples = 16

@@ -1,7 +1,6 @@
 """SimCLR two-view loss functions."""
 import torch
 import torch.distributed as dist
-import torch.nn.functional as F  # noqa: N812
 from torch import nn
 
 
@@ -30,6 +29,9 @@ class GatherLayer(torch.autograd.Function):
 class SimCLRContrastiveLoss(nn.Module):
     """SimCLR contrastive loss implementation for DDP training.
 
+    This is the pytorch version of the original SimCLR loss implementation
+    at https://github.com/google-research/simclr/blob/master/tf2/objective.py#L35.
+
     Parameters
     ----------
     temperature : float
@@ -37,11 +39,13 @@ class SimCLRContrastiveLoss(nn.Module):
 
     """
 
-    def __init__(self, temperature: float=1.0) -> None:
+    def __init__(self, temperature: float = 1.0) -> None:
         super(SimCLRContrastiveLoss, self).__init__()
         self.temperature = temperature
 
-    def forward(self, hidden1: torch.Tensor, hidden2: torch.Tensor, device_id, l2_normalize=True) -> torch.Tensor:
+    def forward(
+        self, hidden1: torch.Tensor, hidden2: torch.Tensor, device_id, l2_normalize=True
+    ) -> torch.Tensor:
         world_size = dist.get_world_size()
         batch_size = hidden1.shape[0]
 

@@ -188,7 +188,7 @@ def run(config):
                 "_test" if test_part else "",
             ),
         ),
-        **{"mu": mu, "sigma": sigma}
+        **{"mu": mu, "sigma": sigma},
     )
     # Compute stratified moments for ImageNet-LT dataset
     if config["stratified_moments"]:
@@ -232,7 +232,7 @@ def run(config):
                     "%s%i__val%s_inception_moments.npz"
                     % (dataset_name_prefix, config["resolution"], strat_name),
                 ),
-                **{"mu": mu, "sigma": sigma}
+                **{"mu": mu, "sigma": sigma},
             )
 
 

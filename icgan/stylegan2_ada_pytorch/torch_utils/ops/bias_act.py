@@ -176,8 +176,7 @@ def bias_act(
 
 @misc.profiled_function
 def _bias_act_ref(x, b=None, dim=1, act="linear", alpha=None, gain=None, clamp=None):
-    """Slow reference implementation of `bias_act()` using standard TensorFlow ops.
-    """
+    """Slow reference implementation of `bias_act()` using standard TensorFlow ops."""
     assert isinstance(x, torch.Tensor)
     assert clamp is None or clamp >= 0
     spec = activation_funcs[act]
@@ -213,8 +212,7 @@ _bias_act_cuda_cache = dict()
 
 
 def _bias_act_cuda(dim=1, act="linear", alpha=None, gain=None, clamp=None):
-    """Fast CUDA implementation of `bias_act()` using custom ops.
-    """
+    """Fast CUDA implementation of `bias_act()` using custom ops."""
     # Parse arguments.
     assert clamp is None or clamp >= 0
     spec = activation_funcs[act]

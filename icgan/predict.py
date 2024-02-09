@@ -53,18 +53,37 @@ class Predictor(cog.Predictor):
         self.size = 256
 
     @cog.input("image", type=Path, help="Input image Instance")
-    @cog.input("gen_model", type=str, options=["icgan", "cc_icgan"], default="icgan",
-               help='Select type of IC-GAN model. "icgan" is conditioned on the input image; '
-                    '"cc_icgan" is conditioned on both input image and a conditional_class')
-    @cog.input("conditional_class", type=str, default=None, options=CLASS_NAMES,
-               help="Choose conditional class. Only valid for gen_model=cc_icgan")
-    @cog.input("num_samples", type=int, default=1, options=[1, 4, 9, 16],
-               help="number of samples generated")
+    @cog.input(
+        "gen_model",
+        type=str,
+        options=["icgan", "cc_icgan"],
+        default="icgan",
+        help='Select type of IC-GAN model. "icgan" is conditioned on the input image; '
+        '"cc_icgan" is conditioned on both input image and a conditional_class',
+    )
+    @cog.input(
+        "conditional_class",
+        type=str,
+        default=None,
+        options=CLASS_NAMES,
+        help="Choose conditional class. Only valid for gen_model=cc_icgan",
+    )
+    @cog.input(
+        "num_samples",
+        type=int,
+        default=1,
+        options=[1, 4, 9, 16],
+        help="number of samples generated",
+    )
     @cog.input("seed", type=int, default=0, help="seed=0 means no seed")
-    def predict(self, image, gen_model="icgan", conditional_class=None, num_samples=1, seed=0):
+    def predict(
+        self, image, gen_model="icgan", conditional_class=None, num_samples=1, seed=0
+    ):
         assert isinstance(seed, int), "seed should be an integer"
-        if gen_model == 'cc_icgan':
-            assert conditional_class is not None, 'please set conditional_class for cc_icgan'
+        if gen_model == "cc_icgan":
+            assert (
+                conditional_class is not None
+            ), "please set conditional_class for cc_icgan"
         num_samples_ranked = num_samples
         experiment_name = (
             "icgan_biggan_imagenet_res256"
@@ -87,11 +106,14 @@ class Predictor(cog.Predictor):
         state = None if not seed else np.random.RandomState(seed)
         np.random.seed(seed)
 
-        feature_extractor_name = ("classification" if gen_model == "cc_icgan" else "selfsupervised")
+        feature_extractor_name = (
+            "classification" if gen_model == "cc_icgan" else "selfsupervised"
+        )
 
         # Load feature extractor (outlier filtering and optionally input image feature extraction)
         self.feature_extractor, self.last_feature_extractor = load_feature_extractor(
-            gen_model, self.last_feature_extractor, self.feature_extractor)
+            gen_model, self.last_feature_extractor, self.feature_extractor
+        )
         # Load features
         if input_image_instance not in ["None", "", None]:
             print("Obtaining instance features from input image!")
@@ -109,13 +131,14 @@ class Predictor(cog.Predictor):
                 + feature_extractor_name
                 + "_kmeans_k1000_instance_features.npy",
                 allow_pickle=True,
-            ).item()["instance_features"][input_feature_index: input_feature_index + 1]
+            ).item()["instance_features"][input_feature_index : input_feature_index + 1]
         else:
             input_features = None
 
         # Load generative model
         self.model, self.last_gen_model = load_generative_model(
-            gen_model, self.last_gen_model, experiment_name, self.model)
+            gen_model, self.last_gen_model, experiment_name, self.model
+        )
         # Prepare other variables
 
         replace_to_inplace_relu(self.model)
@@ -187,9 +210,9 @@ class Predictor(cog.Predictor):
         )
         for j in selected_idxs:
             all_images_mosaic[
-            :,
-            row_i * self.size: row_i * self.size + self.size,
-            col_i * self.size: col_i * self.size + self.size,
+                :,
+                row_i * self.size : row_i * self.size + self.size,
+                col_i * self.size : col_i * self.size + self.size,
             ] = all_outs[j]
             if row_i == int(np.sqrt(num_samples_ranked)) - 1:
                 row_i = 0

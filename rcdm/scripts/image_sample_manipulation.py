@@ -14,7 +14,10 @@ from tqdm import tqdm
 import faiss
 from PIL import Image
 import blobfile as bf
-from guided_diffusion_rcdm.image_datasets import ImageDataset, _list_image_files_recursively
+from guided_diffusion_rcdm.image_datasets import (
+    ImageDataset,
+    _list_image_files_recursively,
+)
 from guided_diffusion_rcdm import dist_util, logger
 from guided_diffusion_rcdm.get_ssl_models import get_model
 from guided_diffusion_rcdm.get_rcdm_models import get_dict_rcdm_model
@@ -26,11 +29,12 @@ from guided_diffusion_rcdm.script_util import (
     args_to_dict,
 )
 
+
 def generate_embeddings(model, device, loader, mlp=False):
-    '''
+    """
     Function to embed the data from the pixel space to a representation space induced by model.
     Saves the embeddings and also return them as output along with the respective labels.
-    '''
+    """
     embeddings = []
 
     iterator = tqdm(loader, total=len(loader))
@@ -50,31 +54,34 @@ def generate_embeddings(model, device, loader, mlp=False):
 
     return embeddings
 
+
 def nearest_neighbors_faiss(embeddings, target, device):
-    k = 20 # We use 20 nearest neighbors
-    d = embeddings.shape[-1] 
+    k = 20  # We use 20 nearest neighbors
+    d = embeddings.shape[-1]
     index_flat = faiss.IndexFlatL2(d)
 
-    if 'cuda' in str(device):
-        print('using gpu')
+    if "cuda" in str(device):
+        print("using gpu")
         res = faiss.StandardGpuResources()
         index = faiss.index_cpu_to_gpu(res, 0, index_flat)
     else:
         nlist = 100
         index = faiss.IndexIVFFlat(index_flat, d, nlist)
         index.nprobe = 100
-    
+
     index.train(embeddings)
     index.add(embeddings)
     distance, neighbor_idx = index.search(target, k)
     return distance, neighbor_idx
 
+
 def compute_dist_ssl(ssl_model, sample, target):
     with th.no_grad():
-        feat = ssl_model(sample).detach()        
-    distance = ((feat - target)**2).sum(1)
-    val = np.round(distance.detach().view(-1,1).cpu().numpy(), 1)
+        feat = ssl_model(sample).detach()
+    distance = ((feat - target) ** 2).sum(1)
+    val = np.round(distance.detach().view(-1, 1).cpu().numpy(), 1)
     return val
+
 
 def main(args):
     args.gpu = 0
@@ -84,15 +91,16 @@ def main(args):
     ssl_model = get_model(args.type_model, args.use_head).cuda().eval()
     for p in ssl_model.parameters():
         ssl_model.requires_grad = False
-    ssl_dim = ssl_model(th.zeros(1,3,224,224).cuda()).size(1)
-    tr_normalize = transforms.Normalize(
-            mean=[0.5,0.5,0.5], std=[0.5, 0.5, 0.5]
-        )
+    ssl_dim = ssl_model(th.zeros(1, 3, 224, 224).cuda()).size(1)
+    tr_normalize = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 
     # ============ preparing model ... ============
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
-        **args_to_dict(args, model_and_diffusion_defaults().keys()), G_shared=args.no_shared, feat_cond=True, ssl_dim=ssl_dim
+        **args_to_dict(args, model_and_diffusion_defaults().keys()),
+        G_shared=args.no_shared,
+        feat_cond=True,
+        ssl_dim=ssl_dim,
     )
 
     # Load model
@@ -105,11 +113,13 @@ def main(args):
     model.eval()
 
     ### Get target image
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        tr_normalize,
-    ])
+    transform = transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            tr_normalize,
+        ]
+    )
     with bf.BlobFile(args.image_path, "rb") as f:
         pil_image = Image.open(f)
         pil_image.load()
@@ -137,7 +147,9 @@ def main(args):
     # Compute the embeddings of the images that will use to find knn
     embeddings = generate_embeddings(ssl_model, args.gpu, loader, mlp=False)
     # Then compute nearest_neighbors of the target image
-    distance, index = nearest_neighbors_faiss(embeddings, feat_original.cpu().numpy(), "cuda:0")
+    distance, index = nearest_neighbors_faiss(
+        embeddings, feat_original.cpu().numpy(), "cuda:0"
+    )
     list_voisins = []
     list_feat = []
     # Creage a list of the embeddings of the nearest neigbors
@@ -148,10 +160,10 @@ def main(args):
 
     # Then we compute a count of how many times a given dimension is non zero accross the neigborhood
     lf, c = th.unique(list_feat, return_counts=True, sorted=True)
-    #list_voisins = th.cat(list_voisins, dim=0)
+    # list_voisins = th.cat(list_voisins, dim=0)
     logger.log("sampling...")
     all_images = []
-    noise = th.randn((args.batch_size,3,128,128)).cuda().repeat(6,1,1,1)
+    noise = th.randn((args.batch_size, 3, 128, 128)).cuda().repeat(6, 1, 1, 1)
     noise_steps = [th.randn_like(noise) for i in range(diffusion.num_timesteps)]
 
     ### Get the image on which we will apply the transformation on
@@ -176,7 +188,9 @@ def main(args):
         feat_zero[:, lf[(c > args.n_common)]] = 0
 
         feat_transformation = feat.clone()
-        feat_transformation[:, lf[(c > args.n_common)]] = feat_target[:, lf[(c > args.n_common)]]
+        feat_transformation[:, lf[(c > args.n_common)]] = feat_target[
+            :, lf[(c > args.n_common)]
+        ]
 
         model_kwargs["feat"] = th.cat((feat, feat_zero, feat_transformation))
 
@@ -194,8 +208,14 @@ def main(args):
     all_images.extend([sample.unsqueeze(0).cpu().numpy() for sample in samples])
     logger.log(f"created {len(all_images) * args.batch_size} samples")
 
-    arr = np.concatenate(all_images, axis=0)        
-    save_image(th.FloatTensor(arr).permute(0,3,1,2), args.out_dir+'/'+args.name+'.jpeg', normalize=True, scale_each=True, nrow=args.batch_size)
+    arr = np.concatenate(all_images, axis=0)
+    save_image(
+        th.FloatTensor(arr).permute(0, 3, 1, 2),
+        args.out_dir + "/" + args.name + ".jpeg",
+        normalize=True,
+        scale_each=True,
+        nrow=args.batch_size,
+    )
 
     logger.log("sampling complete")
 
@@ -215,21 +235,61 @@ def create_argparser():
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n_common', default=14, type=int, help='Number of common dim to remove')
-    parser.add_argument('--name', default="manipulation", type=str, help='Path to save logs and checkpoints.')
-    parser.add_argument('--out_dir', default=".", type=str, help='Path to save logs and checkpoints.')
-    parser.add_argument('--image_path', default=".", type=str, help='Path of the image you want to extract the attributes from.')
-    parser.add_argument('--folder_nn_path', default=".", type=str, help='Path of the folder of images to use to compute nearest neigbords.')
-    parser.add_argument('--image_target_path', default=".", type=str, help='Path of the image on which to apply the transformation.')
-    parser.add_argument('--no_shared', action='store_false', default=True,
-                        help='This flag enables squeeze and excitation.')
-    parser.add_argument('--use_head', action='store_true', default=False,
-                        help='Use the projector/head to compute the SSL representation instead of the backbone.')
+    parser.add_argument(
+        "--n_common", default=14, type=int, help="Number of common dim to remove"
+    )
+    parser.add_argument(
+        "--name",
+        default="manipulation",
+        type=str,
+        help="Path to save logs and checkpoints.",
+    )
+    parser.add_argument(
+        "--out_dir", default=".", type=str, help="Path to save logs and checkpoints."
+    )
+    parser.add_argument(
+        "--image_path",
+        default=".",
+        type=str,
+        help="Path of the image you want to extract the attributes from.",
+    )
+    parser.add_argument(
+        "--folder_nn_path",
+        default=".",
+        type=str,
+        help="Path of the folder of images to use to compute nearest neigbords.",
+    )
+    parser.add_argument(
+        "--image_target_path",
+        default=".",
+        type=str,
+        help="Path of the image on which to apply the transformation.",
+    )
+    parser.add_argument(
+        "--no_shared",
+        action="store_false",
+        default=True,
+        help="This flag enables squeeze and excitation.",
+    )
+    parser.add_argument(
+        "--use_head",
+        action="store_true",
+        default=False,
+        help="Use the projector/head to compute the SSL representation instead of the backbone.",
+    )
     add_dict_to_argparser(parser, defaults)
-    parser.add_argument('--dist', action='store_true', default=False,
-                        help='Compute distance ssl representation.')
-    parser.add_argument('--type_model', type=str, default="dino",
-                    help='Select the type of model to use.')
+    parser.add_argument(
+        "--dist",
+        action="store_true",
+        default=False,
+        help="Compute distance ssl representation.",
+    )
+    parser.add_argument(
+        "--type_model",
+        type=str,
+        default="dino",
+        help="Select the type of model to use.",
+    )
     return parser
 
 

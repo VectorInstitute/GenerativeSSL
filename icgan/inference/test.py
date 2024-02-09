@@ -159,9 +159,10 @@ class Tester:
                 )
             )
         # Save metrics in file
-        print('Saving metrics in ', os.path.join(
-                self.config["samples_root"],
-                self.config["experiment_name"]))
+        print(
+            "Saving metrics in ",
+            os.path.join(self.config["samples_root"], self.config["experiment_name"]),
+        )
         np.save(
             os.path.join(
                 self.config["samples_root"],

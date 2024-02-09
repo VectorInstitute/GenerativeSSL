@@ -156,11 +156,11 @@ def training_loop(
     torch.manual_seed(random_seed * num_gpus + rank)
     torch.backends.cudnn.benchmark = cudnn_benchmark  # Improves training speed.
     torch.backends.cuda.matmul.allow_tf32 = (
-        allow_tf32
-    )  # Allow PyTorch to internally use tf32 for matmul
+        allow_tf32  # Allow PyTorch to internally use tf32 for matmul
+    )
     torch.backends.cudnn.allow_tf32 = (
-        allow_tf32
-    )  # Allow PyTorch to internally use tf32 for convolutions
+        allow_tf32  # Allow PyTorch to internally use tf32 for convolutions
+    )
     conv2d_gradfix.enabled = True  # Improves training speed.
     grid_sample_gradfix.enabled = True  # Avoids errors with the augmentation pipe.
 
@@ -331,7 +331,7 @@ def training_loop(
             mb_ratio = reg_interval / (reg_interval + 1)
             opt_kwargs = dnnlib.EasyDict(opt_kwargs)
             opt_kwargs.lr = opt_kwargs.lr * mb_ratio
-            opt_kwargs.betas = [beta ** mb_ratio for beta in opt_kwargs.betas]
+            opt_kwargs.betas = [beta**mb_ratio for beta in opt_kwargs.betas]
             opt = dnnlib.util.construct_class_by_name(
                 module.parameters(), **opt_kwargs
             )  # subclass of torch.optim.Optimizer

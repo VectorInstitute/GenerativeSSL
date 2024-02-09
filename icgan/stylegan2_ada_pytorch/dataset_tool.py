@@ -343,7 +343,7 @@ def open_dataset(source, *, max_images: Optional[int]):
 
 
 def open_dest(
-    dest: str
+    dest: str,
 ) -> Tuple[str, Callable[[str, Union[bytes, str]], None], Callable[[], None]]:
     dest_ext = file_ext(dest)
 

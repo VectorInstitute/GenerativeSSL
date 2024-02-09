@@ -13,7 +13,7 @@
 PY_ARGS=${@:1}
 
 # load virtual environment
-source /ssd003/projects/aieng/envs/genssl/bin/activate
+source /ssd003/projects/aieng/envs/genssl2/bin/activate
 
 export NCCL_ASYNC_ERROR_HANDLING=1 # set to 1 for NCCL backend
 export CUDA_LAUNCH_BLOCKING=1
@@ -28,4 +28,5 @@ nvidia-smi
 srun python run_simCLR.py \
 --fp16-precision \
 --distributed_mode \
---batch-size=128
+--batch-size=4 \
+--icgan_augmentation

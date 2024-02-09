@@ -24,25 +24,26 @@ from guided_diffusion_rcdm.script_util import (
     args_to_dict,
 )
 
+
 def exclude_bias_and_norm(p):
     return p.ndim == 1
 
+
 def main(args):
-    
     args.gpu = 0
     logger.configure(dir=args.out_dir)
 
-    tr_normalize = transforms.Normalize(
-            mean=[0.5,0.5,0.5], std=[0.5, 0.5, 0.5]
-        )
+    tr_normalize = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 
     # Crop small
-    transform_zoom = transforms.Compose([
-        transforms.Resize((args.image_size,args.image_size)),
-        transforms.ToTensor(),
-        tr_normalize,
-    ])
-    
+    transform_zoom = transforms.Compose(
+        [
+            transforms.Resize((args.image_size, args.image_size)),
+            transforms.ToTensor(),
+            tr_normalize,
+        ]
+    )
+
     val_dataset_small = datasets.ImageFolder(args.data_dir, transform=transform_zoom)
     data = DataLoader(
         val_dataset_small, batch_size=1, shuffle=False, num_workers=4, drop_last=False
@@ -62,12 +63,15 @@ def main(args):
     ssl_model = get_model(args.type_model, args.use_head).cuda().eval()
     for p in ssl_model.parameters():
         ssl_model.requires_grad = False
-    ssl_dim = ssl_model(th.zeros(1,3,224,224).cuda()).size(1)
+    ssl_dim = ssl_model(th.zeros(1, 3, 224, 224).cuda()).size(1)
 
     # ============ preparing data ... ============
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
-        **args_to_dict(args, model_and_diffusion_defaults().keys()), G_shared=args.no_shared, feat_cond=True, ssl_dim=ssl_dim
+        **args_to_dict(args, model_and_diffusion_defaults().keys()),
+        G_shared=args.no_shared,
+        feat_cond=True,
+        ssl_dim=ssl_dim,
     )
 
     # Load model
@@ -83,11 +87,12 @@ def main(args):
     logger.log("sampling...")
     all_images = []
 
-    sample_fn = (diffusion.p_sample_loop if not args.use_ddim else diffusion.ddim_sample_loop)
+    sample_fn = (
+        diffusion.p_sample_loop if not args.use_ddim else diffusion.ddim_sample_loop
+    )
     num_current_samples = 0
 
     while num_current_samples < args.num_images:
-
         batch_small, batch, cond = next(data)
         batch = batch[0:1].repeat(args.batch_size, 1, 1, 1).cuda()
         model_kwargs = {}
@@ -115,8 +120,14 @@ def main(args):
         logger.log(f"created {len(all_images) * args.batch_size} samples")
         num_current_samples += 1
 
-    arr = np.concatenate(all_images, axis=0)    
-    save_image(th.FloatTensor(arr).permute(0,3,1,2), args.out_dir+'/'+args.name+'.jpeg', normalize=True, scale_each=True, nrow=args.batch_size+1)
+    arr = np.concatenate(all_images, axis=0)
+    save_image(
+        th.FloatTensor(arr).permute(0, 3, 1, 2),
+        args.out_dir + "/" + args.name + ".jpeg",
+        normalize=True,
+        scale_each=True,
+        nrow=args.batch_size + 1,
+    )
 
     logger.log("sampling complete")
 
@@ -136,15 +147,31 @@ def create_argparser():
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
-    parser.add_argument('--name', default="samples", type=str, help='Path to save logs and checkpoints.')
-    parser.add_argument('--out_dir', default=".", type=str, help='Path to save logs and checkpoints.')
-    parser.add_argument('--no_shared', action='store_false', default=True,
-                        help='This flag enables squeeze and excitation.')
-    parser.add_argument('--use_head', action='store_true', default=False,
-                        help='Use the projector/head to compute the SSL representation instead of the backbone.')
+    parser.add_argument(
+        "--name", default="samples", type=str, help="Path to save logs and checkpoints."
+    )
+    parser.add_argument(
+        "--out_dir", default=".", type=str, help="Path to save logs and checkpoints."
+    )
+    parser.add_argument(
+        "--no_shared",
+        action="store_false",
+        default=True,
+        help="This flag enables squeeze and excitation.",
+    )
+    parser.add_argument(
+        "--use_head",
+        action="store_true",
+        default=False,
+        help="Use the projector/head to compute the SSL representation instead of the backbone.",
+    )
     add_dict_to_argparser(parser, defaults)
-    parser.add_argument('--type_model', type=str, default="dino",
-                    help='Select the type of model to use.')
+    parser.add_argument(
+        "--type_model",
+        type=str,
+        default="dino",
+        help="Select the type of model to use.",
+    )
     return parser
 
 

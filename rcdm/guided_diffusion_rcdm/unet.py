@@ -5,6 +5,7 @@ import threading
 
 import numpy as np
 import torch as th
+
 # from torch._C import has_mkldnn
 import torch.nn as nn
 import torch.nn.functional as F
@@ -23,6 +24,7 @@ from .nn import normalization as normalization_gg
 from .layers import SNConv2d, ccbn, bn, SNLinear, identity
 import functools
 
+
 class AttentionPool2d(nn.Module):
     """
     Adapted from CLIP: https://github.com/openai/CLIP/blob/main/clip/model.py
@@ -37,7 +39,7 @@ class AttentionPool2d(nn.Module):
     ):
         super().__init__()
         self.positional_embedding = nn.Parameter(
-            th.randn(embed_dim, spacial_dim ** 2 + 1) / embed_dim ** 0.5
+            th.randn(embed_dim, spacial_dim**2 + 1) / embed_dim**0.5
         )
         self.qkv_proj = conv_nd(1, embed_dim, 3 * embed_dim, 1)
         self.c_proj = conv_nd(1, embed_dim, output_dim or embed_dim, 1)
@@ -186,7 +188,7 @@ class ResBlock(TimestepBlock):
         self.use_conv = use_conv
         self.use_checkpoint = use_checkpoint
         self.use_scale_shift_norm = use_scale_shift_norm
-        self.use_fp16= use_fp16
+        self.use_fp16 = use_fp16
 
         self.in_layers = nn.Sequential(
             normalization_gg(channels),
@@ -212,7 +214,7 @@ class ResBlock(TimestepBlock):
                 2 * self.out_channels if use_scale_shift_norm else self.out_channels,
             ),
         )
-        
+
         self.out_layers = nn.Sequential(
             normalization_gg(self.out_channels),
             nn.SiLU(),
@@ -267,6 +269,7 @@ class ResBlock(TimestepBlock):
             h = h + emb_out
             h = self.out_layers(h)
         return self.skip_connection(x) + h
+
 
 class AttentionBlock(nn.Module):
     """
@@ -333,7 +336,7 @@ def count_flops_attn(model, _x, y):
     # We perform two matmuls with the same number of ops.
     # The first computes the weight matrix, the second computes
     # the combination of the value vectors.
-    matmul_ops = 2 * b * (num_spatial ** 2) * c
+    matmul_ops = 2 * b * (num_spatial**2) * c
     model.total_ops += th.DoubleTensor([matmul_ops])
 
 
@@ -509,7 +512,7 @@ class UNetModel(nn.Module):
             self.label_emb = nn.Embedding(num_classes, time_embed_dim)
 
         if instance_cond:
-            self.ssl_emb = nn.Linear(self.ssl_dim, time_embed_dim) 
+            self.ssl_emb = nn.Linear(self.ssl_dim, time_embed_dim)
             if use_fp16:
                 self.ssl_emb = self.ssl_emb.half()
 
@@ -710,7 +713,7 @@ class UNetModel(nn.Module):
         if self.num_classes is not None:
             assert y.shape == (x.shape[0],)
             emb = emb + self.label_emb(y)
-        
+
         if feat is not None:
             emb = emb + self.ssl_emb(feat)
 
@@ -897,9 +900,7 @@ class EncoderUNetModel(nn.Module):
             self.out = nn.Sequential(
                 normalization_gg(ch),
                 nn.SiLU(),
-                AttentionPool2d(
-                    (image_size // ds), ch, num_head_channels, 128
-                ),
+                AttentionPool2d((image_size // ds), ch, num_head_channels, 128),
                 nn.Linear(128, self.out_channels),
                 nn.Sigmoid(),
             )
@@ -912,11 +913,11 @@ class EncoderUNetModel(nn.Module):
         elif pool == "spatial_v2":
             self.out = nn.Sequential(
                 nn.Linear(self._feature_size, 2048),
-                #nn.ReLU(),
-                #normalization(2048),
-                #nn.SiLU(),
+                # nn.ReLU(),
+                # normalization(2048),
+                # nn.SiLU(),
                 nn.Linear(2048, self.out_channels, bias=False),
-                nn.Sigmoid()
+                nn.Sigmoid(),
             )
         else:
             raise NotImplementedError(f"Unexpected {pool} pooling")

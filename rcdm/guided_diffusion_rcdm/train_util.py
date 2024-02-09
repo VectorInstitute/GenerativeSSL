@@ -19,6 +19,7 @@ from .resample import LossAwareSampler, UniformSampler
 # 20-21 within the first ~1K steps of training.
 INITIAL_LOG_LOSS_SCALE = 20.0
 
+
 class TrainLoop:
     def __init__(
         self,
@@ -197,7 +198,7 @@ class TrainLoop:
                 micro,
                 t,
                 model_kwargs=micro_cond,
-                noise=micro_noise
+                noise=micro_noise,
             )
 
             if last_batch or not self.use_ddp:
@@ -279,9 +280,11 @@ def get_blob_logdir():
     # a blobstore or some external drive.
     return logger.get_dir()
 
+
 def extract_number(f):
-    s = re.findall("(\d+).pt",f)
-    return (int(s[0]) if s else -1,f)
+    s = re.findall("(\d+).pt", f)
+    return (int(s[0]) if s else -1, f)
+
 
 def find_resume_checkpoint():
     # On your infrastructure, you may want to override this to automatically
@@ -296,6 +299,7 @@ def find_resume_checkpoint():
     if bf.exists(path):
         return path, resume_step
     return None, 0
+
 
 def find_ema_checkpoint(main_checkpoint, step, rate):
     if main_checkpoint is None:

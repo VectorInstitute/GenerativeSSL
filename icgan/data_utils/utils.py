@@ -8,24 +8,22 @@
 # Copyright (c) 2019 Andy Brock
 
 # MIT License
-import sys
-import os
-import numpy as np
-import time
-import datetime
-import json
 import math
-import torch
-import torchvision.transforms as transforms
-from torch.utils.data import DataLoader
-
+import os
 import shutil
+import sys
+
+import numpy as np
+import torch
 import torch.distributed as dist
+from torch.utils.data import DataLoader
+from torchvision import transforms
+
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
-from icgan.data_utils.resnet import resnet50
 from icgan.data_utils import datasets_common as dset
 from icgan.data_utils.cocostuff_dataset import CocoStuff
+from icgan.data_utils.resnet import resnet50
 
 
 class CenterCropLongEdge(object):
@@ -303,6 +301,7 @@ def load_pretrained_feature_extractor(
             "selfsupervised", a network trained on ImageNet with self-supervision will be used.
         backbone_feature_extractor: str, optional
             Name of the backbone for the feature extractor. Currently, only ResNet50 is supported.
+
     Returns
     -------
     A Pytorch network initialized with pre-trained weights.
@@ -369,7 +368,7 @@ def get_dataset_images(
     which_dataset="imagenet",
     instance_json="",
     stuff_json="",
-    **kwargs
+    **kwargs,
 ):
     """It prepares a dataset that reads the files from a folder.
 
@@ -436,7 +435,7 @@ def get_dataset_images(
         load_in_mem=load_in_mem,
         split=split,
         longtail=longtail,
-        **dataset_kwargs
+        **dataset_kwargs,
     )
     return dataset
 
@@ -465,7 +464,7 @@ def get_dataset_hdf5(
     k_nn=50,
     load_in_mem_feats=False,
     compute_nns=False,
-    **kwargs
+    **kwargs,
 ):
     """It prepares a dataset that reads the data from HDF5 files.
 
@@ -698,7 +697,7 @@ def get_dataloader(
     longtail_temperature=1,
     rank=0,
     world_size=-1,
-    **kwargs
+    **kwargs,
 ):
     """Get DataLoader to iterate over the dataset.
 
@@ -785,7 +784,7 @@ def get_dataloader(
             sampler=sampler,
             shuffle=False,
             worker_init_fn=seed_worker,
-            **loader_kwargs
+            **loader_kwargs,
         )
     else:
         if use_balanced_sampler:
@@ -821,7 +820,7 @@ def get_dataloader(
             shuffle=shuffle,
             sampler=sampler,
             worker_init_fn=seed_worker if use_checkpointable_sampler else None,
-            **loader_kwargs
+            **loader_kwargs,
         )
 
     return loader

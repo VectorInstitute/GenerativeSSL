@@ -37,6 +37,7 @@ import sys
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 from data_utils.compute_pdrc import compute_prdc
 
+
 # Module that wraps the inception network to enable use with dataparallel and
 # returning pool features and logits.
 class WrapInception(nn.Module):
@@ -163,25 +164,25 @@ def sqrt_newton_schulz(A, numIters, dtype=None):
 # calculations using torch?
 def numpy_calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     """Numpy implementation of the Frechet Distance.
-  Taken from https://github.com/bioinf-jku/TTUR
-  The Frechet distance between two multivariate Gaussians X_1 ~ N(mu_1, C_1)
-  and X_2 ~ N(mu_2, C_2) is
-          d^2 = ||mu_1 - mu_2||^2 + Tr(C_1 + C_2 - 2*sqrt(C_1*C_2)).
-  Stable version by Dougal J. Sutherland.
-  Parameters
-  ----------
-    mu1   : Numpy array containing the activations of a layer of the
-             inception net (like returned by the function 'get_predictions')
-             for generated samples.
-    mu2   : The sample mean over activations, precalculated on an
-             representive data set.
-    sigma1: The covariance matrix over activations for generated samples.
-    sigma2: The covariance matrix over activations, precalculated on an
-             representive data set.
-  Returns
-  -------
-    The Frechet Distance (float).
-  """
+    Taken from https://github.com/bioinf-jku/TTUR
+    The Frechet distance between two multivariate Gaussians X_1 ~ N(mu_1, C_1)
+    and X_2 ~ N(mu_2, C_2) is
+            d^2 = ||mu_1 - mu_2||^2 + Tr(C_1 + C_2 - 2*sqrt(C_1*C_2)).
+    Stable version by Dougal J. Sutherland.
+    Parameters
+    ----------
+      mu1   : Numpy array containing the activations of a layer of the
+               inception net (like returned by the function 'get_predictions')
+               for generated samples.
+      mu2   : The sample mean over activations, precalculated on an
+               representive data set.
+      sigma1: The covariance matrix over activations for generated samples.
+      sigma2: The covariance matrix over activations, precalculated on an
+               representive data set.
+    Returns
+    -------
+      The Frechet Distance (float).
+    """
 
     mu1 = np.atleast_1d(mu1)
     mu2 = np.atleast_1d(mu2)
@@ -225,26 +226,26 @@ def numpy_calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
 
 def torch_calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     """Pytorch implementation of the Frechet Distance.
-  Taken from https://github.com/bioinf-jku/TTUR
-  The Frechet distance between two multivariate Gaussians X_1 ~ N(mu_1, C_1)
-  and X_2 ~ N(mu_2, C_2) is
-          d^2 = ||mu_1 - mu_2||^2 + Tr(C_1 + C_2 - 2*sqrt(C_1*C_2)).
-  Stable version by Dougal J. Sutherland.
+    Taken from https://github.com/bioinf-jku/TTUR
+    The Frechet distance between two multivariate Gaussians X_1 ~ N(mu_1, C_1)
+    and X_2 ~ N(mu_2, C_2) is
+            d^2 = ||mu_1 - mu_2||^2 + Tr(C_1 + C_2 - 2*sqrt(C_1*C_2)).
+    Stable version by Dougal J. Sutherland.
 
-  Parameters
-  ----------
-    mu1   : Numpy array containing the activations of a layer of the
-             inception net (like returned by the function 'get_predictions')
-             for generated samples.
-    mu2   : The sample mean over activations, precalculated on an
-             representive data set.
-    sigma1: The covariance matrix over activations for generated samples.
-    sigma2: The covariance matrix over activations, precalculated on an
-             representive data set.
-  Returns
-  -------
-    The Frechet Distance (float).
-  """
+    Parameters
+    ----------
+      mu1   : Numpy array containing the activations of a layer of the
+               inception net (like returned by the function 'get_predictions')
+               for generated samples.
+      mu2   : The sample mean over activations, precalculated on an
+               representive data set.
+      sigma1: The covariance matrix over activations for generated samples.
+      sigma2: The covariance matrix over activations, precalculated on an
+               representive data set.
+    Returns
+    -------
+      The Frechet Distance (float).
+    """
 
     assert (
         mu1.shape == mu2.shape
@@ -270,8 +271,7 @@ def calculate_inception_score(pred, num_splits=10):
     scores = []
     for index in range(num_splits):
         pred_chunk = pred[
-            index
-            * (pred.shape[0] // num_splits) : (index + 1)
+            index * (pred.shape[0] // num_splits) : (index + 1)
             * (pred.shape[0] // num_splits),
             :,
         ]
@@ -286,12 +286,14 @@ def calculate_inception_score(pred, num_splits=10):
 # Loop and run the sampler and the net until it accumulates num_inception_images
 # activations. Return the pool, the logits, and the labels (if one wants
 # Inception Accuracy the labels of the generated class will be needed)
-def accumulate_inception_activations(sample, net, num_inception_images=50000, model_backbone='biggan'):
+def accumulate_inception_activations(
+    sample, net, num_inception_images=50000, model_backbone="biggan"
+):
     pool, logits, labels = [], [], []
     while (torch.cat(logits, 0).shape[0] if len(logits) else 0) < num_inception_images:
         with torch.no_grad():
             images, labels_val, _ = sample()
-            if model_backbone == 'stylegan2':
+            if model_backbone == "stylegan2":
                 images = torch.clamp((images * 127.5 + 128), 0, 255)
                 images = ((images / 255) - 0.5) * 2
             if labels_val is not None:
@@ -349,7 +351,7 @@ def prepare_inception_metrics(
     stratified_fid=False,
     prdc=False,
     device="cuda",
-    backbone='biggan',
+    backbone="biggan",
 ):
     # Load metrics; this is intentionally not in a try-except loop so that
     # the script will crash here if it cannot find the Inception moments.
@@ -387,7 +389,7 @@ def prepare_inception_metrics(
         prints=True,
         use_torch=True,
         loader_ref=None,
-        num_pr_images=10000
+        num_pr_images=10000,
     ):
         if prints:
             print("Gathering activations...")

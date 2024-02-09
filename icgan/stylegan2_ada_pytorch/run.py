@@ -54,7 +54,6 @@ if __name__ == "__main__":
     if not args.slurm or LOCAL:
         trainer(args)
     else:
-
         executor = submitit.SlurmExecutor(folder=args.slurm_logdir, max_num_timeout=60)
         print(args.gpus)
         executor.update_parameters(

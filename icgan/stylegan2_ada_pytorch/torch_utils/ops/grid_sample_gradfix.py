@@ -93,7 +93,7 @@ class _GridSample2dBackward(torch.autograd.Function):
     @staticmethod
     def backward(ctx, grad2_grad_input, grad2_grad_grid):
         _ = grad2_grad_grid  # unused
-        grid, = ctx.saved_tensors
+        (grid,) = ctx.saved_tensors
         grad2_grad_output = None
         grad2_input = None
         grad2_grid = None

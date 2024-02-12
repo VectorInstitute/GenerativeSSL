@@ -198,8 +198,7 @@ def upfirdn2d(x, f, up=1, down=1, padding=0, flip_filter=False, gain=1, impl="cu
 
 @misc.profiled_function
 def _upfirdn2d_ref(x, f, up=1, down=1, padding=0, flip_filter=False, gain=1):
-    """Slow reference implementation of `upfirdn2d()` using standard PyTorch ops.
-    """
+    """Slow reference implementation of `upfirdn2d()` using standard PyTorch ops."""
     # Validate arguments.
     assert isinstance(x, torch.Tensor) and x.ndim == 4
     if f is None:
@@ -252,8 +251,7 @@ _upfirdn2d_cuda_cache = dict()
 
 
 def _upfirdn2d_cuda(up=1, down=1, padding=0, flip_filter=False, gain=1):
-    """Fast CUDA implementation of `upfirdn2d()` using custom ops.
-    """
+    """Fast CUDA implementation of `upfirdn2d()` using custom ops."""
     # Parse arguments.
     upx, upy = _parse_scaling(up)
     downx, downy = _parse_scaling(down)
@@ -323,7 +321,7 @@ def _upfirdn2d_cuda(up=1, down=1, padding=0, flip_filter=False, gain=1):
 
         @staticmethod
         def backward(ctx, dy):  # pylint: disable=arguments-differ
-            f, = ctx.saved_tensors
+            (f,) = ctx.saved_tensors
             _, _, ih, iw = ctx.x_shape
             _, _, oh, ow = dy.shape
             fw, fh = _get_filter_size(f)

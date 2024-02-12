@@ -18,9 +18,9 @@ import functools
 
 import torch
 import torch.nn as nn
-import BigGAN_PyTorch.utils as biggan_utils
-import BigGAN_PyTorch.BigGAN as BigGANModel
-import data_utils.utils as data_utils
+from icgan.BigGAN_PyTorch import utils as biggan_utils
+from icgan.BigGAN_PyTorch import BigGAN as BigGANModel
+from icgan.data_utils import utils as data_utils
 
 
 def get_sampling_funct(
@@ -401,6 +401,7 @@ def load_model_inference(config, device="cuda"):
     elif config["model_backbone"] == "stylegan2":
         import stylegan2_ada_pytorch.dnnlib as dnnlib
         import stylegan2_ada_pytorch.legacy as legacy
+
         # StyleGAN2 saves the entire network + weights in a pickle. Load it here.
         network_pkl = os.path.join(
             config["base_root"], config["experiment_name"], "best-network-snapshot.pkl"

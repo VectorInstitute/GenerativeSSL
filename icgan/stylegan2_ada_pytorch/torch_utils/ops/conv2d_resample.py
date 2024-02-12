@@ -35,14 +35,11 @@ def _get_weight_shape(w):
 def _conv2d_wrapper(
     x, w, stride=1, padding=0, groups=1, transpose=False, flip_weight=True
 ):
-    """Wrapper for the underlying `conv2d()` and `conv_transpose2d()` implementations.
-    """
+    """Wrapper for the underlying `conv2d()` and `conv_transpose2d()` implementations."""
     out_channels, in_channels_per_group, kh, kw = _get_weight_shape(w)
 
     # Flip weight if requested.
-    if (
-        not flip_weight
-    ):  # conv2d() actually performs correlation (flip_weight=True) not convolution (flip_weight=False).
+    if not flip_weight:  # conv2d() actually performs correlation (flip_weight=True) not convolution (flip_weight=False).
         w = w.flip([2, 3])
 
     # Workaround performance pitfall in cuDNN 8.0.5, triggered when using
@@ -143,7 +140,7 @@ def conv2d_resample(
             f=f,
             up=up,
             padding=[px0, px1, py0, py1],
-            gain=up ** 2,
+            gain=up**2,
             flip_filter=flip_filter,
         )
         return x
@@ -187,7 +184,7 @@ def conv2d_resample(
             x=x,
             f=f,
             padding=[px0 + pxt, px1 + pxt, py0 + pyt, py1 + pyt],
-            gain=up ** 2,
+            gain=up**2,
             flip_filter=flip_filter,
         )
         if down > 1:
@@ -207,7 +204,7 @@ def conv2d_resample(
         f=(f if up > 1 else None),
         up=up,
         padding=[px0, px1, py0, py1],
-        gain=up ** 2,
+        gain=up**2,
         flip_filter=flip_filter,
     )
     x = _conv2d_wrapper(x=x, w=w, groups=groups, flip_weight=flip_weight)

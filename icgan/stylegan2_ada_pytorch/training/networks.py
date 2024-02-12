@@ -191,7 +191,7 @@ class Conv2dLayer(torch.nn.Module):
         self.conv_clamp = conv_clamp
         self.register_buffer("resample_filter", upfirdn2d.setup_filter(resample_filter))
         self.padding = kernel_size // 2
-        self.weight_gain = 1 / np.sqrt(in_channels * (kernel_size ** 2))
+        self.weight_gain = 1 / np.sqrt(in_channels * (kernel_size**2))
         self.act_gain = bias_act.activation_funcs[activation].def_gain
 
         memory_format = (
@@ -470,7 +470,7 @@ class ToRGBLayer(torch.nn.Module):
             )
         )
         self.bias = torch.nn.Parameter(torch.zeros([out_channels]))
-        self.weight_gain = 1 / np.sqrt(in_channels * (kernel_size ** 2))
+        self.weight_gain = 1 / np.sqrt(in_channels * (kernel_size**2))
 
     def forward(self, x, w, fused_modconv=True):
         styles = self.affine(w) * self.weight_gain
@@ -656,9 +656,7 @@ class SynthesisNetwork(torch.nn.Module):
         self.img_resolution = img_resolution
         self.img_resolution_log2 = int(np.log2(img_resolution))
         self.img_channels = img_channels
-        self.block_resolutions = [
-            2 ** i for i in range(2, self.img_resolution_log2 + 1)
-        ]
+        self.block_resolutions = [2**i for i in range(2, self.img_resolution_log2 + 1)]
         channels_dict = {
             res: min(channel_base // res, channel_max) for res in self.block_resolutions
         }
@@ -971,7 +969,7 @@ class DiscriminatorEpilogue(torch.nn.Module):
             conv_clamp=conv_clamp,
         )
         self.fc = FullyConnectedLayer(
-            in_channels * (resolution ** 2), in_channels, activation=activation
+            in_channels * (resolution**2), in_channels, activation=activation
         )
         self.out = FullyConnectedLayer(in_channels, 1 if cmap_dim == 0 else cmap_dim)
 
@@ -1035,9 +1033,7 @@ class Discriminator(torch.nn.Module):
         self.img_resolution = img_resolution
         self.img_resolution_log2 = int(np.log2(img_resolution))
         self.img_channels = img_channels
-        self.block_resolutions = [
-            2 ** i for i in range(self.img_resolution_log2, 2, -1)
-        ]
+        self.block_resolutions = [2**i for i in range(self.img_resolution_log2, 2, -1)]
         channels_dict = {
             res: min(channel_base // res, channel_max)
             for res in self.block_resolutions + [4]

@@ -1,4 +1,4 @@
-﻿# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Facebook, Inc. and its affiliates.
 # All rights reserved.
 #
 # Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
@@ -21,6 +21,7 @@ import dnnlib
 from . import metric_utils
 
 # ----------------------------------------------------------------------------
+
 
 # Spherical interpolation of a batch of vectors.
 def slerp(a, b, t):
@@ -80,7 +81,7 @@ class PPLSampler(torch.nn.Module):
             ws=torch.cat([wt0, wt1]),
             noise_mode="const",
             force_fp32=True,
-            **self.G_kwargs
+            **self.G_kwargs,
         )
 
         # Center crop.
@@ -112,7 +113,7 @@ class PPLSampler(torch.nn.Module):
         lpips_t0, lpips_t1 = self.vgg16(
             img, resize_images=False, return_lpips=True
         ).chunk(2)
-        dist = (lpips_t0 - lpips_t1).square().sum(1) / self.epsilon ** 2
+        dist = (lpips_t0 - lpips_t1).square().sum(1) / self.epsilon**2
         return dist
 
 

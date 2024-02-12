@@ -85,7 +85,7 @@ class CocoStuff(Dataset):
        stuff_whitelist: list, optional
            None means use all stuff categories. Otherwise a list giving a whitelist of stuff
            category names to use.
-           """
+    """
 
     def __init__(
         self,
@@ -106,7 +106,7 @@ class CocoStuff(Dataset):
         split="train",
         iscrowd=True,
         mode="train",
-        **kwargs
+        **kwargs,
     ):
         super(Dataset, self).__init__()
         if stuff_only and stuff_json is None:
@@ -258,7 +258,7 @@ class CocoStuff(Dataset):
         return min(len(self.image_ids), self.max_samples)
 
     def __getitem__(self, index):
-        """ Get an image, a void label and the image index.
+        """Get an image, a void label and the image index.
         Returns a tuple of: image (FloatTensor of shape (C, H, W)), void label 0 and image index.
 
         """

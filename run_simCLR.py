@@ -1,3 +1,4 @@
+"""SimCLR training script."""
 import argparse
 import random
 from functools import partial
@@ -49,7 +50,11 @@ parser.add_argument(
     help="number of data loading workers",
 )
 parser.add_argument(
-    "--epochs", default=100, type=int, metavar="N", help="number of total epochs to run"
+    "--epochs",
+    default=100,
+    type=int,
+    metavar="N",
+    help="number of total epochs to run",
 )
 parser.add_argument(
     "-b",
@@ -80,7 +85,10 @@ parser.add_argument(
     dest="weight_decay",
 )
 parser.add_argument(
-    "--seed", default=42, type=int, help="seed for initializing training. "
+    "--seed",
+    default=42,
+    type=int,
+    help="seed for initializing training. ",
 )
 parser.add_argument(
     "--fp16-precision",
@@ -89,10 +97,16 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--out_dim", default=128, type=int, help="feature dimension (default: 128)"
+    "--out_dim",
+    default=128,
+    type=int,
+    help="feature dimension (default: 128)",
 )
 parser.add_argument(
-    "--log-every-n-steps", default=100, type=int, help="Log every n steps"
+    "--log-every-n-steps",
+    default=100,
+    type=int,
+    help="Log every n steps",
 )
 parser.add_argument(
     "--temperature",
@@ -108,10 +122,19 @@ parser.add_argument(
     help="Number of views for contrastive learning training.",
 )
 parser.add_argument(
-    "--rcdm_agumentation", action="store_true", help="Use RCDM agumentation or not."
+    "--rcdm_augmentation",
+    action="store_true",
+    help="Use RCDM augmentation or not.",
 )
 parser.add_argument(
-    "--distributed_mode", action="store_true", help="Enable distributed training"
+    "--icgan_augmentation",
+    action="store_true",
+    help="Use ICGAN augmentation or not.",
+)
+parser.add_argument(
+    "--distributed_mode",
+    action="store_true",
+    help="Enable distributed training",
 )
 parser.add_argument("--distributed_launcher", default="slurm")
 parser.add_argument("--distributed_backend", default="nccl")
@@ -161,18 +184,18 @@ def main():
     train_dataset = dataset.get_dataset(
         args.dataset_name,
         args.n_views,
-        args.rcdm_agumentation,
-        device_id
+        args.rcdm_augmentation,
+        args.icgan_augmentation,
+        device_id,
     )
     train_sampler = None
 
     if dist_utils.is_dist_avail_and_initialized() and args.distributed_mode:
-            train_sampler = DistributedSampler(
-                train_dataset,
-                seed=args.seed,
-                drop_last=True,
-            )
-
+        train_sampler = DistributedSampler(
+            train_dataset,
+            seed=args.seed,
+            drop_last=True,
+        )
     init_fn = partial(
         worker_init_fn,
         num_workers=args.num_workers,

@@ -1,4 +1,4 @@
-﻿# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Facebook, Inc. and its affiliates.
 # All rights reserved.
 #
 # Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.

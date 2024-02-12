@@ -29,6 +29,7 @@ from sync_batchnorm import SynchronizedBatchNorm2d as SyncBatchNorm2d
 # Attention is passed in in the format '32_64' to mean applying an attention
 # block at both resolution 32x32 and 64x64. Just '64' will apply at 64x64.
 
+
 # Channel ratio is the ratio of
 class GBlock(nn.Module):
     def __init__(
@@ -92,7 +93,7 @@ def G_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "upsample": [True] * 6,
         "resolution": [8, 16, 32, 64, 128, 256],
         "attention": {
-            2 ** i: (2 ** i in [int(item) for item in attention.split("_")])
+            2**i: (2**i in [int(item) for item in attention.split("_")])
             for i in range(3, 9)
         },
     }
@@ -102,7 +103,7 @@ def G_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "upsample": [True] * 5,
         "resolution": [8, 16, 32, 64, 128],
         "attention": {
-            2 ** i: (2 ** i in [int(item) for item in attention.split("_")])
+            2**i: (2**i in [int(item) for item in attention.split("_")])
             for i in range(3, 8)
         },
     }
@@ -112,7 +113,7 @@ def G_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "upsample": [True] * 4,
         "resolution": [8, 16, 32, 64],
         "attention": {
-            2 ** i: (2 ** i in [int(item) for item in attention.split("_")])
+            2**i: (2**i in [int(item) for item in attention.split("_")])
             for i in range(3, 7)
         },
     }
@@ -122,7 +123,7 @@ def G_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "upsample": [True] * 3,
         "resolution": [8, 16, 32],
         "attention": {
-            2 ** i: (2 ** i in [int(item) for item in attention.split("_")])
+            2**i: (2**i in [int(item) for item in attention.split("_")])
             for i in range(3, 6)
         },
     }
@@ -162,7 +163,7 @@ class Generator(nn.Module):
         no_optim=False,
         G_param="SN",
         norm_style="bn",
-        **kwargs
+        **kwargs,
     ):
         super(Generator, self).__init__()
         # Channel width mulitplier
@@ -258,7 +259,7 @@ class Generator(nn.Module):
         # First linear layer
         self.linear = self.which_linear(
             self.dim_z + self.shared_dim,
-            self.arch["in_channels"][0] * (self.bottom_width ** 2),
+            self.arch["in_channels"][0] * (self.bottom_width**2),
         )
 
         # self.blocks is a doubly-nested list of modules, the outer loop intended
@@ -460,7 +461,7 @@ def D_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "downsample": [True] * 6 + [False],
         "resolution": [128, 64, 32, 16, 8, 4, 4],
         "attention": {
-            2 ** i: 2 ** i in [int(item) for item in attention.split("_")]
+            2**i: 2**i in [int(item) for item in attention.split("_")]
             for i in range(2, 8)
         },
     }
@@ -470,7 +471,7 @@ def D_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "downsample": [True] * 5 + [False],
         "resolution": [64, 32, 16, 8, 4, 4],
         "attention": {
-            2 ** i: 2 ** i in [int(item) for item in attention.split("_")]
+            2**i: 2**i in [int(item) for item in attention.split("_")]
             for i in range(2, 8)
         },
     }
@@ -480,7 +481,7 @@ def D_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "downsample": [True] * 4 + [False],
         "resolution": [32, 16, 8, 4, 4],
         "attention": {
-            2 ** i: 2 ** i in [int(item) for item in attention.split("_")]
+            2**i: 2**i in [int(item) for item in attention.split("_")]
             for i in range(2, 7)
         },
     }
@@ -490,7 +491,7 @@ def D_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "downsample": [True, True, False, False],
         "resolution": [16, 16, 16, 16],
         "attention": {
-            2 ** i: 2 ** i in [int(item) for item in attention.split("_")]
+            2**i: 2**i in [int(item) for item in attention.split("_")]
             for i in range(2, 6)
         },
     }
@@ -521,7 +522,7 @@ class Discriminator(nn.Module):
         D_init="ortho",
         skip_init=False,
         D_param="SN",
-        **kwargs
+        **kwargs,
     ):
         super(Discriminator, self).__init__()
         # Width multiplier

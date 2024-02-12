@@ -20,7 +20,7 @@ from torch.nn import Parameter as P
 import sys
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
-from BigGAN_PyTorch.sync_batchnorm import SynchronizedBatchNorm2d as SyncBN2d
+from icgan.BigGAN_PyTorch.sync_batchnorm import SynchronizedBatchNorm2d as SyncBN2d
 
 
 # Projection of x onto y
@@ -270,9 +270,9 @@ def manual_bn(x, gain=None, bias=None, return_mean_var=False, eps=1e-5):
     # Mean of x
     m = torch.mean(float_x, [0, 2, 3], keepdim=True)
     # Mean of x squared
-    m2 = torch.mean(float_x ** 2, [0, 2, 3], keepdim=True)
+    m2 = torch.mean(float_x**2, [0, 2, 3], keepdim=True)
     # Calculate variance as mean of squared minus mean squared.
-    var = m2 - m ** 2
+    var = m2 - m**2
     # Cast back to float 16 if necessary
     var = var.type(x.type())
     m = m.type(x.type())
@@ -451,7 +451,7 @@ class bn(nn.Module):
         momentum=0.1,
         cross_replica=False,
         mybn=False,
-        **kwargs
+        **kwargs,
     ):
         super(bn, self).__init__()
         self.output_size = output_size

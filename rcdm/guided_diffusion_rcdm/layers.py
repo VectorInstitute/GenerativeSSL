@@ -18,6 +18,7 @@ import sys
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
+
 # Projection of x onto y
 def proj(x, y):
     return torch.mm(y, x.t()) * y / torch.mm(y, y.t())
@@ -265,9 +266,9 @@ def manual_bn(x, gain=None, bias=None, return_mean_var=False, eps=1e-5):
     # Mean of x
     m = torch.mean(float_x, [0, 2, 3], keepdim=True)
     # Mean of x squared
-    m2 = torch.mean(float_x ** 2, [0, 2, 3], keepdim=True)
+    m2 = torch.mean(float_x**2, [0, 2, 3], keepdim=True)
     # Calculate variance as mean of squared minus mean squared.
-    var = m2 - m ** 2
+    var = m2 - m**2
     # Cast back to float 16 if necessary
     var = var.type(x.type())
     m = m.type(x.type())
@@ -370,8 +371,8 @@ class ccbn(nn.Module):
         # Prepare gain and bias layers
         self.gain = which_linear(input_size, output_size)
         self.bias = which_linear(input_size, output_size)
-        #self.gain = nn.Linear(input_size, output_size)
-        #self.bias = nn.Linear(input_size, output_size)
+        # self.gain = nn.Linear(input_size, output_size)
+        # self.bias = nn.Linear(input_size, output_size)
         if self.use_fp16:
             self.gain = self.gain.half()
             self.bias = self.bias.half()
@@ -462,7 +463,7 @@ class bn(nn.Module):
         momentum=0.1,
         cross_replica=False,
         mybn=False,
-        **kwargs
+        **kwargs,
     ):
         super(bn, self).__init__()
 

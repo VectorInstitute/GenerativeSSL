@@ -1,4 +1,4 @@
-﻿# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Facebook, Inc. and its affiliates.
 # All rights reserved.
 #
 # Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
@@ -226,8 +226,7 @@ def _reconstruct_persistent_obj(meta):
 
 
 def _module_to_src(module):
-    r"""Query the source code of a given Python module.
-    """
+    r"""Query the source code of a given Python module."""
     src = _module_to_src_dict.get(module, None)
     if src is None:
         src = inspect.getsource(module)
@@ -237,8 +236,7 @@ def _module_to_src(module):
 
 
 def _src_to_module(src):
-    r"""Get or create a Python module for the given source code.
-    """
+    r"""Get or create a Python module for the given source code."""
     module = _src_to_module_dict.get(src, None)
     if module is None:
         module_name = "_imported_module_" + uuid.uuid4().hex
@@ -272,9 +270,7 @@ def _check_pickleable(obj):
         ]:
             return None  # NumPy arrays and PyTorch tensors are pickleable.
         if is_persistent(obj):
-            return (
-                None
-            )  # Persistent objects are pickleable, by virtue of the constructor check.
+            return None  # Persistent objects are pickleable, by virtue of the constructor check.
         return obj
 
     with io.BytesIO() as f:

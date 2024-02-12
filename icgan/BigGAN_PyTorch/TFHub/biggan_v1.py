@@ -87,7 +87,7 @@ class SpectralNorm(nn.Module):
 
 
 class SelfAttention(nn.Module):
-    """ Self Attention Layer"""
+    """Self Attention Layer"""
 
     def __init__(self, in_dim, activation=F.relu):
         super().__init__()
@@ -426,7 +426,6 @@ class Discriminator(nn.Module):
         self.embed = SpectralNorm(self.embed)
 
     def forward(self, input, class_id):
-
         out = self.pre_conv(input)
         out += self.pre_skip(F.avg_pool2d(input, 2))
         out = self.conv(out)

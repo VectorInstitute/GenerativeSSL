@@ -130,7 +130,7 @@ def create_model_and_diffusion(
         rescale_timesteps=rescale_timesteps,
         rescale_learned_sigmas=rescale_learned_sigmas,
         timestep_respacing=timestep_respacing,
-        feat_cond=feat_cond
+        feat_cond=feat_cond,
     )
     return model, diffusion
 
@@ -254,6 +254,7 @@ def create_classifier(
     classifier_pool,
 ):
     from .unet import SuperResModel, UNetModel, EncoderUNetModel
+
     if image_size == 512:
         channel_mult = (0.5, 1, 1, 2, 2, 4, 4)
     elif image_size == 256:
@@ -380,6 +381,7 @@ def sr_create_model(
     pretrained=False,
 ):
     from .unet import SuperResModel, UNetModel, EncoderUNetModel
+
     _ = small_size  # hack to prevent unused variable
 
     if large_size == 512:

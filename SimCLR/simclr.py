@@ -19,9 +19,7 @@ class SimCLR(object):
         self.scheduler = kwargs["scheduler"]
         self.device_id = kwargs["device_id"]
         log_dir = os.path.join(self.args.model_dir, self.args.experiment_name)
-        if not os.path.exists(log_dir):
-            os.mkdir(log_dir)
-        self.writer = SummaryWriter()
+        self.writer = SummaryWriter(log_dir=log_dir)
         self.criterion = loss.SimCLRContrastiveLoss(self.args.temperature).cuda(
             self.device_id
         )
@@ -64,19 +62,6 @@ class SimCLR(object):
                         "learning_rate",
                         self.scheduler.get_last_lr()[0],
                         global_step=n_iter,
-                    )
-                    
-                    # save latest model checkpoints
-                    checkpoint_name = "checkpoint_final.pth.tar"
-                    save_checkpoint(
-                        {
-                            "n_iter": n_iter,
-                            "arch": self.args.arch,
-                            "state_dict": self.model.state_dict(),
-                            "optimizer": self.optimizer.state_dict(),
-                        },
-                        is_best=False,
-                        filename=os.path.join(self.writer.log_dir, checkpoint_name),
                     )
 
                 n_iter += 1

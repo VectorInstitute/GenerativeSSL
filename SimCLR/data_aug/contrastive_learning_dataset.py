@@ -7,7 +7,6 @@ from SimCLR.data_aug.rcdm_aug import RCDMInference
 from SimCLR.data_aug.rcdm_config import get_config
 from SimCLR.data_aug.view_generator import ContrastiveLearningViewGenerator
 from SimCLR.exceptions.exceptions import InvalidDatasetSelection
-import random
 
 class ContrastiveLearningDataset:
     def __init__(self, root_folder):

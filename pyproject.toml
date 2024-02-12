@@ -7,12 +7,10 @@ line-length = 88
 
 [tool.mypy]
 ignore_missing_imports = true
-install_types = true
 pretty = true
-non_interactive = true
 
 [tool.ruff]
-select = [
+lint.select = [
     "A", # flake8-builtins
     "B", # flake8-bugbear
     "COM", # flake8-commas
@@ -31,21 +29,28 @@ select = [
     "ERA", # eradicate
     "PL", # pylint
 ]
-ignore = [
+lint.ignore = [
     "E501", # line length violation
     "C901", # `function_name` is too complex
+    "PLR0913", # Too many arguments
+    "PLR2004", # Magic value used in comparison
 ]
 line-length = 88
 
 # Ignore import violations in all `__init__.py` files.
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["E402", "F401", "F403", "F811"]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 lines-after-imports = 2
 
-[tool.ruff.pycodestyle]
+[tool.ruff.lint.pycodestyle]
 max-doc-length = 88
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]

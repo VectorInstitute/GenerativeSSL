@@ -23,19 +23,22 @@ from guided_diffusion_rcdm.script_util import (
     args_to_dict,
 )
 
+
 def exclude_bias_and_norm(p):
-        return p.ndim == 1
+    return p.ndim == 1
+
 
 # uniform interpolation between two points in latent space
 def interpolate_points(p1, p2, n_steps=6):
-	# interpolate ratios between the points
-	ratios = np.linspace(0.5, 0.7, num=n_steps)
-	# linear interpolate vectors
-	vectors = list()
-	for ratio in ratios:
-		v = (1.0 - ratio) * p1 + ratio * p2
-		vectors.append(v)
-	return np.asarray(vectors)
+    # interpolate ratios between the points
+    ratios = np.linspace(0.5, 0.7, num=n_steps)
+    # linear interpolate vectors
+    vectors = list()
+    for ratio in ratios:
+        v = (1.0 - ratio) * p1 + ratio * p2
+        vectors.append(v)
+    return np.asarray(vectors)
+
 
 def main(args):
     args.gpu = 0
@@ -45,15 +48,16 @@ def main(args):
     ssl_model = get_model(args.type_model, args.use_head).cuda().eval()
     for p in ssl_model.parameters():
         ssl_model.requires_grad = False
-    ssl_dim = ssl_model(th.zeros(1,3,224,224).cuda()).size(1)
-    tr_normalize = transforms.Normalize(
-            mean=[0.5,0.5,0.5], std=[0.5, 0.5, 0.5]
-        )
+    ssl_dim = ssl_model(th.zeros(1, 3, 224, 224).cuda()).size(1)
+    tr_normalize = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 
     # ============ preparing model ... ============
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
-        **args_to_dict(args, model_and_diffusion_defaults().keys()), G_shared=args.no_shared, feat_cond=True, ssl_dim=ssl_dim
+        **args_to_dict(args, model_and_diffusion_defaults().keys()),
+        G_shared=args.no_shared,
+        feat_cond=True,
+        ssl_dim=ssl_dim,
     )
 
     # Load model
@@ -66,19 +70,21 @@ def main(args):
     model.eval()
 
     # Define transforms
-    tr_normalize = transforms.Normalize(
-            mean=[0.5,0.5,0.5], std=[0.5, 0.5, 0.5]
-        )
-    transform = transforms.Compose([
-        transforms.Resize((224,224)),
-        transforms.ToTensor(),
-        tr_normalize,
-    ])
-    transform_small = transforms.Compose([
-        transforms.Resize((args.image_size,args.image_size)),
-        transforms.ToTensor(),
-        tr_normalize,
-    ])
+    tr_normalize = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+    transform = transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            tr_normalize,
+        ]
+    )
+    transform_small = transforms.Compose(
+        [
+            transforms.Resize((args.image_size, args.image_size)),
+            transforms.ToTensor(),
+            tr_normalize,
+        ]
+    )
 
     ### Choose first image
     with bf.BlobFile(args.first_image_path, "rb") as f:
@@ -91,7 +97,7 @@ def main(args):
     # Compute its embedding
     with th.no_grad():
         feat_1 = ssl_model(first_image.cuda()).detach()
-    
+
     ### Choose second image
     with bf.BlobFile(args.second_image_path, "rb") as f:
         pil_image = Image.open(f)
@@ -103,9 +109,17 @@ def main(args):
     # Compute its embedding
     with th.no_grad():
         feat_2 = ssl_model(second_image.cuda()).detach()
-    
+
     # Perform an interpolation in the representation space
-    inp_features = th.FloatTensor(interpolate_points(feat_1.cpu().numpy(), feat_2.cpu().numpy(), n_steps=args.batch_size)).cuda().view(args.batch_size,-1)
+    inp_features = (
+        th.FloatTensor(
+            interpolate_points(
+                feat_1.cpu().numpy(), feat_2.cpu().numpy(), n_steps=args.batch_size
+            )
+        )
+        .cuda()
+        .view(args.batch_size, -1)
+    )
 
     first_image = ((first_image_small + 1) * 127.5).clamp(0, 255).to(th.uint8)
     first_image = first_image.permute(0, 2, 3, 1)
@@ -118,7 +132,7 @@ def main(args):
     all_images = []
 
     # We keep the noise fixed
-    noise = th.randn((1,3,args.image_size,args.image_size)).cuda()
+    noise = th.randn((1, 3, args.image_size, args.image_size)).cuda()
     noise = noise.repeat(args.batch_size, 1, 1, 1)
     model_kwargs = {}
     sample_fn = (
@@ -144,7 +158,13 @@ def main(args):
     logger.log(f"created {len(all_images) * args.batch_size} samples")
 
     arr = np.concatenate(all_images, axis=0)
-    save_image(th.FloatTensor(arr).permute(0,3,1,2), args.out_dir+'/'+args.name+'.jpeg', normalize=True, scale_each=True, nrow=args.batch_size+2)
+    save_image(
+        th.FloatTensor(arr).permute(0, 3, 1, 2),
+        args.out_dir + "/" + args.name + ".jpeg",
+        normalize=True,
+        scale_each=True,
+        nrow=args.batch_size + 2,
+    )
 
     logger.log("sampling complete")
 
@@ -164,21 +184,58 @@ def create_argparser():
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
-    parser.add_argument('--name', default="interpolation", type=str, help='Path to save logs and checkpoints.')
-    parser.add_argument('--out_dir', default=".", type=str, help='Path to save logs and checkpoints.')
-    parser.add_argument('--first_image_path', default=".", type=str, help='Path of the first image to interpolate from.')
-    parser.add_argument('--second_image_path', default=".", type=str, help='Path of the second image to interpolate from.')   
-    parser.add_argument('--feat_cond', action='store_true', default=False,
-                        help='This flag enables squeeze and excitation.')
-    parser.add_argument('--no_shared', action='store_false', default=True,
-                        help='This flag enables squeeze and excitation.')
-    parser.add_argument('--use_head', action='store_true', default=False,
-                        help='Use the projector/head to compute the SSL representation instead of the backbone.')
+    parser.add_argument(
+        "--name",
+        default="interpolation",
+        type=str,
+        help="Path to save logs and checkpoints.",
+    )
+    parser.add_argument(
+        "--out_dir", default=".", type=str, help="Path to save logs and checkpoints."
+    )
+    parser.add_argument(
+        "--first_image_path",
+        default=".",
+        type=str,
+        help="Path of the first image to interpolate from.",
+    )
+    parser.add_argument(
+        "--second_image_path",
+        default=".",
+        type=str,
+        help="Path of the second image to interpolate from.",
+    )
+    parser.add_argument(
+        "--feat_cond",
+        action="store_true",
+        default=False,
+        help="This flag enables squeeze and excitation.",
+    )
+    parser.add_argument(
+        "--no_shared",
+        action="store_false",
+        default=True,
+        help="This flag enables squeeze and excitation.",
+    )
+    parser.add_argument(
+        "--use_head",
+        action="store_true",
+        default=False,
+        help="Use the projector/head to compute the SSL representation instead of the backbone.",
+    )
     add_dict_to_argparser(parser, defaults)
-    parser.add_argument('--dist', action='store_true', default=False,
-                        help='Compute distance ssl representation.')
-    parser.add_argument('--type_model', type=str, default="dino",
-                    help='Select the type of model to use.')
+    parser.add_argument(
+        "--dist",
+        action="store_true",
+        default=False,
+        help="Compute distance ssl representation.",
+    )
+    parser.add_argument(
+        "--type_model",
+        type=str,
+        default="dino",
+        help="Select the type of model to use.",
+    )
 
     return parser
 

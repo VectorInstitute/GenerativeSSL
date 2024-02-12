@@ -119,6 +119,7 @@ def run(config):
         and config["which_dataset"] == "imagenet_lt"
         and config["split"] == "val"
     ) or config["strat_name"] == ""
+
     # Inception with TF1.3 or earlier.
     # Call this function with list of images. Each of elements should be a
     # numpy array with values ranging from 0 to 255.
@@ -276,7 +277,7 @@ def run(config):
                 "_val" if config["split"] == "val" else "",
                 config["resolution"],
             ),
-            **{"mu": mu, "sigma": sigma}
+            **{"mu": mu, "sigma": sigma},
         )
     else:
         np.savez(
@@ -287,7 +288,7 @@ def run(config):
                 "_val" if config["split"] == "val" else "",
                 "_strat_" + config["strat_name"] if config["strat_name"] != "" else "",
             ),
-            **{"mu": mu, "sigma": sigma}
+            **{"mu": mu, "sigma": sigma},
         )
     print(
         "Inception took %3f seconds, score of %3f +/- %3f."
@@ -326,7 +327,7 @@ def run(config):
                     config["resolution"],
                     strat_name,
                 ),
-                **{"mu": mu, "sigma": sigma}
+                **{"mu": mu, "sigma": sigma},
             )
 
 

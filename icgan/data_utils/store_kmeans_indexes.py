@@ -121,7 +121,7 @@ if __name__ == "__main__":
         type=int,
         default=-1,
         help="Number of k-means centers if using subsampled training instances"
-             " (default: %(default)s)",
+        " (default: %(default)s)",
     )
     parser.add_argument(
         "--gpu",

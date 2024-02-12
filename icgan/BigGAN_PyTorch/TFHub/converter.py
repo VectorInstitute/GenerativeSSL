@@ -50,13 +50,13 @@ RESOLUTIONS = list(Z_DIMS)
 def dump_tfhub_to_hdf5(module_path, hdf5_path, redownload=False):
     """Loads TFHub weights and saves them to intermediate HDF5 file.
 
-  Args:
-    module_path ([Path-like]): Path to TFHub module.
-    hdf5_path ([Path-like]): Path to output HDF5 file.
+    Args:
+      module_path ([Path-like]): Path to TFHub module.
+      hdf5_path ([Path-like]): Path to output HDF5 file.
 
-  Returns:
-    [h5py.File]: Loaded hdf5 file containing module weights.
-  """
+    Returns:
+      [h5py.File]: Loaded hdf5 file containing module weights.
+    """
     if os.path.exists(hdf5_path) and (not redownload):
         print("Loading BigGAN hdf5 file from:", hdf5_path)
         return h5py.File(hdf5_path, "r")
@@ -81,7 +81,6 @@ def dump_tfhub_to_hdf5(module_path, hdf5_path, redownload=False):
 
 
 class TFHub2Pytorch(object):
-
     TF_ROOT = "module"
 
     NUM_GBLOCK = {128: 5, 256: 6, 512: 7}
@@ -176,7 +175,6 @@ class TFHub2Pytorch(object):
             ).squeeze()
 
     def load_conv(self, name_pth, name_tf, bias=True):
-
         self.state_dict[name_pth + ".weight_u"] = self.load_tf_tensor(
             name_tf, self.u
         ).squeeze()
@@ -248,7 +246,6 @@ class TFHub2Pytorch(object):
         )
 
     def load_attention(self, name_pth, name_tf):
-
         self.load_snconv(name_pth + "theta", os.path.join(name_tf, "theta"), bias=False)
         self.load_snconv(name_pth + "phi", os.path.join(name_tf, "phi"), bias=False)
         self.load_snconv(name_pth + "g", os.path.join(name_tf, "g"), bias=False)
@@ -458,7 +455,6 @@ def convert_biggan(
 
 
 def generate_sample(G, z_dim, batch_size, filename, parallel=False):
-
     G.eval()
     G.to(DEVICE)
     with torch.no_grad():
@@ -520,7 +516,6 @@ def parse_args():
 
 
 if __name__ == "__main__":
-
     args = parse_args()
     os.makedirs(args.weights_dir, exist_ok=True)
     os.makedirs(args.samples_dir, exist_ok=True)

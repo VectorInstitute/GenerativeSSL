@@ -1,5 +1,6 @@
 import ml_collections
 
+
 def get_config():
     config = ml_collections.ConfigDict()
     config.image_size = 128  # The size of the images to generate.

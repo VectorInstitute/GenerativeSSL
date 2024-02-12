@@ -1,4 +1,4 @@
-﻿# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Facebook, Inc. and its affiliates.
 # All rights reserved.
 #
 # Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
@@ -235,7 +235,7 @@ def rotate2d(theta, **kwargs):
         [torch.cos(theta), torch.sin(-theta), 0],
         [torch.sin(theta), torch.cos(theta), 0],
         [0, 0, 1],
-        **kwargs
+        **kwargs,
     )
 
 
@@ -251,7 +251,7 @@ def rotate3d(v, theta, **kwargs):
         [vy * vx * cc + vz * s, vy * vy * cc + c, vy * vz * cc - vx * s, 0],
         [vz * vx * cc - vy * s, vz * vy * cc + vx * s, vz * vz * cc + c, 0],
         [0, 0, 0, 1],
-        **kwargs
+        **kwargs,
     )
 
 
@@ -389,8 +389,9 @@ class AugmentPipe(torch.nn.Module):
             Hz_fbank = scipy.signal.convolve(Hz_fbank, [Hz_lo2])
             Hz_fbank[
                 i,
-                (Hz_fbank.shape[1] - Hz_hi2.size)
-                // 2 : (Hz_fbank.shape[1] + Hz_hi2.size)
+                (Hz_fbank.shape[1] - Hz_hi2.size) // 2 : (
+                    Hz_fbank.shape[1] + Hz_hi2.size
+                )
                 // 2,
             ] += Hz_hi2
         self.register_buffer("Hz_fbank", torch.as_tensor(Hz_fbank, dtype=torch.float32))
@@ -541,7 +542,6 @@ class AugmentPipe(torch.nn.Module):
 
         # Execute if the transform is not identity.
         if G_inv is not I_3:
-
             # Calculate padding.
             cx = (width - 1) / 2
             cy = (height - 1) / 2

@@ -21,7 +21,7 @@ class RCDMInference(object):
 
         # Load SSL model
         self.ssl_model = (
-            get_model(self.config.type_model, self.config.use_head, self.config.pre_trained_model_dir)
+            get_model(self.config.type_model, self.config.use_head, self.config.pretrained_models_dir)
             .cuda(self.device_id)
             .eval()
         )
@@ -50,7 +50,7 @@ class RCDMInference(object):
 
         if self.config.model_path == "":
             trained_model = get_dict_rcdm_model(
-                self.config.type_model, self.config.use_head, self.config.pre_trained_model_dir
+                self.config.type_model, self.config.use_head, self.config.pretrained_models_dir
             )
         else:
             trained_model = torch.load(self.config.model_path, map_location="cpu")

@@ -63,7 +63,6 @@ class SimCLR(object):
                         self.scheduler.get_last_lr()[0],
                         global_step=n_iter,
                     )
-                    
                 n_iter += 1
 
             # warmup for the first 10 epochs

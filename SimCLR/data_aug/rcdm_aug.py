@@ -63,7 +63,6 @@ class RCDMInference(object):
                 data_utils.CenterCropLongEdge(),
                 transforms.Resize((size, size)),
                 transforms.ToTensor(),
-                transforms.Normalize(self.config.norm_mean, self.config.norm_std),
             ]
         )
         tensor_image = transform_list(input_image)

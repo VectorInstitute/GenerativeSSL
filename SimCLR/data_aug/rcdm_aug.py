@@ -90,7 +90,7 @@ class RCDMInference(object):
         )
         img = self.preprocess_input_image(img).cuda(self.device_id)
         print("1",img.shape)
-        img = img.unsqueeze(0).repeat(1, 1, 1, 1)
+        img = img.repeat(1, 1, 1, 1)
         print("2",img.shape)
         model_kwargs = {}
 

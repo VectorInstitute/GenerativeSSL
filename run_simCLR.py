@@ -12,6 +12,7 @@ from SimCLR import distributed as dist_utils
 from SimCLR.data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 from SimCLR.models.resnet_simclr import ResNetSimCLR
 from SimCLR.simclr import SimCLR
+from torch.utils.data import Subset
 
 
 model_names = sorted(
@@ -138,6 +139,13 @@ parser.add_argument(
 )
 parser.add_argument("--distributed_launcher", default="slurm")
 parser.add_argument("--distributed_backend", default="nccl")
+parser.add_argument(
+    "--n_subset",
+    default=1,
+    type=int,
+    metavar="S",
+    help="number of first n class",
+)
 
 
 def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> None:
@@ -186,6 +194,17 @@ def main():
         args.icgan_augmentation,
         device_id,
     )
+
+    if args.n_subset > 2:
+        desired_indices = []
+        desired_classes = list(range(args.n_subset))
+
+        # Iterate through the full dataset to find indices of desired classes
+        desired_indices = [i for i, target in enumerate(train_dataset.targets) if target in desired_classes]
+
+        # Create a subset of the dataset containing only the desired classes
+        train_dataset = Subset(train_dataset, desired_indices)
+
     train_sampler = None
 
     if dist_utils.is_dist_avail_and_initialized() and args.distributed_mode:

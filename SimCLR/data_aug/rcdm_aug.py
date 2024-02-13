@@ -89,9 +89,7 @@ class RCDMInference(object):
             else self.diffusion.ddim_sample_loop
         )
         img = self.preprocess_input_image(img).cuda(self.device_id)
-        print("1",img.shape)
         img = img.repeat(1, 1, 1, 1)
-        print("2",img.shape)
         model_kwargs = {}
 
         with torch.no_grad():
@@ -104,5 +102,4 @@ class RCDMInference(object):
             model_kwargs=model_kwargs,
         )
 
-        print("Sampling completed!")
         return sample.squeeze(0)

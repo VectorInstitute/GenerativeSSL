@@ -51,7 +51,11 @@ parser.add_argument(
     help="number of data loading workers",
 )
 parser.add_argument(
-    "--epochs", default=100, type=int, metavar="N", help="number of total epochs to run"
+    "--epochs",
+    default=100,
+    type=int,
+    metavar="N",
+    help="number of total epochs to run",
 )
 parser.add_argument(
     "-b",
@@ -63,23 +67,33 @@ parser.add_argument(
     "batch size of all GPUs on the current node when "
     "using Data Parallel or Distributed Data Parallel",
 )
-
 parser.add_argument(
-    "--seed", default=42, type=int, help="seed for initializing training. "
+    "--seed",
+    default=42,
+    type=int,
+    help="seed for initializing training. ",
 )
-
 parser.add_argument(
-    "--distributed_mode", action="store_true", help="Enable distributed training"
+    "--log-every-n-steps",
+    default=100,
+    type=int,
+    help="Log every n steps",
+)
+parser.add_argument(
+    "--distributed_mode",
+    action="store_true",
+    help="Enable distributed training",
 )
 parser.add_argument("--distributed_launcher", default="slurm")
 parser.add_argument("--distributed_backend", default="nccl")
-parser.add_argument("--pretrained_model_file", default=None, help="Path to the pretrained model file.")
-parser.add_argument("--linear_evaluation", 
-                    action="store_true",
-                    help="Whether or not to evaluate the linear evaluation of the model.")
 parser.add_argument(
-    "--log-every-n-steps", default=100, type=int, help="Log every n steps"
-)
+    "--pretrained_model_file", 
+    default=None, 
+    help="Path to the pretrained model file.")
+parser.add_argument(
+    "--linear_evaluation", 
+    action="store_true",
+    help="Whether or not to evaluate the linear evaluation of the model.")
 parser.add_argument("--model_dir", default="model_checkpoints")
 parser.add_argument("--experiment_name", default="simclr")
 
@@ -196,7 +210,11 @@ def main():
     elif args.dataset_name == "imagenet":
         num_classes = 1000
 
-    model = PretrainedResNet(base_model=args.arch, pretrained_dir = args.pretrained_model_file, linear_eval=args.linear_evaluation, num_classes=num_classes)
+    model = PretrainedResNet(
+        base_model=args.arch, 
+        pretrained_dir = args.pretrained_model_file, 
+        linear_eval=args.linear_evaluation, 
+        num_classes=num_classes)
 
     if args.distributed_mode and dist_utils.is_dist_avail_and_initialized():
         # set the single device scope, otherwise DistributedDataParallel will
@@ -207,7 +225,12 @@ def main():
     else:
         model = model.cuda()
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=3e-4, weight_decay=0.0008)
+    optimizer = torch.optim.Adam(
+        model.parameters(), 
+        lr=3e-4, 
+        weight_decay=0.0008,
+        )
+    
     criterion = torch.nn.CrossEntropyLoss().cuda(device_id)
 
     n_iter = 0
@@ -260,7 +283,7 @@ def main():
         checkpoint_name = "checkpoint_supervised_epoch_{:04d}.pth.tar".format(epoch)
         save_checkpoint(
             {
-                "n_iter": n_iter,
+                "n_epoch": epoch,
                 "arch": args.arch,
                 "state_dict": model.state_dict(),
                 "optimizer": optimizer.state_dict(),

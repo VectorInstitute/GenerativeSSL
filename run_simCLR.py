@@ -140,11 +140,11 @@ parser.add_argument(
 parser.add_argument("--distributed_launcher", default="slurm")
 parser.add_argument("--distributed_backend", default="nccl")
 parser.add_argument(
-    "--n_subset",
-    default=1,
-    type=int,
-    metavar="S",
-    help="number of first n class",
+    "--subset_fraction",
+    default=1.0,
+    type=float,
+    metavar="SF",
+    help="subset fraction of the dataset",
 )
 
 
@@ -195,12 +195,10 @@ def main():
         device_id,
     )
 
-    if args.n_subset > 2:
-        desired_indices = []
-        desired_classes = list(range(args.n_subset))
-
-        # Iterate through the full dataset to find indices of desired classes
-        desired_indices = [i for i, target in enumerate(train_dataset.targets) if target in desired_classes]
+    if args.subset_fraction < 1.0:
+        # Get indices of subset of the dataset
+        subset_size = int(args.subset_fraction * len(train_dataset))
+        desired_indices = torch.randperm(len(train_dataset))[:subset_size]
 
         # Create a subset of the dataset containing only the desired classes
         train_dataset = Subset(train_dataset, desired_indices)

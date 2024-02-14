@@ -51,11 +51,13 @@ class ICGANInference:
                     size=(1, size),
                 ).astype(np.float32)
                 noise_vector.data[trunc_indices] = torch.tensor(
-                    trunc, requires_grad=True
+                    trunc,
+                    requires_grad=True,
                 ).cuda(self.device_id)
         else:
             noise_vector = noise_vector.clamp(
-                -2 * self.config.truncation, 2 * self.config.truncation
+                -2 * self.config.truncation,
+                2 * self.config.truncation,
             )
 
         out = self.model(noise_vector, input_label, input_features.cuda(self.device_id))
@@ -72,7 +74,8 @@ class ICGANInference:
 
     def load_feature_extractor(self, feat_ext_path):
         feature_extractor = data_utils.load_pretrained_feature_extractor(
-            feat_ext_path, feature_extractor="selfsupervised"
+            feat_ext_path,
+            feature_extractor="selfsupervised",
         )
         feature_extractor = feature_extractor.cuda(self.device_id)
         feature_extractor.eval()
@@ -85,28 +88,35 @@ class ICGANInference:
                 transforms.Resize((size, size)),
                 transforms.ToTensor(),
                 transforms.Normalize(self.config.norm_mean, self.config.norm_std),
-            ]
+            ],
         )
         tensor_image = transform_list(input_image)
         tensor_image = torch.nn.functional.interpolate(
-            tensor_image.unsqueeze(0), 224, mode="bicubic", align_corners=True
+            tensor_image.unsqueeze(0),
+            224,
+            mode="bicubic",
+            align_corners=True,
         )
         return tensor_image
 
     def preprocess_generated_image(self, image):
         transform_list = transforms.Normalize(
-            self.config.norm_mean, self.config.norm_std
+            self.config.norm_mean,
+            self.config.norm_std,
         )
         image = transform_list(image * 0.5 + 0.5)
         image = torch.nn.functional.interpolate(
-            image, 224, mode="bicubic", align_corners=True
+            image,
+            224,
+            mode="bicubic",
+            align_corners=True,
         )
         return image
 
     def __call__(self, input_image_tensor):
         with torch.no_grad():
             input_features, _ = self.feature_extractor(
-                self.preprocess_input_image(input_image_tensor).cuda(self.device_id)
+                self.preprocess_input_image(input_image_tensor).cuda(self.device_id),
             )
         input_features /= torch.linalg.norm(input_features, dim=-1, keepdims=True)
 
@@ -118,7 +128,7 @@ class ICGANInference:
             random_state=self.state,
         ).astype(np.float32)
         noise_vector = torch.tensor(noise_vector, requires_grad=False).cuda(
-            self.device_id
+            self.device_id,
         )
         instance_vector = (
             torch.tensor(input_features, requires_grad=False)

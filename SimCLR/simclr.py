@@ -20,7 +20,7 @@ class SimCLR(object):
         self.device_id = kwargs["device_id"]
         self.writer = SummaryWriter()
         self.criterion = loss.SimCLRContrastiveLoss(self.args.temperature).cuda(
-            self.device_id
+            self.device_id,
         )
 
     def train(self, train_loader):
@@ -83,7 +83,7 @@ class SimCLR(object):
                 filename=os.path.join(self.writer.log_dir, checkpoint_name),
             )
             print(
-                f"Model checkpoint and metadata has been saved at {self.writer.log_dir}."
+                f"Model checkpoint and metadata has been saved at {self.writer.log_dir}.",
             )
 
         print("Training has finished.")

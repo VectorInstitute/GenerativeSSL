@@ -5,6 +5,7 @@ from functools import partial
 
 import torch
 from torch.nn.parallel import DistributedDataParallel as DDP  # noqa: N817
+from torch.utils.data import Subset
 from torch.utils.data.distributed import DistributedSampler
 from torchvision import models
 
@@ -12,7 +13,6 @@ from SimCLR import distributed as dist_utils
 from SimCLR.data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 from SimCLR.models.resnet_simclr import ResNetSimCLR
 from SimCLR.simclr import SimCLR
-from torch.utils.data import Subset
 
 
 model_names = sorted(
@@ -246,7 +246,10 @@ def main():
     )
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=len(train_loader), eta_min=0, last_epoch=-1
+        optimizer,
+        T_max=len(train_loader),
+        eta_min=0,
+        last_epoch=-1,
     )
 
     simclr = SimCLR(

@@ -40,17 +40,4 @@ repos:
       - id: nbqa-ruff
         args: [--fix]
 
-  - repo: local
-    hooks:
-    - id: pytest
-      name: pytest
-      entry: python3 -m pytest
-      language: system
-      pass_filenames: false
-      always_run: true
-
-exclude: |
-  (?x)(
-      ^rcdm/|
-      ^icgan/|
-  )
+exclude: 'icgan/.*|rcdm/.*'

@@ -44,7 +44,11 @@ class SimCLRContrastiveLoss(nn.Module):
         self.temperature = temperature
 
     def forward(
-        self, hidden1: torch.Tensor, hidden2: torch.Tensor, device_id, l2_normalize=True
+        self,
+        hidden1: torch.Tensor,
+        hidden2: torch.Tensor,
+        device_id,
+        l2_normalize=True,
     ) -> torch.Tensor:
         world_size = dist.get_world_size()
         batch_size = hidden1.shape[0]

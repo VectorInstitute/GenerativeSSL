@@ -44,13 +44,14 @@ class RCDMInference(object):
                     config.ssl_image_channels,
                     config.ssl_image_size,
                     config.ssl_image_size,
-                ).cuda(self.device_id)
+                ).cuda(self.device_id),
             ).size(1),
         )
 
         if self.config.model_path == "":
             trained_model = get_dict_rcdm_model(
-                self.config.type_model, self.config.use_head
+                self.config.type_model,
+                self.config.use_head,
             )
         else:
             trained_model = torch.load(self.config.model_path, map_location="cpu")
@@ -64,11 +65,14 @@ class RCDMInference(object):
                 transforms.Resize((size, size)),
                 transforms.ToTensor(),
                 transforms.Normalize(self.config.norm_mean, self.config.norm_std),
-            ]
+            ],
         )
         tensor_image = transform_list(input_image)
         tensor_image = torch.nn.functional.interpolate(
-            tensor_image.unsqueeze(0), 224, mode="bicubic", align_corners=True
+            tensor_image.unsqueeze(0),
+            224,
+            mode="bicubic",
+            align_corners=True,
         )
         return tensor_image
 
@@ -79,7 +83,8 @@ class RCDMInference(object):
         Args:
             img (torch.Tensor): An image to apply RCDM to.
 
-        Returns:
+        Returns
+        -------
             List[torch.Tensor]: List of generated image tensors.
         """
         print("Starting RCDM model inference...")

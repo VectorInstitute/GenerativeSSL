@@ -31,5 +31,5 @@ srun python evaluate_simCLR.py \
 --distributed_mode \
 --batch-size=256 \
 --pretrained_model_dir="/ssd003/projects/aieng/genssl/experiments/simclr" \
---pretrained_model_name='/checkpoint_epoch_0003.pth.tar' \
+--pretrained_model_name="/checkpoint_epoch_0003.pth.tar" \
 --linear_evaluation 

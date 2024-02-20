@@ -16,7 +16,7 @@ class SupervisedDataset:
             size (int): Image size.
         """
         transform_list = [
-            transforms.Resize(size=(size,size)),
+            transforms.CenterCrop(size=size),
             transforms.ToTensor(),
         ]
 

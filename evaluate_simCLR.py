@@ -12,7 +12,6 @@ import shutil
 from SimCLR import distributed as dist_utils
 from SimCLR.data_aug.supervised_dataset import SupervisedDataset
 from SimCLR.models.resnet_pretrained import PretrainedResNet
-from SimCLR.simclr import SimCLR
 
 
 model_names = sorted(
@@ -68,16 +67,28 @@ parser.add_argument(
     "using Data Parallel or Distributed Data Parallel",
 )
 parser.add_argument(
+    "--lr",
+    "--learning-rate",
+    default=0.0003,
+    type=float,
+    metavar="LR",
+    help="initial learning rate",
+    dest="lr",
+)
+parser.add_argument(
+    "--wd",
+    "--weight-decay",
+    default=8e-4,
+    type=float,
+    metavar="W",
+    help="weight decay (default: 1e-4)",
+    dest="weight_decay",
+)
+parser.add_argument(
     "--seed",
     default=42,
     type=int,
     help="seed for initializing training. ",
-)
-parser.add_argument(
-    "--log-every-n-steps",
-    default=100,
-    type=int,
-    help="Log every n steps",
 )
 parser.add_argument(
     "--distributed_mode",
@@ -87,15 +98,21 @@ parser.add_argument(
 parser.add_argument("--distributed_launcher", default="slurm")
 parser.add_argument("--distributed_backend", default="nccl")
 parser.add_argument(
-    "--pretrained_model_file", 
+    "--pretrained_model_dir", 
     default=None, 
-    help="Path to the pretrained model file.")
+    help="Path to the pretrained model directory.")
+parser.add_argument(
+    "--pretrained_model_name", 
+    default=None, 
+    help="Name of pretrained model.")
 parser.add_argument(
     "--linear_evaluation", 
     action="store_true",
     help="Whether or not to evaluate the linear evaluation of the model.")
-parser.add_argument("--model_dir", default="model_checkpoints")
-parser.add_argument("--experiment_name", default="simclr")
+parser.add_argument(
+    "--enable_checkpointing", 
+    action="store_true",
+    help="Whether or not to enable checkpointing of the model.")
 
 
 def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> None:
@@ -132,10 +149,8 @@ def accuracy(output, target, topk=(1,)):
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
     
-def save_checkpoint(state, is_best, filename="checkpoint.pth.tar"):
+def save_checkpoint(state, filename="checkpoint.pth.tar"):
     torch.save(state, filename)
-    if is_best:
-        shutil.copyfile(filename, "model_best.pth.tar")
 
 
 def main():
@@ -212,7 +227,7 @@ def main():
 
     model = PretrainedResNet(
         base_model=args.arch, 
-        pretrained_dir = args.pretrained_model_file, 
+        pretrained_model_file = os.path.join(args.pretrained_model_dir, args.pretrained_model_name), 
         linear_eval=args.linear_evaluation, 
         num_classes=num_classes)
 
@@ -227,17 +242,15 @@ def main():
 
     optimizer = torch.optim.Adam(
         model.parameters(), 
-        lr=3e-4, 
-        weight_decay=0.0008,
+        lr=args.lr, 
+        weight_decay=args.weight_decay,
         )
     
     criterion = torch.nn.CrossEntropyLoss().cuda(device_id)
 
     n_iter = 0
 
-    log_dir = os.path.join(args.model_dir, args.experiment_name)
-    if not os.path.exists(log_dir):
-        os.mkdir(log_dir)
+    log_dir = args.pretrained_model_dir
 
     for epoch in range(args.epochs):
         if dist_utils.is_dist_avail_and_initialized():
@@ -255,11 +268,6 @@ def main():
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            if n_iter % args.log_every_n_steps == 0:
-                temp_train_acc = top1_train_accuracy / (counter + 1)
-                print(
-                    f"Iter {n_iter}\t Top1 Train accuracy {temp_train_acc.item()}",
-                )
             n_iter += 1
 
         top1_train_accuracy /= counter + 1
@@ -280,17 +288,17 @@ def main():
         print(
             f"Epoch {n_iter}\t Top1 Train accuracy {top1_train_accuracy.item()}\tTop1 Test accuracy: {top1_accuracy.item()}\tTop5 test acc: {top5_accuracy.item()}",
         )
-        checkpoint_name = "checkpoint_supervised_epoch_{:04d}.pth.tar".format(epoch)
-        save_checkpoint(
-            {
-                "n_epoch": epoch,
-                "arch": args.arch,
-                "state_dict": model.state_dict(),
-                "optimizer": optimizer.state_dict(),
-            },
-            is_best=False,
-            filename=os.path.join(log_dir, checkpoint_name),
-        )
+        if args.enable_checkpointing:
+            checkpoint_name = "checkpoint_supervised_epoch_{:04d}.pth.tar".format(epoch)
+            save_checkpoint(
+                {
+                    "n_epoch": epoch,
+                    "arch": args.arch,
+                    "state_dict": model.state_dict(),
+                    "optimizer": optimizer.state_dict(),
+                },
+                filename=os.path.join(log_dir, checkpoint_name),
+            )
 
    
 

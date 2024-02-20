@@ -3,6 +3,8 @@ import argparse
 import random
 from functools import partial
 
+import os
+from datetime import datetime
 import torch
 from torch.nn.parallel import DistributedDataParallel as DDP  # noqa: N817
 from torch.utils.data.distributed import DistributedSampler
@@ -173,6 +175,14 @@ def main():
     args = parser.parse_args()
     print(args)
 
+    # Create a directory to save the model checkpoints and logs
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y_%H:%M")
+    log_dir = os.path.join(args.model_dir, args.experiment_name,dt_string)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    # Set the start method to spawn for distributed training
     torch.multiprocessing.set_start_method("spawn")
 
     assert (
@@ -252,6 +262,7 @@ def main():
     )
 
     simclr = SimCLR(
+        log_dir=log_dir,
         model=model,
         optimizer=optimizer,
         scheduler=scheduler,

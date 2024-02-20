@@ -12,13 +12,12 @@ from .utils import save_checkpoint, save_config_file
 
 
 class SimCLR(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, log_dir, *args, **kwargs):
         self.args = kwargs["args"]
         self.model = kwargs["model"]
         self.optimizer = kwargs["optimizer"]
         self.scheduler = kwargs["scheduler"]
         self.device_id = kwargs["device_id"]
-        log_dir = os.path.join(self.args.model_dir, self.args.experiment_name)
         self.writer = SummaryWriter(log_dir)
         self.criterion = loss.SimCLRContrastiveLoss(self.args.temperature).cuda(
             self.device_id

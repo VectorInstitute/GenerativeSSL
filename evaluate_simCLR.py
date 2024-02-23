@@ -227,6 +227,7 @@ def main():
     elif args.dataset_name == "stl10":
         num_classes = 10
     elif args.dataset_name == "imagenet":
+        print("Using ImageNet dataset", flush=True)
         num_classes = 1000
 
     model = PretrainedResNet(
@@ -234,6 +235,8 @@ def main():
         pretrained_model_file = os.path.join(args.pretrained_model_dir, args.experiment_name, args.pretrained_model_name), 
         linear_eval=args.linear_evaluation, 
         num_classes=num_classes)
+    
+    print("loaded model", flush=True)
 
     if args.distributed_mode and dist_utils.is_dist_avail_and_initialized():
         # set the single device scope, otherwise DistributedDataParallel will
@@ -254,7 +257,9 @@ def main():
 
     n_iter = 0
 
-    log_dir = args.pretrained_model_dir
+    log_dir = os.path.joinq(args.pretrained_model_dir, args.experiment_name)
+
+    print(f"log_dir:{log_dir}", flush=True)
 
     for epoch_counter in tqdm(range(args.epochs), desc="Training Progress"):
         if dist_utils.is_dist_avail_and_initialized():

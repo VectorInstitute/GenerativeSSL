@@ -10,7 +10,6 @@ class PretrainedResNet(nn.Module):
         super(PretrainedResNet, self).__init__()
 
         self.pretrained_model_file = pretrained_model_file
-        print(self.pretrained_model_file, flush=True)
 
         self.resnet_dict = {
             "resnet18": models.resnet18(pretrained=False, num_classes=num_classes),

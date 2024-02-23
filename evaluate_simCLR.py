@@ -227,7 +227,6 @@ def main():
     elif args.dataset_name == "stl10":
         num_classes = 10
     elif args.dataset_name == "imagenet":
-        print("Using ImageNet dataset", flush=True)
         num_classes = 1000
 
     model = PretrainedResNet(
@@ -235,8 +234,6 @@ def main():
         pretrained_model_file = os.path.join(args.pretrained_model_dir, args.experiment_name, args.pretrained_model_name), 
         linear_eval=args.linear_evaluation, 
         num_classes=num_classes)
-    
-    print("loaded model", flush=True)
 
     if args.distributed_mode and dist_utils.is_dist_avail_and_initialized():
         # set the single device scope, otherwise DistributedDataParallel will
@@ -255,18 +252,14 @@ def main():
     
     criterion = torch.nn.CrossEntropyLoss().cuda(device_id)
 
-    n_iter = 0
-
     log_dir = os.path.join(args.pretrained_model_dir, args.experiment_name)
-
-    print(f"log_dir:{log_dir}", flush=True)
 
     for epoch_counter in tqdm(range(args.epochs), desc="Epoch Progress"):
         if dist_utils.is_dist_avail_and_initialized():
             train_loader.sampler.set_epoch(epoch_counter)
         top1_train_accuracy = 0
-        print(f"epoch:{epoch_counter}", flush=True)
-        for counter, (x_batch, y_batch) in tqdm(enumerate(train_loader), desc="Training Progress"):
+        counter = 0
+        for counter, (x_batch, y_batch) in tqdm(train_loader, desc="Training Progress"):
             x_batch = x_batch.cuda(device_id)
             y_batch = y_batch.cuda(device_id)
 
@@ -278,14 +271,13 @@ def main():
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            n_iter += 1
-            if counter % 100 == 0:
-                print(f"Epoch {epoch_counter}\t Iteration {counter}\t Loss: {loss.item()}", flush=True)
+            counter += 1
 
-        top1_train_accuracy /= counter + 1
+        top1_train_accuracy /= counter 
         top1_accuracy = 0
         top5_accuracy = 0
-        for counter, (x_batch, y_batch) in tqdm(enumerate(test_loader), desc="Evaluation Progress"):
+        counter = 0
+        for x_batch, y_batch in tqdm(test_loader, desc="Evaluation Progress"):
             x_batch = x_batch.cuda(device_id)
             y_batch = y_batch.cuda(device_id)
 
@@ -294,11 +286,12 @@ def main():
             top1, top5 = accuracy(logits, y_batch, topk=(1, 5))
             top1_accuracy += top1[0]
             top5_accuracy += top5[0]
+            counter += 1
 
-        top1_accuracy /= counter + 1
-        top5_accuracy /= counter + 1
+        top1_accuracy /= counter 
+        top5_accuracy /= counter 
         print(
-            f"Epoch {n_iter}\t Top1 Train accuracy {top1_train_accuracy.item()}\tTop1 Test accuracy: {top1_accuracy.item()}\tTop5 test acc: {top5_accuracy.item()}",
+            f"Epoch {epoch_counter}\t Top1 Train accuracy {top1_train_accuracy.item()}\tTop1 Test accuracy: {top1_accuracy.item()}\tTop5 test acc: {top5_accuracy.item()}",
             flush=True,
         )
         if args.enable_checkpointing:

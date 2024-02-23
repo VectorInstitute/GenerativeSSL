@@ -7,7 +7,7 @@ import torch
 from torch.nn.parallel import DistributedDataParallel as DDP  # noqa: N817
 from torch.utils.data.distributed import DistributedSampler
 from torchvision import models
-import shutil
+from tqdm import tqdm
 
 from SimCLR import distributed as dist_utils
 from SimCLR.datasets.supervised_dataset import SupervisedDataset
@@ -256,9 +256,9 @@ def main():
 
     log_dir = args.pretrained_model_dir
 
-    for epoch in range(args.epochs):
+    for epoch_counter in tqdm(range(args.epochs), desc="Training Progress"):
         if dist_utils.is_dist_avail_and_initialized():
-            train_loader.sampler.set_epoch(epoch)
+            train_loader.sampler.set_epoch(epoch_counter)
         top1_train_accuracy = 0
         for counter, (x_batch, y_batch) in enumerate(train_loader):
             x_batch = x_batch.cuda(device_id)
@@ -294,10 +294,10 @@ def main():
             flush=True,
         )
         if args.enable_checkpointing:
-            checkpoint_name = "checkpoint_supervised_epoch_{:04d}.pth.tar".format(epoch)
+            checkpoint_name = "checkpoint_supervised_epoch_{:04d}.pth.tar".format(epoch_counter)
             save_checkpoint(
                 {
-                    "n_epoch": epoch,
+                    "n_epoch": epoch_counter,
                     "arch": args.arch,
                     "state_dict": model.state_dict(),
                     "optimizer": optimizer.state_dict(),

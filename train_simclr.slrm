@@ -7,8 +7,8 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=100G
-#SBATCH --output=./logs/simclr/slurm-%N-%j.out
-#SBATCH --error=./logs/simclr/slurm-%N-%j.err
+#SBATCH --output=logs/simclr/slurm-%N-%j.out
+#SBATCH --error=logs/simclr/slurm-%N-%j.err
 #SBATCH --qos=a100_arashaf
 
 PY_ARGS=${@:1}

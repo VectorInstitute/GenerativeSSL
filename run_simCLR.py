@@ -11,7 +11,7 @@ from torch.utils.data.distributed import DistributedSampler
 from torchvision import models
 
 from SimCLR import distributed as dist_utils
-from SimCLR.data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
+from SimCLR.datasets.contrastive_learning_dataset import ContrastiveLearningDataset
 from SimCLR.models.resnet_simclr import ResNetSimCLR
 from SimCLR.simclr import SimCLR
 from torch.utils.data import Subset
@@ -177,7 +177,7 @@ def main():
 
     # Create a directory to save the model checkpoints and logs
     now = datetime.now()
-    dt_string = now.strftime("%d_%m_%Y_%H:%M")
+    dt_string = now.strftime("%Y_%m_%d_%H_%M")
     log_dir = os.path.join(args.model_dir, args.experiment_name,dt_string)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
@@ -260,7 +260,6 @@ def main():
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, T_max=len(train_loader), eta_min=0, last_epoch=-1
     )
-    print(device_id,flush=True)
     simclr = SimCLR(
         log_dir=log_dir,
         model=model,

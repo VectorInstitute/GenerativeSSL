@@ -4,11 +4,11 @@
 #SBATCH --partition=a100
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:4
-#SBATCH --ntasks-per-node=4
+#SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem-per-cpu=8G
-#SBATCH --output=/h/sayromlou/GenerativeSSL/logs/simclr/slurm-%N-%j.out
-#SBATCH --error=/h/sayromlou/GenerativeSSL/logs/simclr/slurm-%N-%j.err
+#SBATCH --mem=100G
+#SBATCH --output=./logs/simclr/slurm-%N-%j.out
+#SBATCH --error=./logs/simclr/slurm-%N-%j.err
 #SBATCH --qos=a100_arashaf
 
 PY_ARGS=${@:1}
@@ -16,7 +16,7 @@ PY_ARGS=${@:1}
 # load virtual environment
 source /ssd003/projects/aieng/envs/genssl2/bin/activate
 
-export NCCL_ASYNC_ERROR_HANDLING=1 # set to 1 for NCCL backend
+export TORCH_NCCL_ASYNC_ERROR_HANDLING=1 # set to 1 for NCCL backend
 export CUDA_LAUNCH_BLOCKING=1
 
 export MASTER_ADDR=$(hostname)
@@ -25,10 +25,11 @@ export MASTER_PORT=45679
 export PYTHONPATH="."
 nvidia-smi
 
-# “srun” executes the script <ntasks-per-node * nodes> times
-srun python run_simCLR.py \
+# torchrun execute nproc-per-node * nodes times
+torchrun --nnodes 1 --nproc-per-node 4 run_simCLR.py \
 --fp16-precision \
 --distributed_mode \
+--distributed_launcher="pytorch" \
 --batch-size=256 \
 --model_dir="/projects/imagenet_synthetic/train_models" \
 --experiment_name="simclr" \

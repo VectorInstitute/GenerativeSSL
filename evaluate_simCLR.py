@@ -10,7 +10,7 @@ from torchvision import models
 import shutil
 
 from SimCLR import distributed as dist_utils
-from SimCLR.data_aug.supervised_dataset import SupervisedDataset
+from SimCLR.datasets.supervised_dataset import SupervisedDataset
 from SimCLR.models.resnet_pretrained import PretrainedResNet
 
 
@@ -291,6 +291,7 @@ def main():
         top5_accuracy /= counter + 1
         print(
             f"Epoch {n_iter}\t Top1 Train accuracy {top1_train_accuracy.item()}\tTop1 Test accuracy: {top1_accuracy.item()}\tTop5 test acc: {top5_accuracy.item()}",
+            flush=True,
         )
         if args.enable_checkpointing:
             checkpoint_name = "checkpoint_supervised_epoch_{:04d}.pth.tar".format(epoch)

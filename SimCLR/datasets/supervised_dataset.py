@@ -2,7 +2,7 @@ from torchvision import datasets, transforms
 from torchvision.transforms import transforms
 
 from SimCLR.exceptions.exceptions import InvalidDatasetSelection
-import random
+from SimCLR.datasets.data_aug.center_crop import CostumeCenterCrop
 
 class SupervisedDataset:
     def __init__(self, root_folder):
@@ -16,7 +16,8 @@ class SupervisedDataset:
             size (int): Image size.
         """
         transform_list = [
-            transforms.CenterCrop(size=size),
+            CostumeCenterCrop(),
+            transforms.Resize((size, size)),
             transforms.ToTensor(),
         ]
 

@@ -15,7 +15,7 @@
 PY_ARGS=${@:1}
 
 # load virtual environment
-source /ssd003/projects/aieng/envs/genssl/bin/activate
+source /ssd003/projects/aieng/envs/genssl2/bin/activate
 
 export NCCL_ASYNC_ERROR_HANDLING=1 # set to 1 for NCCL backend
 export CUDA_LAUNCH_BLOCKING=1
@@ -26,10 +26,19 @@ export MASTER_PORT=45679
 export PYTHONPATH="."
 nvidia-smi
 
-# “srun” executes the script <ntasks-per-node * nodes> times
-srun python evaluate_simCLR.py \
---distributed_mode \
---batch-size=256 \
---pretrained_model_dir="/ssd003/projects/aieng/genssl/experiments/simclr" \
---pretrained_model_name="/checkpoint_epoch_0003.pth.tar" \
---linear_evaluation 
+files=$(ls checkpoint_epoch_*)
+
+# Loop through each file and pass it as a parameter to the rest of the script
+for file in $files
+do
+    # “srun” executes the script <ntasks-per-node * nodes> times
+    srun python evaluate_simCLR.py \
+    --distributed_mode \
+    --batch-size=256 \
+    --pretrained_model_dir="/projects/imagenet_synthetic/train_models" \
+    --experiment_name="simclr/23_02_2024_13:02" \
+    --pretrained_model_name=$file \
+    --linear_evaluation \
+    --arch="resnet50"
+    # Add your processing logic here
+done

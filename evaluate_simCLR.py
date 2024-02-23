@@ -106,6 +106,10 @@ parser.add_argument(
     default=None, 
     help="Name of pretrained model.")
 parser.add_argument(
+    "--experiment_name",
+    default=None,
+    help="Name of the experiment.")
+parser.add_argument(
     "--linear_evaluation", 
     action="store_true",
     help="Whether or not to evaluate the linear evaluation of the model.")
@@ -227,7 +231,7 @@ def main():
 
     model = PretrainedResNet(
         base_model=args.arch, 
-        pretrained_model_file = os.path.join(args.pretrained_model_dir, args.pretrained_model_name), 
+        pretrained_model_file = os.path.join(args.pretrained_model_dir, args.experiment_name, args.pretrained_model_name), 
         linear_eval=args.linear_evaluation, 
         num_classes=num_classes)
 

@@ -260,7 +260,7 @@ def main():
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, T_max=len(train_loader), eta_min=0, last_epoch=-1
     )
-
+    print(device_id,flush=True)
     simclr = SimCLR(
         log_dir=log_dir,
         model=model,

@@ -259,7 +259,7 @@ def main():
             train_loader.sampler.set_epoch(epoch_counter)
         top1_train_accuracy = 0
         counter = 0
-        for counter, (x_batch, y_batch) in tqdm(train_loader, desc="Training Progress"):
+        for x_batch, y_batch in tqdm(train_loader, desc="Training Progress"):
             x_batch = x_batch.cuda(device_id)
             y_batch = y_batch.cuda(device_id)
 

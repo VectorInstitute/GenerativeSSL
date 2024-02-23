@@ -25,7 +25,10 @@ export MASTER_PORT=45679
 export PYTHONPATH="."
 nvidia-smi
 
-files=$(ls checkpoint_epoch_*)
+pretrained_model_dir="/projects/imagenet_synthetic/train_models"
+experiment_name="simclr/2024_02_23_13_02"
+
+files=$(ls $pretrained_model_dir/$experiment_name/checkpoint_epoch_*)
 
 # Loop through each file and pass it as a parameter to the rest of the script
 for file in $files
@@ -37,8 +40,8 @@ do
     --distributed_mode \
     --distributed_launcher="pytorch" \
     --batch-size=256 \
-    --pretrained_model_dir="/projects/imagenet_synthetic/train_models" \
-    --experiment_name="simclr/2024_02_23_13_02" \
+    --pretrained_model_dir=$pretrained_model_dir \
+    --experiment_name=$experiment_name \
     --pretrained_model_name=$file \
     --linear_evaluation \
     --arch="resnet50"

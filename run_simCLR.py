@@ -182,7 +182,7 @@ def main():
     try:
         os.makedirs(log_dir)
     except FileExistsError:
-        print(f"Directory {log_dir} made by another worker")
+        print(f"Directory {log_dir} made by another worker", flush=True)
 
     # Set the start method to spawn for distributed training
     torch.multiprocessing.set_start_method("spawn")

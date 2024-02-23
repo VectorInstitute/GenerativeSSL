@@ -179,8 +179,10 @@ def main():
     now = datetime.now()
     dt_string = now.strftime("%Y_%m_%d_%H_%M")
     log_dir = os.path.join(args.model_dir, args.experiment_name,dt_string)
-    if not os.path.exists(log_dir):
+    try:
         os.makedirs(log_dir)
+    except FileExistsError:
+        print(f"Directory {log_dir} made by another worker")
 
     # Set the start method to spawn for distributed training
     torch.multiprocessing.set_start_method("spawn")

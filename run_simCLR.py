@@ -177,7 +177,7 @@ def main():
 
     # Create a directory to save the model checkpoints and logs
     now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y_%H:%M")
+    dt_string = now.strftime("%d_%m_%Y_%H:%M")
     log_dir = os.path.join(args.model_dir, args.experiment_name,dt_string)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)

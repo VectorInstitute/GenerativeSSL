@@ -5,8 +5,8 @@ from PIL import Image as Image_PIL
 from scipy.stats import truncnorm
 from torch import nn
 import torchvision.transforms as transforms
-import inference.utils as inference_utils
-import data_utils.utils as data_utils
+from icgan.inference import utils as inference_utils
+from icgan.data_utils import utils as data_utils
 
 
 class ICGANInference:
@@ -24,14 +24,14 @@ class ICGANInference:
             else:
                 self.replace_to_inplace_relu(child)
 
-    def load_icgan(self, root_="./"):
+    def load_icgan(self, root_=""):
         root = os.path.join(root_, self.config.experiment_name)
         config = torch.load("%s/%s.pth" % (root, "state_dict_best0"))["config"]
         config["weights_root"] = root_
         config["model_backbone"] = "biggan"
         config["experiment_name"] = self.config.experiment_name
         G, config = inference_utils.load_model_inference(config)
-        G.cuda()
+        G = G.cuda()
         G.eval()
         return G
 
@@ -62,7 +62,7 @@ class ICGANInference:
         return mu2 + sigma2 - torch.log(sigma2) - 1
 
     def load_generative_model(self):
-        model = self.load_icgan(root_="./")
+        model = self.load_icgan(root_="")
         return model
 
     def load_feature_extractor(self, feat_ext_path):

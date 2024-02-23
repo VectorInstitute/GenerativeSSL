@@ -261,11 +261,12 @@ def main():
 
     print(f"log_dir:{log_dir}", flush=True)
 
-    for epoch_counter in tqdm(range(args.epochs), desc="Training Progress"):
+    for epoch_counter in tqdm(range(args.epochs), desc="Epoch Progress"):
         if dist_utils.is_dist_avail_and_initialized():
             train_loader.sampler.set_epoch(epoch_counter)
         top1_train_accuracy = 0
-        for counter, (x_batch, y_batch) in enumerate(train_loader):
+        print(f"epoch:{epoch_counter}", flush=True)
+        for counter, (x_batch, y_batch) in tqdm(enumerate(train_loader), desc="Training Progress"):
             x_batch = x_batch.cuda(device_id)
             y_batch = y_batch.cuda(device_id)
 
@@ -278,11 +279,13 @@ def main():
             loss.backward()
             optimizer.step()
             n_iter += 1
+            if counter % 100 == 0:
+                print(f"Epoch {epoch_counter}\t Iteration {counter}\t Loss: {loss.item()}", flush=True)
 
         top1_train_accuracy /= counter + 1
         top1_accuracy = 0
         top5_accuracy = 0
-        for counter, (x_batch, y_batch) in enumerate(test_loader):
+        for counter, (x_batch, y_batch) in tqdm(enumerate(test_loader), desc="Evaluation Progress"):
             x_batch = x_batch.cuda(device_id)
             y_batch = y_batch.cuda(device_id)
 

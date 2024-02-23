@@ -257,7 +257,7 @@ def main():
 
     n_iter = 0
 
-    log_dir = os.path.joinq(args.pretrained_model_dir, args.experiment_name)
+    log_dir = os.path.join(args.pretrained_model_dir, args.experiment_name)
 
     print(f"log_dir:{log_dir}", flush=True)
 

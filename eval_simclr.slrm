@@ -28,7 +28,11 @@ nvidia-smi
 pretrained_model_dir="/projects/imagenet_synthetic/train_models"
 experiment_name="simclr/2024_02_23_13_02"
 
-files=$(ls $pretrained_model_dir/$experiment_name/checkpoint_epoch_*)
+cd $pretrained_model_dir/$experiment_name
+
+files=$(ls checkpoint_epoch_*)
+
+cd "$OLDPWD"
 
 # Loop through each file and pass it as a parameter to the rest of the script
 for file in $files

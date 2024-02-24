@@ -2,7 +2,7 @@
 
 #SBATCH --job-name=gen_image
 #SBATCH --partition=a100
-#SBATCH --time=60:00:00
+#SBATCH --time=72:00:00
 #SBATCH --qos=a100_arashaf
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:1
@@ -26,8 +26,9 @@ export PYTHONPATH="."
 nvidia-smi
 
 srun python img2img.py \
---outdir /projects/imagenet_synthetic/arashaf_test \
---num_shards=4 \
---shard_index=0 \
---image_version=1 \
---counter=30
+--outdir /projects/imagenet_synthetic/arashaf_stablediff_batched \
+--num_shards=5 \
+--shard_index=4 \
+--image_version=0 \
+--batch_size=8 \
+--counter=1000000000

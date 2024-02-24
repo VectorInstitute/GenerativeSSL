@@ -3,6 +3,7 @@ import os
 import time
 
 import torch
+import torchvision.transforms.functional as TF
 from diffusers import (
     DDIMScheduler,
     DPMSolverSinglestepScheduler,
@@ -41,8 +42,8 @@ class StableGenerator(object):
         print("Scheduler:", self.model.scheduler)
 
         # image size
-        self.height = self.opt.img_save_size
-        self.width = self.opt.img_save_size
+        self.height = self.opt.img_size
+        self.width = self.opt.img_size
 
         # inference steps
         self.num_inference_steps = self.opt.steps
@@ -53,8 +54,7 @@ class StableGenerator(object):
         self.generator = torch.Generator()
         self.generator.manual_seed(self.opt.image_version)
 
-    def generate(self, input_image, n_sample_per_image=10):
-        trans = transforms.Resize(size=(self.height, self.width))
+    def generate(self, input_image, n_sample_per_image=1):
         synth_images = self.model(
             input_image,
             eta=self.eta,
@@ -62,7 +62,17 @@ class StableGenerator(object):
             num_inference_steps=self.num_inference_steps,
             generator=self.generator,
         ).images
+        trans = transforms.Resize(size=(self.height, self.width))
         return [trans(img) for img in synth_images]
+
+
+class ImageNetWithFilenames(datasets.ImageNet):
+    def __getitem__(self, index):
+        filename, _ = self.imgs[index]
+        image = self.loader(os.path.join(self.root, filename))
+        if self.transform is not None:
+            image = self.transform(image)
+        return {"image": image, "filename": filename}
 
 
 def main():
@@ -74,9 +84,7 @@ def main():
         help="dir to write results to",
         default="outputs/txt2img-samples",
     )
-    parser.add_argument(
-        "--img_save_size", type=int, default=224, help="image saving size"
-    )
+    parser.add_argument("--img_size", type=int, default=224, help="image saving size")
     parser.add_argument(
         "--steps",
         type=int,
@@ -126,57 +134,122 @@ def main():
         type=int,
         help="Counter.",
     )
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=8,
+        help="Batch size.",
+    )
     opt = parser.parse_args()
+    print(opt)
 
     if opt.outdir is not None:
         os.makedirs(opt.outdir, exist_ok=True)
 
     transform_list = [
         data_utils.CenterCropLongEdge(),
-        transforms.Resize(size=(opt.img_save_size, opt.img_save_size)),
+        transforms.Resize(size=(opt.img_size, opt.img_size)),
+        transforms.ToTensor(),  # TODO(arashaf)
     ]
     transform = transforms.Compose(transform_list)
 
-    imagenet_dataset = datasets.ImageNet(
-        "/scratch/ssd004/datasets/imagenet256", split="train", transform=transform
+    imagenet_dir = "/scratch/ssd004/datasets/imagenet256"
+
+    # imagenet_dataset = datasets.ImageNet(
+    #     imagenet_dir, split="train", transform=transform
+    # )
+
+    imagenet_dataset = ImageNetWithFilenames(
+        root=imagenet_dir, split="train", transform=transform
+    )
+    dl_generator = torch.Generator()
+    dl_generator.manual_seed(42)
+    data_loader = torch.utils.data.DataLoader(
+        imagenet_dataset,
+        batch_size=opt.batch_size,
+        shuffle=False,
+        generator=dl_generator,
     )
 
-    Stable_generator = StableGenerator(opt)
+    stable_generator = StableGenerator(opt)
     n = len(imagenet_dataset)
-
+    print(f"Total number of images: {n}")
     counter = 0
-    for i in range(n):
+    # for i in range(n):
+    #     counter += 1
+    #     if counter > opt.counter:
+    #         break
+    #     if i % opt.num_shards == opt.shard_index:
+    #         start = time.time()
+    #         batch = imagenet_dataset[i]
+    #         image = batch[0]
+    #         generated_images = stable_generator.generate(
+    #             image,
+    #             n_sample_per_image=1,
+    #         )
+
+    #         path = imagenet_dataset.samples[i][0]
+    #         _save_images(path, generated_images, opt.outdir, opt.image_version)
+    #         end = time.time()
+    #         print(
+    #             f"Generated {len(generated_images)} images in time: {end-start} seconds."
+    #         )
+
+    for i, dct in enumerate(data_loader):
         counter += 1
         if counter > opt.counter:
             break
         if i % opt.num_shards == opt.shard_index:
-            batch = imagenet_dataset[i]
-            image = batch[0]
+            images = dct["image"]
+            filenames = dct["filename"]
+            # print(f"Batch {i}")
+            # print("Filenames:", filenames)  # Filename of the image
+            # print("Shapes:", images.shape)  # Shape of the image tensor
             start = time.time()
-            generated_images = Stable_generator.generate(
-                image,
+            image_list = []
+            for j in range(images.size(0)):
+                image = TF.to_pil_image(images[j])
+                image_list.append(image)
+            generated_images = stable_generator.generate(
+                image_list,
                 n_sample_per_image=1,
             )
+            _arash_save_images(
+                filenames, generated_images, imagenet_dir, opt.outdir, opt.image_version
+            )
             end = time.time()
-            # print(f"Time taken to generate images: {end-start} seconds")
+            print(
+                f"Generated {len(generated_images)} images in time: {end-start} seconds."
+            )
 
-            # Save images.
-            path = imagenet_dataset.samples[i][0]
-            start = time.time()
-            _save_images(path, generated_images, opt.outdir, opt.image_version)
-            end = time.time()
-            print(f"Time taken to save images: {end-start} seconds")
+    print("Program finished!")
+
+
+def _arash_save_images(file_list, images, old_prefix, new_prefix, image_version):
+    for filepath, img in zip(file_list, images):
+        # Replace the prefix
+        new_filepath = filepath.replace(old_prefix, new_prefix)
+
+        # Extract directory and create if it doesn't exist
+        directory = os.path.dirname(new_filepath)
+        # print(f"File path: {filepath}")
+        # print(f"Directory: {directory}")
+        if not os.path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
+
+        # Extract filename and extension
+        filename, extension = os.path.splitext(os.path.basename(filepath))
+
+        new_filename = f"{filename}_{image_version}{extension}"
+        new_file_path = os.path.join(directory, new_filename)
+        img.save(new_file_path)
+        # print(f"File saved: {new_file_path}")
 
 
 def _save_images(path, images, out_dir, image_version):
-    # get the class name
     out_folder = path.split("/")[-1].split(".")[0].split("_")[0]
-    # get the (class name_image number)
     file_name = path.split("/")[-1].split(".")[0]
-    # create a folder for each class
     save_folder = os.path.join(out_dir, out_folder)
-    print(f"Path: {path}")
-    print(f"save_folder: {save_folder}")
 
     if not os.path.exists(save_folder):
         os.makedirs(save_folder, exist_ok=True)

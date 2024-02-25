@@ -1,15 +1,15 @@
 #!/bin/bash
 
 #SBATCH --job-name=train_sunrgbd
-#SBATCH --partition=a100
+#SBATCH --partition=t4v2
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:4
-#SBATCH --ntasks-per-node=1
+#SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=100G
 #SBATCH --output=logs/simclr/eval_slurm-%N-%j.out
 #SBATCH --error=logs/simclr/eval_slurm-%N-%j.err
-#SBATCH --qos=a100_arashaf
+#SBATCH --qos=m
 
 PY_ARGS=${@:1}
 
@@ -39,15 +39,13 @@ for file in $files
 do
     echo "Evaluating: $file"
 
-    # torchrun execute nproc-per-node * nodes times
-    torchrun --nnodes 1 --nproc-per-node 4 evaluate_simCLR.py \
+    # srun execute ntasks-per-node * nodes times
+    srun python evaluate_simCLR.py \
     --distributed_mode \
-    --distributed_launcher="pytorch" \
     --batch-size=256 \
     --pretrained_model_dir=$pretrained_model_dir \
     --experiment_name=$experiment_name \
     --pretrained_model_name=$file \
-    --linear_evaluation \
-    --arch="resnet50"
+    --linear_evaluation 
     # Add your processing logic here
 done

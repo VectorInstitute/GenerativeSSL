@@ -1,14 +1,14 @@
 #!/bin/bash
 
-#SBATCH --job-name=train_simclr
+#SBATCH --job-name=simclr_base
 #SBATCH --partition=a100
-#SBATCH --time=72:00:00
 #SBATCH --qos=a100_arashaf
+#SBATCH --time=72:00:00
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:4
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=4
-#SBATCH --mem-per-cpu=2G
+#SBATCH --mem-per-cpu=4G
 #SBATCH --output=slurm-%N-%j.out
 
 PY_ARGS=${@:1}
@@ -29,4 +29,6 @@ nvidia-smi
 srun python run_simCLR.py \
 --fp16-precision \
 --distributed_mode \
---batch-size=128
+--batch-size=512 \
+--epochs=100 \
+--no-use_synthetic_data

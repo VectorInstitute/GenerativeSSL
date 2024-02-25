@@ -27,8 +27,8 @@ nvidia-smi
 
 srun python img2img.py \
 --outdir /projects/imagenet_synthetic/arashaf_stablediff_batched \
---num_shards=5 \
---shard_index=4 \
---image_version=0 \
+--num_shards=7 \
+--shard_index=2 \
+--image_version=1 \
 --batch_size=8 \
 --counter=1000000000

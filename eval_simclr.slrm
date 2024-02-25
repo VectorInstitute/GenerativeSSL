@@ -1,0 +1,51 @@
+#!/bin/bash
+
+#SBATCH --job-name=train_sunrgbd
+#SBATCH --partition=t4v2
+#SBATCH --nodes=1
+#SBATCH --gres=gpu:4
+#SBATCH --ntasks-per-node=4
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=100G
+#SBATCH --output=logs/simclr/eval_slurm-%N-%j.out
+#SBATCH --error=logs/simclr/eval_slurm-%N-%j.err
+#SBATCH --qos=m
+
+PY_ARGS=${@:1}
+
+# load virtual environment
+source /ssd003/projects/aieng/envs/genssl2/bin/activate
+
+export TORCH_NCCL_ASYNC_ERROR_HANDLING=1 # set to 1 for NCCL backend
+export CUDA_LAUNCH_BLOCKING=1
+
+export MASTER_ADDR=$(hostname)
+export MASTER_PORT=45679
+
+export PYTHONPATH="."
+nvidia-smi
+
+pretrained_model_dir="/projects/imagenet_synthetic/train_models"
+experiment_name="simclr/2024_02_23_13_02"
+
+cd $pretrained_model_dir/$experiment_name
+
+files=$(ls checkpoint_epoch_*)
+
+cd "$OLDPWD"
+
+# Loop through each file and pass it as a parameter to the rest of the script
+for file in $files
+do
+    echo "Evaluating: $file"
+
+    # srun execute ntasks-per-node * nodes times
+    srun python evaluate_simCLR.py \
+    --distributed_mode \
+    --batch-size=256 \
+    --pretrained_model_dir=$pretrained_model_dir \
+    --experiment_name=$experiment_name \
+    --pretrained_model_name=$file \
+    --linear_evaluation 
+    # Add your processing logic here
+done

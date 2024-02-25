@@ -21,7 +21,7 @@ class RCDMInference(object):
 
         # Load SSL model
         self.ssl_model = (
-            get_model(self.config.type_model, self.config.use_head)
+            get_model(self.config.type_model, self.config.use_head, self.config.pretrained_models_dir)
             .cuda(self.device_id)
             .eval()
         )
@@ -50,7 +50,7 @@ class RCDMInference(object):
 
         if self.config.model_path == "":
             trained_model = get_dict_rcdm_model(
-                self.config.type_model, self.config.use_head
+                self.config.type_model, self.config.use_head, self.config.pretrained_models_dir
             )
         else:
             trained_model = torch.load(self.config.model_path, map_location="cpu")
@@ -63,7 +63,6 @@ class RCDMInference(object):
                 data_utils.CenterCropLongEdge(),
                 transforms.Resize((size, size)),
                 transforms.ToTensor(),
-                transforms.Normalize(self.config.norm_mean, self.config.norm_std),
             ]
         )
         tensor_image = transform_list(input_image)
@@ -89,9 +88,8 @@ class RCDMInference(object):
             if not self.config.use_ddim
             else self.diffusion.ddim_sample_loop
         )
-
-        img = img.unsqueeze(0).repeat(1, 1, 1, 1)
         img = self.preprocess_input_image(img).cuda(self.device_id)
+        img = img.repeat(1, 1, 1, 1)
         model_kwargs = {}
 
         with torch.no_grad():
@@ -104,5 +102,4 @@ class RCDMInference(object):
             model_kwargs=model_kwargs,
         )
 
-        print("Sampling completed!")
         return sample.squeeze(0)

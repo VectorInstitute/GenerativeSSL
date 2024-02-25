@@ -1,11 +1,11 @@
 from torchvision import datasets, transforms
 
-from SimCLR.data_aug.gaussian_blur import GaussianBlur
-from SimCLR.data_aug.icgan_aug import ICGANInference
-from SimCLR.data_aug.icgan_config import get_icgan_config
-from SimCLR.data_aug.rcdm_aug import RCDMInference
-from SimCLR.data_aug.rcdm_config import get_config
-from SimCLR.data_aug.view_generator import ContrastiveLearningViewGenerator
+from SimCLR.datasets.data_aug.gaussian_blur import GaussianBlur
+from SimCLR.datasets.data_aug.icgan_aug import ICGANInference
+from SimCLR.datasets.data_aug.icgan_config import get_icgan_config
+from SimCLR.datasets.data_aug.rcdm_aug import RCDMInference
+from SimCLR.datasets.data_aug.rcdm_config import get_config
+from SimCLR.datasets.view_generator import ContrastiveLearningViewGenerator
 from SimCLR.exceptions.exceptions import InvalidDatasetSelection
 
 
@@ -114,3 +114,4 @@ class ContrastiveLearningDataset:
             raise InvalidDatasetSelection()
         else:
             return dataset_fn()
+        

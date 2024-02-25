@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 import torch
 from torch.cuda.amp import GradScaler, autocast
@@ -18,7 +19,15 @@ class SimCLR(object):
         self.optimizer = kwargs["optimizer"]
         self.scheduler = kwargs["scheduler"]
         self.device_id = kwargs["device_id"]
-        self.writer = SummaryWriter()
+        # Create a directory to save the model checkpoints and logs
+        now = datetime.now()
+        dt_string = now.strftime("%Y_%m_%d_%H_%M")
+        log_dir = os.path.join(args.model_dir, args.experiment_name,dt_string)
+        try:
+            os.makedirs(log_dir)
+        except FileExistsError:
+            print(f"Directory {log_dir} made by another worker", flush=True)
+        self.writer = SummaryWriter(log_dir)
         self.criterion = loss.SimCLRContrastiveLoss(self.args.temperature).cuda(
             self.device_id
         )
@@ -62,7 +71,6 @@ class SimCLR(object):
                         self.scheduler.get_last_lr()[0],
                         global_step=n_iter,
                     )
-
                 n_iter += 1
 
             # warmup for the first 10 epochs

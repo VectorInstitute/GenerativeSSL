@@ -9,7 +9,7 @@ from torch.utils.data.distributed import DistributedSampler
 from torchvision import models
 
 from SimCLR import distributed as dist_utils
-from SimCLR.data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
+from SimCLR.datasets.contrastive_learning_dataset import ContrastiveLearningDataset
 from SimCLR.models.resnet_simclr import ResNetSimCLR
 from SimCLR.simclr import SimCLR
 from torch.utils.data import Subset
@@ -139,6 +139,8 @@ parser.add_argument(
 )
 parser.add_argument("--distributed_launcher", default="slurm")
 parser.add_argument("--distributed_backend", default="nccl")
+parser.add_argument("--model_dir", default="model_checkpoints")
+parser.add_argument("--experiment_name", default="simclr")
 parser.add_argument(
     "--subset_fraction",
     default=1.0,
@@ -171,6 +173,7 @@ def main():
     args = parser.parse_args()
     print(args)
 
+    # Set the start method to spawn for distributed training
     torch.multiprocessing.set_start_method("spawn")
 
     assert (
@@ -248,7 +251,6 @@ def main():
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, T_max=len(train_loader), eta_min=0, last_epoch=-1
     )
-
     simclr = SimCLR(
         model=model,
         optimizer=optimizer,

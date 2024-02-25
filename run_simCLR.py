@@ -56,7 +56,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--epochs",
-    default=50,
+    default=100,
     type=int,
     metavar="N",
     help="number of total epochs to run",

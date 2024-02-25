@@ -1,9 +1,11 @@
+"""Synthetic image generation using Stable Diffusion."""
+
 import argparse
 import os
 import time
 
 import torch
-import torchvision.transforms.functional as TF
+import torchvision.transforms.functional as tfunc
 from diffusers import (
     DDIMScheduler,
     DPMSolverSinglestepScheduler,
@@ -48,7 +50,6 @@ class StableGenerator(object):
         # inference steps
         self.num_inference_steps = self.opt.steps
 
-        # eta (0, 1)
         self.eta = self.opt.ddim_eta
 
         self.generator = torch.Generator()
@@ -155,10 +156,6 @@ def main():
 
     imagenet_dir = "/scratch/ssd004/datasets/imagenet256"
 
-    # imagenet_dataset = datasets.ImageNet(
-    #     imagenet_dir, split="train", transform=transform
-    # )
-
     imagenet_dataset = ImageNetWithFilenames(
         root=imagenet_dir, split="train", transform=transform
     )
@@ -175,26 +172,6 @@ def main():
     n = len(imagenet_dataset)
     print(f"Total number of images: {n}")
     counter = 0
-    # for i in range(n):
-    #     counter += 1
-    #     if counter > opt.counter:
-    #         break
-    #     if i % opt.num_shards == opt.shard_index:
-    #         start = time.time()
-    #         batch = imagenet_dataset[i]
-    #         image = batch[0]
-    #         generated_images = stable_generator.generate(
-    #             image,
-    #             n_sample_per_image=1,
-    #         )
-
-    #         path = imagenet_dataset.samples[i][0]
-    #         _save_images(path, generated_images, opt.outdir, opt.image_version)
-    #         end = time.time()
-    #         print(
-    #             f"Generated {len(generated_images)} images in time: {end-start} seconds."
-    #         )
-
     for i, dct in enumerate(data_loader):
         counter += 1
         if counter > opt.counter:
@@ -202,19 +179,16 @@ def main():
         if i % opt.num_shards == opt.shard_index:
             images = dct["image"]
             filenames = dct["filename"]
-            # print(f"Batch {i}")
-            # print("Filenames:", filenames)  # Filename of the image
-            # print("Shapes:", images.shape)  # Shape of the image tensor
             start = time.time()
             image_list = []
             for j in range(images.size(0)):
-                image = TF.to_pil_image(images[j])
+                image = tfunc.to_pil_image(images[j])
                 image_list.append(image)
             generated_images = stable_generator.generate(
                 image_list,
                 n_sample_per_image=1,
             )
-            _arash_save_images(
+            _save_images(
                 filenames, generated_images, imagenet_dir, opt.outdir, opt.image_version
             )
             end = time.time()
@@ -225,15 +199,13 @@ def main():
     print("Program finished!")
 
 
-def _arash_save_images(file_list, images, old_prefix, new_prefix, image_version):
+def _save_images(file_list, images, old_prefix, new_prefix, image_version):
     for filepath, img in zip(file_list, images):
         # Replace the prefix
         new_filepath = filepath.replace(old_prefix, new_prefix)
 
         # Extract directory and create if it doesn't exist
         directory = os.path.dirname(new_filepath)
-        # print(f"File path: {filepath}")
-        # print(f"Directory: {directory}")
         if not os.path.exists(directory):
             os.makedirs(directory, exist_ok=True)
 
@@ -243,20 +215,6 @@ def _arash_save_images(file_list, images, old_prefix, new_prefix, image_version)
         new_filename = f"{filename}_{image_version}{extension}"
         new_file_path = os.path.join(directory, new_filename)
         img.save(new_file_path)
-        # print(f"File saved: {new_file_path}")
-
-
-def _save_images(path, images, out_dir, image_version):
-    out_folder = path.split("/")[-1].split(".")[0].split("_")[0]
-    file_name = path.split("/")[-1].split(".")[0]
-    save_folder = os.path.join(out_dir, out_folder)
-
-    if not os.path.exists(save_folder):
-        os.makedirs(save_folder, exist_ok=True)
-
-    for _, img in enumerate(images):
-        save_file = os.path.join(save_folder, f"{file_name}_{image_version}.JPEG")
-        img.save(save_file)
 
 
 if __name__ == "__main__":

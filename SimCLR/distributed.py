@@ -11,7 +11,8 @@ def init_distributed_mode(
     backend,
 ) -> None:
     """Launch distributed training based on given launcher and backend.
-    Parameters.
+
+    Parameters
     ----------
     launcher : {'pytorch', 'slurm'}
         Specifies if pytorch launch utitlity (`torchrun`) is being
@@ -31,8 +32,10 @@ def init_distributed_mode(
 
 def launch_pytorch_dist(backend) -> None:
     """Initialize a distributed process group with PyTorch.
+
     NOTE: This method relies on `torchrun` to set 'MASTER_ADDR',
     'MASTER_PORT', 'RANK', 'WORLD_SIZE' and 'LOCAL_RANK' as environment variables
+
     Parameters
     ----------
     backend : {'nccl', 'gloo', 'mpi'}
@@ -48,6 +51,7 @@ def launch_pytorch_dist(backend) -> None:
 
 def launch_slurm_dist(backend) -> None:
     """Initialize a distributed process group when using SLURM.
+
     Parameters
     ----------
     backend : {'nccl', 'gloo', 'mpi'}
@@ -78,6 +82,7 @@ def launch_slurm_dist(backend) -> None:
 # https://github.com/pytorch/vision/blob/main/references/classification/utils.py
 def disable_non_master_print():
     """Disable printing if not master process.
+
     Notes
     -----
     Printing can be forced by adding a boolean flag, 'force', to the keyword arguments
@@ -102,6 +107,7 @@ def is_dist_avail_and_initialized() -> bool:
 
 def get_world_size() -> int:
     """Get the total number of processes a distributed process group.
+
     It returns 1 if the PyTorch distributed package is unavailable or the
     default process group has not been initialized.
     """
@@ -112,6 +118,7 @@ def get_world_size() -> int:
 
 def get_rank() -> int:
     """Return the global rank of the current process.
+
     Returns 0 if the PyTorch distribued package is unavailable or the
     default process group has not been initialized.
     """
@@ -122,6 +129,7 @@ def get_rank() -> int:
 
 def is_main_process() -> bool:
     """Check if the current process is the Master proces.
+
     The master process typically has a rank of 0.
     """
     return not is_dist_avail_and_initialized() or get_rank() == 0

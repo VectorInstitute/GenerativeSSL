@@ -1,18 +1,22 @@
 """SimCLR training script."""
+
 import argparse
+import os
 import random
+from datetime import datetime
 from functools import partial
 
 import torch
 from torch.nn.parallel import DistributedDataParallel as DDP  # noqa: N817
+from torch.utils.data import Subset
 from torch.utils.data.distributed import DistributedSampler
 from torchvision import models
 
 from SimCLR import distributed as dist_utils
 from SimCLR.data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
+from SimCLR.data_aug.imagenet_synthetic_dataset import ImageNetSynthetic
 from SimCLR.models.resnet_simclr import ResNetSimCLR
 from SimCLR.simclr import SimCLR
-from torch.utils.data import Subset
 
 
 model_names = sorted(
@@ -146,6 +150,33 @@ parser.add_argument(
     metavar="SF",
     help="subset fraction of the dataset",
 )
+parser.add_argument(
+    "--checkpoint_dir",
+    default="/projects/imagenet_synthetic/model_checkpoints",
+    help="Checkpoint root directory.",
+)
+parser.add_argument(
+    "--use_synthetic_data",
+    action=argparse.BooleanOptionalAction,
+    help="Whether to use real data or synthetic data for training.",
+)
+parser.add_argument(
+    "--synthetic_data_dir",
+    default="/projects/imagenet_synthetic/synthetic_icgan",
+    help="Path to the root of synthetic data.",
+)
+parser.add_argument(
+    "--synthetic_index_min",
+    default=0,
+    type=int,
+    help="Synthetic data files are named filename_i.JPEG. This index determines the lower bound for i.",
+)
+parser.add_argument(
+    "--synthetic_index_max",
+    default=9,
+    type=int,
+    help="Synthetic data files are named filename_i.JPEG. This index determines the upper bound for i.",
+)
 
 
 def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> None:
@@ -169,6 +200,11 @@ def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> No
 
 def main():
     args = parser.parse_args()
+    args.checkpoint_dir = os.path.join(
+        args.checkpoint_dir, datetime.now().strftime("%Y-%m-%d-%H-%M")
+    )
+    os.makedirs(args.checkpoint_dir, exist_ok=True)
+
     print(args)
 
     torch.multiprocessing.set_start_method("spawn")
@@ -186,14 +222,26 @@ def main():
     else:
         device_id = None
 
-    dataset = ContrastiveLearningDataset(args.data)
-    train_dataset = dataset.get_dataset(
-        args.dataset_name,
-        args.n_views,
-        args.rcdm_augmentation,
-        args.icgan_augmentation,
-        device_id,
-    )
+    if args.use_synthetic_data:
+        print(
+            f"Using synthetic data for training at {args.synthetic_data_dir} between indices {args.synthetic_index_min} and {args.synthetic_index_max}."
+        )
+        train_dataset = ImageNetSynthetic(
+            args.data,
+            args.synthetic_data_dir,
+            index_min=args.synthetic_index_min,
+            index_max=args.synthetic_index_max,
+        )
+    else:
+        print(f"Using real data for training at {args.data}.")
+        dataset = ContrastiveLearningDataset(args.data)
+        train_dataset = dataset.get_dataset(
+            args.dataset_name,
+            args.n_views,
+            args.rcdm_augmentation,
+            args.icgan_augmentation,
+            device_id,
+        )
 
     if args.subset_fraction < 1.0:
         # Get indices of subset of the dataset
@@ -246,7 +294,10 @@ def main():
     )
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=len(train_loader), eta_min=0, last_epoch=-1
+        optimizer,
+        T_max=len(train_loader),
+        eta_min=0,
+        last_epoch=-1,
     )
 
     simclr = SimCLR(

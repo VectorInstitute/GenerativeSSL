@@ -1,3 +1,5 @@
+"""Contrastive learning dataset."""
+
 from torchvision import datasets, transforms
 
 from SimCLR.data_aug.gaussian_blur import GaussianBlur
@@ -15,7 +17,11 @@ class ContrastiveLearningDataset:
 
     @staticmethod
     def get_simclr_pipeline_transform(
-        size, s=1, rcdm_agumentation=False, icgan_agumentation=False, device_id=None
+        size,
+        s=1,
+        rcdm_agumentation=False,
+        icgan_agumentation=False,
+        device_id=None,
     ):
         """Return a set of data augmentation transformations as described in the SimCLR paper.
 
@@ -36,7 +42,7 @@ class ContrastiveLearningDataset:
 
         if rcdm_agumentation and icgan_agumentation:
             raise ValueError(
-                "Both rcdm agumentation and icgan agumentation flags are set. Please set only one."
+                "Both rcdm agumentation and icgan agumentation flags are set. Please set only one.",
             )
 
         if rcdm_agumentation:

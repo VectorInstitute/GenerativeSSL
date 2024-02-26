@@ -20,14 +20,16 @@ class SimCLR(object):
         self.device_id = kwargs["device_id"]
         self.writer = SummaryWriter()
         self.criterion = loss.SimCLRContrastiveLoss(self.args.temperature).cuda(
-            self.device_id
+            self.device_id,
         )
+        self.checkpoint_dir = self.args.checkpoint_dir
 
     def train(self, train_loader):
         scaler = GradScaler(enabled=self.args.fp16_precision)
 
         # save config file
         save_config_file(self.writer.log_dir, self.args)
+        print(f"Log dir: {self.writer.log_dir}")
 
         n_iter = 0
         print(f"Start SimCLR training for {self.args.epochs} epochs.")
@@ -71,7 +73,8 @@ class SimCLR(object):
 
             print(f"Epoch: {epoch_counter}\tLoss: {loss}")
             # save model checkpoints
-            checkpoint_name = "checkpoint_{:04d}.pth.tar".format(self.args.epochs)
+            checkpoint_name = "checkpoint_{:04d}.pth.tar".format(epoch_counter)
+            checkpoint_file = os.path.join(self.checkpoint_dir, checkpoint_name)
             save_checkpoint(
                 {
                     "epoch": self.args.epochs,
@@ -80,10 +83,10 @@ class SimCLR(object):
                     "optimizer": self.optimizer.state_dict(),
                 },
                 is_best=False,
-                filename=os.path.join(self.writer.log_dir, checkpoint_name),
+                filename=checkpoint_file,
             )
             print(
-                f"Model checkpoint and metadata has been saved at {self.writer.log_dir}."
+                f"Model checkpoint saved at {checkpoint_file}.",
             )
 
         print("Training has finished.")

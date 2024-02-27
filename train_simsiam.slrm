@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=simclr_icgan
+#SBATCH --job-name="simsiam_icgan"
 #SBATCH --partition=a100
 #SBATCH --qos=a100_arashaf
 #SBATCH --time=72:00:00
@@ -26,13 +26,15 @@ export PYTHONPATH="."
 nvidia-smi
 
 # “srun” executes the script <ntasks-per-node * nodes> times
-srun python run_simCLR.py \
---fp16-precision \
+srun python simsiam/main_simsiam.py \
+-a resnet50 \
+--fix-pred-lr \
 --distributed_mode \
---batch-size=512 \
+--batch-size=256 \
 --epochs=100 \
 --use_synthetic_data \
 --synthetic_data_dir="/projects/imagenet_synthetic/synthetic_icgan" \
 --synthetic_index_min=0 \
 --synthetic_index_max=4 \
 --generative_augmentation_prob=0.5
+--experiment="simsiam_icgan" \

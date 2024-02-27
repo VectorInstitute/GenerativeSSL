@@ -3,6 +3,7 @@
 import os
 import random
 
+import torch
 from PIL import Image
 from torchvision import datasets, transforms
 
@@ -37,6 +38,7 @@ class ImageNetSynthetic(datasets.ImageNet):
         imagenet_synthetic_root,
         index_min=0,
         index_max=9,
+        generative_augmentation_prob=None,
         load_one_real_image=False,
         split="train",
     ):
@@ -48,6 +50,7 @@ class ImageNetSynthetic(datasets.ImageNet):
         self.imagenet_synthetic_root = imagenet_synthetic_root
         self.index_min = index_min
         self.index_max = index_max
+        self.generative_augmentation_prob = generative_augmentation_prob
         self.load_one_real_image = load_one_real_image
         self.synthetic_transforms = _get_simclr_transforms(size=224)
         self.real_transforms = _get_simclr_transforms(size=224, random_crop=True)
@@ -62,21 +65,37 @@ class ImageNetSynthetic(datasets.ImageNet):
             filename_parent_dir = filename.split("/")[-2]
             image_path = os.path.join(
                 self.imagenet_synthetic_root,
-                # self.split,
+                self.split,
                 filename_parent_dir,
                 filename_and_extension.split(".")[0] + f"_{rand_int}.JPEG",
             )
             return Image.open(image_path).convert("RGB")
 
-        if self.load_one_real_image:
-            image1 = self.loader(os.path.join(self.root, imagenet_filename))
-            image1 = self.real_transforms(image1)
-        else:
-            image1 = _synthetic_image(imagenet_filename)
-            image1 = self.synthetic_transforms(image1)
+        if self.generative_augmentation_prob is not None:
+            if torch.rand(1) < self.generative_augmentation_prob:
+                # Generate a synthetic image.
+                image1 = _synthetic_image(imagenet_filename)
+                image1 = self.synthetic_transforms(image1)
+            else:
+                image1 = self.loader(os.path.join(self.root, imagenet_filename))
+                image1 = self.real_transforms(image1)
 
-        # image2 is always synthetic.
-        image2 = _synthetic_image(imagenet_filename)
-        image2 = self.synthetic_transforms(image2)
+            if torch.rand(1) < self.generative_augmentation_prob:
+                # Generate another synthetic image.
+                image2 = _synthetic_image(imagenet_filename)
+                image2 = self.synthetic_transforms(image2)
+            else:
+                image2 = self.loader(os.path.join(self.root, imagenet_filename))
+                image2 = self.real_transforms(image2)
+        else:
+            if self.load_one_real_image:
+                image1 = self.loader(os.path.join(self.root, imagenet_filename))
+                image1 = self.real_transforms(image1)
+            else:
+                image1 = _synthetic_image(imagenet_filename)
+                image1 = self.synthetic_transforms(image1)
+            # image2 is always synthetic.
+            image2 = _synthetic_image(imagenet_filename)
+            image2 = self.synthetic_transforms(image2)
 
         return {"view1": image1, "view2": image2}, label

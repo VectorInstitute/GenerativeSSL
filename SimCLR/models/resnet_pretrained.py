@@ -34,7 +34,7 @@ class PretrainedResNet(nn.Module):
         state_dict = checkpoint["state_dict"]
         for k in list(state_dict.keys()):
             if k.startswith("module.backbone."):
-                if k.startswith("module.backbone") and not k.startswith("module.backbone.fc"):
+                if not k.startswith("module.backbone.fc"):
                     # remove prefix
                     state_dict[k[len("module.backbone.") :]] = state_dict[k]
             del state_dict[k]

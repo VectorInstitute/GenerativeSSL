@@ -1,9 +1,8 @@
 #!/bin/bash
 
-#SBATCH --job-name="simsiam_baseline"
-#SBATCH --partition=a100
-#SBATCH --qos=a100_arashaf
-#SBATCH --time=72:00:00
+#SBATCH --job-name="simsiam_eval_baseline"
+#SBATCH --partition=t4v2
+#SBATCH --time=08:00:00
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:4
 #SBATCH --ntasks-per-node=4
@@ -26,20 +25,10 @@ export PYTHONPATH="."
 nvidia-smi
 
 # “srun” executes the script <ntasks-per-node * nodes> times
-srun python simsiam/main_simsiam.py \
--a resnet50 \
---fix-pred-lr \
+srun python simsiam/linear_eval.py \
+--data_dir="/scratch/ssd004/datasets/imagenet256" \
+--arch="resnet50" \
 --distributed_mode \
 --batch-size=256 \
 --epochs=100 \
---experiment="simsiam_baseline" \
---resume_from_checkpoint="/projects/imagenet_synthetic/model_checkpoints/simsiam_baseline_2024-02-27-16-48/checkpoint_22.pth.tar"
-
-
-
-
-# --use_synthetic_data \
-# --synthetic_data_dir="/projects/imagenet_synthetic/synthetic_icgan" \
-# --synthetic_index_min=0 \
-# --synthetic_index_max=4 \
-# --generative_augmentation_prob=0.5 \
+--pretrained_checkpoint="/projects/imagenet_synthetic/model_checkpoints/simsiam_baseline_2024-02-27-16-48/checkpoint_22.pth.tar"

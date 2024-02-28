@@ -304,7 +304,7 @@ def main():
 
         # Checkpointing.
         if dist_utils.get_rank() == 0:
-            checkpoint_name = f"checkpoint_{epoch}.pth.tar"
+            checkpoint_name = "checkpoint_{:04d}.pth.tar".format(epoch)
             checkpoint_file = os.path.join(args.checkpoint_dir, checkpoint_name)
             save_checkpoint(
                 {

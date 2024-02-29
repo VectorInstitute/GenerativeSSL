@@ -9,7 +9,6 @@ import math
 import os
 import random
 import shutil
-import time
 from functools import partial
 
 import torch
@@ -21,6 +20,7 @@ from torch import nn
 from torch.backends import cudnn
 from torch.nn.parallel import DistributedDataParallel as DDP  # noqa: N817
 from torchvision import datasets, models, transforms
+from tqdm import tqdm
 
 from SimCLR import distributed as dist_utils
 
@@ -85,21 +85,6 @@ parser.add_argument(
     metavar="W",
     help="weight decay (default: 0.)",
     dest="weight_decay",
-)
-parser.add_argument(
-    "-p",
-    "--print-freq",
-    default=10,
-    type=int,
-    metavar="N",
-    help="print frequency (default: 10)",
-)
-parser.add_argument(
-    "-e",
-    "--evaluate",
-    dest="evaluate",
-    action="store_true",
-    help="Whether to only evaluate model on validation set (no downstream training).",
 )
 parser.add_argument(
     "--distributed_mode",
@@ -239,7 +224,7 @@ def main():
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 normalize,
-            ]
+            ],
         ),
     )
 
@@ -276,7 +261,7 @@ def main():
                     transforms.CenterCrop(224),
                     transforms.ToTensor(),
                     normalize,
-                ]
+                ],
             ),
         ),
         batch_size=256,
@@ -285,11 +270,7 @@ def main():
         pin_memory=True,
     )
 
-    # if args.evaluate:
-    #     validate(val_loader, model, criterion, device_id, args)
-    #     return
-
-    for epoch in range(args.epochs):
+    for epoch in tqdm(range(args.epochs)):
         print(f"Starting training epoch: {epoch}")
         if dist_utils.is_dist_avail_and_initialized():
             train_sampler.set_epoch(epoch)
@@ -325,17 +306,6 @@ def main():
 
 
 def train(train_loader, model, criterion, optimizer, epoch, device_id, args):
-    batch_time = AverageMeter("Time", ":6.3f")
-    data_time = AverageMeter("Data", ":6.3f")
-    losses = AverageMeter("Loss", ":.4e")
-    top1 = AverageMeter("Acc@1", ":6.2f")
-    top5 = AverageMeter("Acc@5", ":6.2f")
-    progress = ProgressMeter(
-        len(train_loader),
-        [batch_time, data_time, losses, top1, top5],
-        prefix="Epoch: [{}]".format(epoch),
-    )
-
     """
     Switch to eval mode:
     Under the protocol of linear classification on frozen features/models,
@@ -345,11 +315,7 @@ def train(train_loader, model, criterion, optimizer, epoch, device_id, args):
     """
     model.eval()
 
-    end = time.time()
-    for i, (images, target) in enumerate(train_loader):
-        # measure data loading time
-        data_time.update(time.time() - end)
-
+    for images, target in tqdm(train_loader):
         images = images.cuda(device_id, non_blocking=True)
         target = target.cuda(device_id, non_blocking=True)
 
@@ -359,38 +325,22 @@ def train(train_loader, model, criterion, optimizer, epoch, device_id, args):
 
         # measure accuracy and record loss
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
-        losses.update(loss.item(), images.size(0))
-        top1.update(acc1[0], images.size(0))
-        top5.update(acc5[0], images.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-        # measure elapsed time
-        batch_time.update(time.time() - end)
-        end = time.time()
-
-        if i % args.print_freq == 0:
-            progress.display(i)
-
 
 def validate(val_loader, model, criterion, device_id, args):
-    batch_time = AverageMeter("Time", ":6.3f")
-    losses = AverageMeter("Loss", ":.4e")
     top1 = AverageMeter("Acc@1", ":6.2f")
     top5 = AverageMeter("Acc@5", ":6.2f")
-    progress = ProgressMeter(
-        len(val_loader), [batch_time, losses, top1, top5], prefix="Test: "
-    )
 
     # switch to evaluate mode
     model.eval()
 
     with torch.no_grad():
-        end = time.time()
-        for i, (images, target) in enumerate(val_loader):
+        for _, (images, target) in enumerate(val_loader):
             images = images.cuda(device_id, non_blocking=True)
             target = target.cuda(device_id, non_blocking=True)
 
@@ -400,20 +350,13 @@ def validate(val_loader, model, criterion, device_id, args):
 
             # measure accuracy and record loss
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
-            losses.update(loss.item(), images.size(0))
             top1.update(acc1[0], images.size(0))
             top5.update(acc5[0], images.size(0))
 
-            # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
-
-            if i % args.print_freq == 0:
-                progress.display(i)
-
-        # TODO: this should also be done with the ProgressMeter
         print(
-            " * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}".format(top1=top1, top5=top5)
+            "Validation Accuracy@1 {top1.avg:.3f}, Accuracy@5 {top5.avg:.3f}".format(
+                top1=top1, top5=top5
+            )
         )
 
     return top1.avg
@@ -477,23 +420,6 @@ class AverageMeter(object):
     def __str__(self):
         fmtstr = "{name} {val" + self.fmt + "} ({avg" + self.fmt + "})"
         return fmtstr.format(**self.__dict__)
-
-
-class ProgressMeter(object):
-    def __init__(self, num_batches, meters, prefix=""):
-        self.batch_fmtstr = self._get_batch_fmtstr(num_batches)
-        self.meters = meters
-        self.prefix = prefix
-
-    def display(self, batch):
-        entries = [self.prefix + self.batch_fmtstr.format(batch)]
-        entries += [str(meter) for meter in self.meters]
-        print("\t".join(entries))
-
-    def _get_batch_fmtstr(self, num_batches):
-        num_digits = len(str(num_batches // 1))
-        fmt = "{:" + str(num_digits) + "d}"
-        return "[" + fmt + "/" + fmt.format(num_batches) + "]"
 
 
 def adjust_learning_rate(optimizer, init_lr, epoch, args):

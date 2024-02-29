@@ -340,7 +340,7 @@ def validate(val_loader, model, criterion, device_id, args):
     model.eval()
 
     with torch.no_grad():
-        for _, (images, target) in enumerate(val_loader):
+        for images, target in tqdm(val_loader):
             images = images.cuda(device_id, non_blocking=True)
             target = target.cuda(device_id, non_blocking=True)
 

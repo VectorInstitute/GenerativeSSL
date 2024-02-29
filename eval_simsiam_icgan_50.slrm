@@ -2,13 +2,13 @@
 
 #SBATCH --job-name="simsiam_eval"
 #SBATCH --partition=a40
-#SBATCH --time=12:00:00
-#SBATCH --qos=m
-#SBATCH --nodes=1
-#SBATCH --gres=gpu:4
+#SBATCH --account=deadline
+#SBATCH --qos=deadline
+#SBATCH --nodes=2
+#SBATCH --gres=gpu:8
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=4
-#SBATCH --mem-per-cpu=4G
+#SBATCH --mem-per-cpu=8G
 #SBATCH --output=slurm-%j.out
 
 PY_ARGS=${@:1}
@@ -32,4 +32,4 @@ srun python simsiam/linear_eval.py \
 --distributed_mode \
 --batch-size=256 \
 --epochs=100 \
---pretrained_checkpoint="/projects/imagenet_synthetic/model_checkpoints/simsiam_icgan_2024-02-28-15-14/checkpoint_0030.pth.tar"
+--pretrained_checkpoint="/projects/imagenet_synthetic/model_checkpoints/simsiam_icgan_2024-02-29-09-30/checkpoint_0050.pth.tar"

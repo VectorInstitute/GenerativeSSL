@@ -143,12 +143,15 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.distributed:
         if args.dist_url == "env://" and args.rank == -1:
             args.rank = int(os.environ["RANK"])
+            print("rank", args.rank)
         if args.multiprocessing_distributed:
             # For multiprocessing distributed training, rank needs to be the
             # global rank among all the processes
             args.rank = args.rank * ngpus_per_node + gpu
+            print("second rank", args.rank)
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
+        print("init_process_group")
         torch.distributed.barrier()
     # create model
     print("=> creating model '{}'".format(args.arch))

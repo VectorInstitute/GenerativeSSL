@@ -234,7 +234,7 @@ def main_worker(gpu, ngpus_per_node, args):
                                 weight_decay=args.weight_decay)
     if args.lars:
         print("=> use LARS optimizer.")
-        from apex.parallel.LARC import LARC
+        from LARC import LARC
         optimizer = LARC(optimizer=optimizer, trust_coefficient=.001, clip=False)
 
     # optionally resume from a checkpoint

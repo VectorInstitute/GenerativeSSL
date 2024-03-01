@@ -141,6 +141,7 @@ def main_worker(gpu, ngpus_per_node, args):
         print("Use GPU: {} for training".format(args.gpu))
 
     if args.distributed:
+        print("here")
         if args.dist_url == "env://" and args.rank == -1:
             args.rank = int(os.environ["RANK"])
             print("rank", args.rank)

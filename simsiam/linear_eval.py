@@ -109,6 +109,7 @@ def main():
 
     if args.dist_url == "env://" and args.world_size == -1:
         args.world_size = int(os.environ["WORLD_SIZE"])
+        print(args.world_size)
 
     args.distributed = args.world_size > 1 or args.multiprocessing_distributed
 
@@ -117,6 +118,7 @@ def main():
         # Since we have ngpus_per_node processes per node, the total world_size
         # needs to be adjusted accordingly
         args.world_size = ngpus_per_node * args.world_size
+        print("second", args.world_size)
         # Use torch.multiprocessing.spawn to launch distributed processes: the
         # main_worker process function
         mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args, ))

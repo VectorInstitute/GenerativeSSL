@@ -203,7 +203,8 @@ def main():
     )
     if args.lars:
         print("Use LARS optimizer.")
-        from apex.parallel.LARC import LARC
+        # from apex.parallel.LARC import LARC
+        from LARC import LARC
 
         optimizer = LARC(optimizer=optimizer, trust_coefficient=0.001, clip=False)
 

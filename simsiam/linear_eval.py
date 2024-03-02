@@ -158,6 +158,8 @@ def main_worker(gpu, ngpus_per_node, args):
     print("=> creating model '{}'".format(args.arch))
     model = models.__dict__[args.arch]()
 
+    print("model", model.state_dict().keys())
+
     # freeze all layers but the last fc
     for name, param in model.named_parameters():
         if name not in ['fc.weight', 'fc.bias']:

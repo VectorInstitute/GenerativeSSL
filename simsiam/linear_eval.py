@@ -113,7 +113,7 @@ def main():
 
     args.distributed = args.world_size > 1 or args.multiprocessing_distributed
 
-    ngpus_per_node = 1
+    ngpus_per_node = torch.cuda.device_count()
     if args.multiprocessing_distributed:
         # Since we have ngpus_per_node processes per node, the total world_size
         # needs to be adjusted accordingly
@@ -191,7 +191,7 @@ def main_worker(gpu, ngpus_per_node, args):
             print("=> no checkpoint found at '{}'".format(args.pretrained))
 
     # infer learning rate before changing batch size
-    init_lr = args.lr * args.batch_size / 256
+    init_lr = args.lr * args.batch_size / 16
 
     if args.distributed:
         # For multiprocessing distributed, DistributedDataParallel constructor

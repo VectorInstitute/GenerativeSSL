@@ -273,7 +273,7 @@ def main():
         model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
         # set the single device scope, otherwise DistributedDataParallel will
         # use all available devices
-        torch.cuda.set_device(device_id)
+        # torch.cuda.set_device(device_id)
         model = model.cuda(device_id)
         model = DDP(model, device_ids=[device_id])
     else:

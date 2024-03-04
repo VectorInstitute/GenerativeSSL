@@ -24,7 +24,7 @@ from tqdm import tqdm
 
 from SimCLR import distributed as dist_utils
 from LARC import LARC
-
+from torch import distributed as dist
 
 model_names = sorted(
     name
@@ -139,17 +139,25 @@ def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> No
     torch.manual_seed(worker_seed)
     random.seed(worker_seed)
 
+def setup() -> None:
+    """Initialize the process group."""
+    dist.init_process_group("nccl")
+
+
+def cleanup() -> None:
+    """Clean up the process group after training."""
+    dist.destroy_process_group()
+
 
 def main():
     args = parser.parse_args()
     global best_acc1
 
-    torch.multiprocessing.set_start_method("spawn")
+    # torch.multiprocessing.set_start_method("spawn")
     if args.distributed_mode:
-        dist_utils.init_distributed_mode(
-            launcher=args.distributed_launcher,
-            backend=args.distributed_backend,
-        )
+        setup()
+        torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
+        torch.cuda.empty_cache()
         device_id = torch.cuda.current_device()
     else:
         device_id = None
@@ -193,7 +201,7 @@ def main():
     init_lr = args.lr * args.batch_size / 256
 
     if args.distributed_mode and dist_utils.is_dist_avail_and_initialized():
-        torch.cuda.set_device(device_id)
+        # torch.cuda.set_device(device_id)
         model = model.cuda(device_id)
         model = DDP(model, device_ids=[device_id])
     else:

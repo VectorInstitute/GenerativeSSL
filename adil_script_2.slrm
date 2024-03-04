@@ -45,6 +45,6 @@ srun -p $SLURM_JOB_PARTITION \
    --data_dir=/scratch/ssd004/datasets/imagenet256 \
    --arch=resnet50 \
    --distributed_mode \
-   --batch-size=256 \
+   --batch-size=512 \
    --epochs=100 \
-   --pretrained_checkpoint=/ssd003/projects/aieng/arash/checkpoint_0099.pth.tar'
+   --pretrained_checkpoint=/projects/imagenet_synthetic/model_checkpoints/_original_simsiam/checkpoint_0099.pth.tar'

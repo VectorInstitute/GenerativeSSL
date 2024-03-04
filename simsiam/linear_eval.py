@@ -88,28 +88,35 @@ parser.add_argument(
     help="weight decay (default: 0.)",
     dest="weight_decay",
 )
-parser.add_argument(
-    "--distributed_mode",
-    action="store_true",
-    help="Enable distributed training",
-)
-parser.add_argument("--distributed_launcher", default="slurm")
-parser.add_argument("--distributed_backend", default="nccl")
-parser.add_argument(
-    "--seed", default=42, type=int, help="seed for initializing training. "
-)
-parser.add_argument(
-    "--pretrained_checkpoint",
-    default="",
-    type=str,
-    help="Path to simsiam pretrained checkpoint.",
-)
-parser.add_argument("--lars", action="store_true", help="Use LARS")
-parser.add_argument(
-    "--checkpoint_dir",
-    default="",
-    help="Checkpoint directory to save eval model checkpoints.",
-)
+parser.add_argument('-p', '--print-freq', default=10, type=int,
+                    metavar='N', help='print frequency (default: 10)')
+parser.add_argument('--resume', default='', type=str, metavar='PATH',
+                    help='path to latest checkpoint (default: none)')
+parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
+                    help='evaluate model on validation set')
+parser.add_argument('--world-size', default=-1, type=int,
+                    help='number of nodes for distributed training')
+parser.add_argument('--rank', default=-1, type=int,
+                    help='node rank for distributed training')
+parser.add_argument('--dist-url', default='tcp://224.66.41.62:23456', type=str,
+                    help='url used to set up distributed training')
+parser.add_argument('--dist-backend', default='nccl', type=str,
+                    help='distributed backend')
+parser.add_argument('--seed', default=None, type=int,
+                    help='seed for initializing training. ')
+parser.add_argument('--gpu', default=None, type=int,
+                    help='GPU id to use.')
+parser.add_argument('--multiprocessing-distributed', action='store_true',
+                    help='Use multi-processing distributed training to launch '
+                         'N processes per node, which has N GPUs. This is the '
+                         'fastest way to use PyTorch for either single node or '
+                         'multi node data parallel training')
+
+# additional configs:
+parser.add_argument('--pretrained', default='', type=str,
+                    help='path to simsiam pretrained checkpoint')
+parser.add_argument('--lars', action='store_true',
+                    help='Use LARS')
 
 
 best_acc1 = 0

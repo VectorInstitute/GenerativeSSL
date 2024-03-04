@@ -162,7 +162,7 @@ def main():
 
 def main_worker(gpu, ngpus_per_node, args):
     global best_acc1
-    print("spawn performed, gpu", gpu)
+    print("spawn performed, gpu", gpu, flush=True)
     args.gpu = gpu
 
     # suppress printing if not master
@@ -172,27 +172,27 @@ def main_worker(gpu, ngpus_per_node, args):
         builtins.print = print_pass
 
     if args.gpu is not None:
-        print("Use GPU: {} for training".format(args.gpu))
+        print("Use GPU: {} for training".format(args.gpu), flush=True)
 
     if args.distributed:
-        print("here")
+        print("here", flush=True)
         if args.dist_url == "env://" and args.rank == -1:
             args.rank = int(os.environ["RANK"])
-            print("rank", args.rank)
+            print("rank", args.rank, flush=True)
         if args.multiprocessing_distributed:
             # For multiprocessing distributed training, rank needs to be the
             # global rank among all the processes
             args.rank = args.rank * ngpus_per_node + gpu
-            print("second rank", args.rank)
+            print("second rank", args.rank, flush=True)
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
-        print("init_process_group")
+        print("init_process_group", flush=True)
         torch.distributed.barrier()
     # create model
-    print("=> creating model '{}'".format(args.arch))
+    print("=> creating model '{}'".format(args.arch), flush=True)
     model = models.__dict__[args.arch]()
 
-    print("model", model.state_dict().keys())
+    print("model", model.state_dict().keys(), flush=True)
 
     # freeze all layers but the last fc
     for name, param in model.named_parameters():
@@ -205,7 +205,7 @@ def main_worker(gpu, ngpus_per_node, args):
     # load from pre-trained, before DistributedDataParallel constructor
     if args.pretrained:
         if os.path.isfile(args.pretrained):
-            print("=> loading checkpoint '{}'".format(args.pretrained))
+            print("=> loading checkpoint '{}'".format(args.pretrained), flush=True)
             checkpoint = torch.load(args.pretrained, map_location="cpu")
 
             # rename moco pre-trained keys
@@ -240,10 +240,10 @@ def main_worker(gpu, ngpus_per_node, args):
             # DistributedDataParallel, we need to divide the batch size
             # ourselves based on the total number of GPUs we have
             args.batch_size = int(args.batch_size / ngpus_per_node)
-            print("batchsize",args.batch_size)
+            print("batchsize",args.batch_size, flush=True)
             args.workers = int((args.workers + ngpus_per_node - 1) / ngpus_per_node)
-            print("workers",args.workers)
-            print("gpu",args.gpu)
+            print("workers",args.workers, flush=True)
+            print("gpu",args.gpu, flush=True)
             model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
         else:
             model.cuda()
@@ -272,14 +272,14 @@ def main_worker(gpu, ngpus_per_node, args):
                                 momentum=args.momentum,
                                 weight_decay=args.weight_decay)
     if args.lars:
-        print("=> use LARS optimizer.")
+        print("=> use LARS optimizer.", flush=True)
         from LARC import LARC
         optimizer = LARC(optimizer=optimizer, trust_coefficient=.001, clip=False)
 
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
-            print("=> loading checkpoint '{}'".format(args.resume))
+            print("=> loading checkpoint '{}'".format(args.resume), flush=True)
             if args.gpu is None:
                 checkpoint = torch.load(args.resume)
             else:
@@ -294,7 +294,7 @@ def main_worker(gpu, ngpus_per_node, args):
             model.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer'])
             print("=> loaded checkpoint '{}' (epoch {})"
-                  .format(args.resume, checkpoint['epoch']))
+                  .format(args.resume, checkpoint['epoch']), flush=True)
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
 

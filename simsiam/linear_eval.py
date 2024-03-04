@@ -343,6 +343,8 @@ def main_worker(gpu, ngpus_per_node, args):
             train_sampler.set_epoch(epoch)
         adjust_learning_rate(optimizer, init_lr, epoch, args)
 
+        print("epoch", epoch, flush=True)
+
         # train for one epoch
         train(train_loader, model, criterion, optimizer, epoch, args)
 
@@ -404,6 +406,9 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         losses.update(loss.item(), images.size(0))
         top1.update(acc1[0], images.size(0))
         top5.update(acc5[0], images.size(0))
+
+        if i == 0:
+            print("first step passed", flush=True)
 
         # compute gradient and do SGD step
         optimizer.zero_grad()

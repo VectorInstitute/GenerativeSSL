@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#SBATCH --job-name="simsiam_eval"
-#SBATCH --partition=a40
+#SBATCH --job-name="multi_eval"
+#SBATCH --partition=t4v2
 #SBATCH --qos=m2
 #SBATCH --nodes=2
-#SBATCH --gres=gpu:a40:4
+#SBATCH --gres=gpu:2
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=0
@@ -41,7 +41,7 @@ srun -p $SLURM_JOB_PARTITION \
     --rdzv-endpoint $MASTER_ADDR:$MASTER_PORT \
     --rdzv-id $RDVZ_ID \
     --rdzv-backend c10d \
-   simsiam/linear_eval.py \
+   simsiam/adil_eval.py \
    --data_dir=/scratch/ssd004/datasets/imagenet256 \
    --arch=resnet50 \
    --distributed_mode \

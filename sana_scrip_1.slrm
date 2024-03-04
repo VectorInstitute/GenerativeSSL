@@ -34,4 +34,4 @@ python simsiam/linear_eval.py \
     --world-size 1 \
     --rank 0 \
     --pretrained="/projects/imagenet_synthetic/model_checkpoints/_original_simsiam/checkpoint_0099.pth.tar" \
-    --dist-url "tcp://localhost:23456
+    --dist-url "tcp://localhost:23456"

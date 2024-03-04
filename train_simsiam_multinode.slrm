@@ -46,9 +46,9 @@ srun -p $SLURM_JOB_PARTITION \
     --fix-pred-lr \
     --distributed_mode \
     --batch-size=128 \
-    --epochs=100 \
+    --epochs=200 \
     --experiment="simsiam_stablediff_p0p5_seed43" \
-    --resume_from_checkpoint="" \
+    --resume_from_checkpoint="/projects/imagenet_synthetic/model_checkpoints/_original_simsiam/checkpoint_0099.pth.tar" \
     --seed=43 \
     --use_synthetic_data \
     --synthetic_data_dir="/projects/imagenet_synthetic/arashaf_stablediff_batched" \

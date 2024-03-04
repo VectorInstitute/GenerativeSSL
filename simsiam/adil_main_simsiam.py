@@ -264,8 +264,8 @@ def main():
         pin_memory=False,
         drop_last=True,
     )
-
-    print(f"Creating model {args.arch}")
+    if dist_utils.get_rank() == 0:
+        print(f"Creating model {args.arch}")
     model = builder.SimSiam(models.__dict__[args.arch], args.dim, args.pred_dim)
 
     if args.distributed_mode and dist_utils.is_dist_avail_and_initialized():
@@ -278,7 +278,8 @@ def main():
         model = DDP(model, device_ids=[device_id])
     else:
         raise NotImplementedError("Only DistributedDataParallel is supported.")
-    print(model)  # print model after SyncBatchNorm
+    if dist_utils.get_rank() == 0:
+        print(model)  # print model after SyncBatchNorm
 
     # define loss function (criterion) and optimizer
     criterion = nn.CosineSimilarity(dim=1).cuda(device_id)

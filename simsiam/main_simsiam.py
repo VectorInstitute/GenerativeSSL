@@ -138,7 +138,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--synthetic_data_dir",
-    default="/projects/imagenet_synthetic/synthetic_icgan",
+    default="/projects/imagenet_synthetic/",
     help="Path to the root of synthetic data.",
 )
 parser.add_argument(
@@ -158,6 +158,14 @@ parser.add_argument(
     default=None,
     type=float,
     help="The probability of applying a generative model augmentation to a view. Applies to the views separately.",
+)
+parser.add_argument(
+    "-p",
+    "--print-freq",
+    default=10,
+    type=int,
+    metavar="N",
+    help="print frequency (default: 10)",
 )
 
 
@@ -270,7 +278,10 @@ def main():
         optim_params = model.parameters()
 
     # infer learning rate before changing batch size
-    init_lr = args.lr * args.batch_size / 256.0
+    # init_lr = args.lr * args.batch_size / 256.0
+    # TODO(arashaf): Hard-code init-lr to match the original paper with bs=512.
+    init_lr = args.lr * 2.0
+
     optimizer = torch.optim.SGD(
         optim_params,
         init_lr,
@@ -319,11 +330,18 @@ def main():
 
 def train(train_loader, model, criterion, optimizer, epoch, device_id, args):
     """Single epoch training code."""
+    losses = AverageMeter("Loss", ":.4f")
+    progress = ProgressMeter(
+        len(train_loader),
+        [losses],
+        prefix="Epoch: [{}]".format(epoch),
+    )
+
     # switch to train mode
     model.train()
 
-    # for i, (images, _) in enumerate(train_loader):
-    for images, _ in tqdm(train_loader):
+    for i, (images, _) in enumerate(train_loader):
+        # for images, _ in tqdm(train_loader):
         images[0] = images[0].cuda(device_id, non_blocking=True)
         images[1] = images[1].cuda(device_id, non_blocking=True)
 
@@ -331,16 +349,63 @@ def train(train_loader, model, criterion, optimizer, epoch, device_id, args):
         p1, p2, z1, z2 = model(x1=images[0], x2=images[1])
         loss = -(criterion(p1, z2).mean() + criterion(p2, z1).mean()) * 0.5
 
+        losses.update(loss.item(), images[0].size(0))
+
         # compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+        if i % args.print_freq == 0:
+            progress.display(i)
 
 
 def save_checkpoint(state, filename="checkpoint.pth.tar"):
     """Save state dictionary into a model checkpoint."""
     print(f"Saving checkpoint at: {filename}")
     torch.save(state, filename)
+
+
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
+
+    def __init__(self, name, fmt=":f"):
+        self.name = name
+        self.fmt = fmt
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
+
+    def __str__(self):
+        fmtstr = "{name} {val" + self.fmt + "} ({avg" + self.fmt + "})"
+        return fmtstr.format(**self.__dict__)
+
+
+class ProgressMeter(object):
+    def __init__(self, num_batches, meters, prefix=""):
+        self.batch_fmtstr = self._get_batch_fmtstr(num_batches)
+        self.meters = meters
+        self.prefix = prefix
+
+    def display(self, batch):
+        entries = [self.prefix + self.batch_fmtstr.format(batch)]
+        entries += [str(meter) for meter in self.meters]
+        print("\t".join(entries))
+
+    def _get_batch_fmtstr(self, num_batches):
+        num_digits = len(str(num_batches // 1))
+        fmt = "{:" + str(num_digits) + "d}"
+        return "[" + fmt + "/" + fmt.format(num_batches) + "]"
 
 
 def adjust_learning_rate(optimizer, init_lr, epoch, args):

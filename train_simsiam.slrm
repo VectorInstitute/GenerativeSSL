@@ -1,14 +1,15 @@
 #!/bin/bash
 
-#SBATCH --job-name="simsiam_baseline"
-#SBATCH --partition=a100
-#SBATCH --qos=a100_arashaf
+#SBATCH --job-name="simsiam_train"
+#SBATCH --partition=a40
+#SBATCH --account=deadline
+#SBATCH --qos=deadline
 #SBATCH --time=72:00:00
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:4
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=4
-#SBATCH --mem-per-cpu=4G
+#SBATCH --mem-per-cpu=8G
 #SBATCH --output=slurm-%j.out
 
 PY_ARGS=${@:1}
@@ -30,16 +31,15 @@ srun python simsiam/main_simsiam.py \
 -a resnet50 \
 --fix-pred-lr \
 --distributed_mode \
---batch-size=256 \
+--batch-size=128 \
 --epochs=100 \
---experiment="simsiam_baseline" \
---resume_from_checkpoint="/projects/imagenet_synthetic/model_checkpoints/simsiam_baseline_2024-02-27-16-48/checkpoint_22.pth.tar"
+--experiment="simsiam_stablediff_p0p5_seed43" \
+--resume_from_checkpoint="" \
+--seed=43 \
+--use_synthetic_data \
+--synthetic_data_dir="/projects/imagenet_synthetic/arashaf_stablediff_batched" \
+--synthetic_index_min=0 \
+--synthetic_index_max=1 \
+--generative_augmentation_prob=0.5
 
 
-
-
-# --use_synthetic_data \
-# --synthetic_data_dir="/projects/imagenet_synthetic/synthetic_icgan" \
-# --synthetic_index_min=0 \
-# --synthetic_index_max=4 \
-# --generative_augmentation_prob=0.5 \

@@ -115,7 +115,6 @@ best_acc1 = 0
 
 def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> None:
     """Initialize worker processes with a random seed.
-
     Parameters
     ----------
     worker_id : int
@@ -182,7 +181,7 @@ def main():
             raise ValueError(f"No checkpoint found at: {args.pretrained_checkpoint}")
 
     # infer learning rate before changing batch size
-    init_lr = args.lr * args.batch_size / 256
+    init_lr = args.lr * args.batch_size * 4.0 / 256.0
 
     if args.distributed_mode and dist_utils.is_dist_avail_and_initialized():
         torch.cuda.set_device(device_id)
@@ -203,7 +202,7 @@ def main():
     )
     if args.lars:
         print("Use LARS optimizer.")
-        from apex.parallel.LARC import LARC
+        from LARC import LARC
 
         optimizer = LARC(optimizer=optimizer, trust_coefficient=0.001, clip=False)
 

@@ -9,6 +9,7 @@ import math
 import os
 import random
 import shutil
+import time
 from functools import partial
 
 import torch
@@ -320,6 +321,16 @@ def main():
 
 
 def train(train_loader, model, criterion, optimizer, epoch, device_id, args):
+    batch_time = AverageMeter('Time', ':6.3f')
+    data_time = AverageMeter('Data', ':6.3f')
+    losses = AverageMeter('Loss', ':.4e')
+    top1 = AverageMeter('Acc@1', ':6.2f')
+    top5 = AverageMeter('Acc@5', ':6.2f')
+    progress = ProgressMeter(
+        len(train_loader),
+        [batch_time, data_time, losses, top1, top5],
+        prefix="Epoch: [{}]".format(epoch))
+
     """
     Switch to eval mode:
     Under the protocol of linear classification on frozen features/models,
@@ -328,8 +339,12 @@ def train(train_loader, model, criterion, optimizer, epoch, device_id, args):
     no gradient), which are part of the model parameters too.
     """
     model.eval()
+    i = 0
 
+    end = time.time()
     for images, target in tqdm(train_loader):
+        # measure data loading time
+        data_time.update(time.time() - end)
         images = images.cuda(device_id, non_blocking=True)
         target = target.cuda(device_id, non_blocking=True)
 
@@ -339,22 +354,41 @@ def train(train_loader, model, criterion, optimizer, epoch, device_id, args):
 
         # measure accuracy and record loss
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
+        losses.update(loss.item(), images.size(0))
+        top1.update(acc1[0], images.size(0))
+        top5.update(acc5[0], images.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
+        # measure elapsed time
+        batch_time.update(time.time() - end)
+        end = time.time()
+
+        if i % args.print_freq == 0 and dist_utils.get_rank() == 0:
+            progress.display(i)
+
 
 def validate(val_loader, model, criterion, device_id, args):
+    batch_time = AverageMeter('Time', ':6.3f')
+    losses = AverageMeter('Loss', ':.4e')   
     top1 = AverageMeter("Acc@1", ":6.2f")
     top5 = AverageMeter("Acc@5", ":6.2f")
+    progress = ProgressMeter(
+        len(val_loader),
+        [batch_time, losses, top1, top5],
+        prefix='Test: ')
 
     # switch to evaluate mode
     model.eval()
 
     with torch.no_grad():
+        end = time.time()
+        i = 0
         for images, target in tqdm(val_loader):
+            
             images = images.cuda(device_id, non_blocking=True)
             target = target.cuda(device_id, non_blocking=True)
 
@@ -364,15 +398,17 @@ def validate(val_loader, model, criterion, device_id, args):
 
             # measure accuracy and record loss
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
+            losses.update(loss.item(), images.size(0))
             top1.update(acc1[0], images.size(0))
             top5.update(acc5[0], images.size(0))
 
-        print(
-            "Validation Accuracy@1 {top1.avg:.3f}, Accuracy@5 {top5.avg:.3f}".format(
-                top1=top1, top5=top5
-            )
-        )
+            # measure elapsed time
+            batch_time.update(time.time() - end)
+            end = time.time()
 
+            if i % args.print_freq == 0 and dist_utils.get_rank() == 0:
+                progress.display(i)
+            i += 1
     return top1.avg
 
 
@@ -434,6 +470,25 @@ class AverageMeter(object):
     def __str__(self):
         fmtstr = "{name} {val" + self.fmt + "} ({avg" + self.fmt + "})"
         return fmtstr.format(**self.__dict__)
+    
+
+class ProgressMeter(object):
+    def __init__(self, num_batches, meters, prefix=""):
+        self.batch_fmtstr = self._get_batch_fmtstr(num_batches)
+        self.meters = meters
+        self.prefix = prefix
+
+    def display(self, batch):
+        entries = [self.prefix + self.batch_fmtstr.format(batch)]
+        entries += [str(meter) for meter in self.meters]
+        print('\t'.join(entries))
+
+    def _get_batch_fmtstr(self, num_batches):
+        num_digits = len(str(num_batches // 1))
+        fmt = '{:' + str(num_digits) + 'd}'
+        return '[' + fmt + '/' + fmt.format(num_batches) + ']'
+
+
 
 
 def adjust_learning_rate(optimizer, init_lr, epoch, args):

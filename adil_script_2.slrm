@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #SBATCH --job-name="multi_eval"
-#SBATCH --partition=t4v2
+#SBATCH --partition=a40
 #SBATCH --qos=m2
 #SBATCH --nodes=2
-#SBATCH --gres=gpu:t4v2:2
+#SBATCH --gres=gpu:a40:4
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=0

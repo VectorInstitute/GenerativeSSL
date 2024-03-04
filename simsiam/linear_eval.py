@@ -50,7 +50,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-j",
-    "--num_workers",
+    "--workers",
     default=4,
     type=int,
     metavar="N",

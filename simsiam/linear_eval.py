@@ -129,7 +129,7 @@ def main():
         random.seed(args.seed)
         torch.manual_seed(args.seed)
         #NOTE: this line can reduce speed considerably
-        cudnn.deterministic = True
+        # cudnn.deterministic = True
         warnings.warn('You have chosen to seed training. '
                       'This will turn on the CUDNN deterministic setting, '
                       'which can slow down your training considerably! '

@@ -27,6 +27,8 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
 
+from tqdm import tqdm
+
 model_names = sorted(
     name
     for name in models.__dict__
@@ -389,7 +391,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     model.eval()
 
     end = time.time()
-    for i, (images, target) in enumerate(train_loader):
+    i = 0
+    for images, target in tqdm(train_loader):
         # measure data loading time
         data_time.update(time.time() - end)
 
@@ -421,6 +424,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
         if i % args.print_freq == 0:
             progress.display(i)
+        
+        i += 1
 
 
 def validate(val_loader, model, criterion, args):
@@ -438,7 +443,8 @@ def validate(val_loader, model, criterion, args):
 
     with torch.no_grad():
         end = time.time()
-        for i, (images, target) in enumerate(val_loader):
+        i = 0
+        for images, target in tqdm(val_loader):
             if args.gpu is not None:
                 images = images.cuda(args.gpu, non_blocking=True)
             target = target.cuda(args.gpu, non_blocking=True)
@@ -460,9 +466,11 @@ def validate(val_loader, model, criterion, args):
             if i % args.print_freq == 0:
                 progress.display(i)
 
+            i += 1
+
         # # TODO: this should also be done with the ProgressMeter
-        # print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
-        #       .format(top1=top1, top5=top5))
+        print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
+              .format(top1=top1, top5=top5))
 
     return top1.avg
 

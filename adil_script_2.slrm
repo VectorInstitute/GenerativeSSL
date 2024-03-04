@@ -47,4 +47,5 @@ srun -p $SLURM_JOB_PARTITION \
    --distributed_mode \
    --batch-size=512 \
    --epochs=100 \
-   --pretrained_checkpoint=/projects/imagenet_synthetic/model_checkpoints/_original_simsiam/checkpoint_0099.pth.tar'
+   --pretrained_checkpoint="/projects/imagenet_synthetic/model_checkpoints/_original_simsiam/checkpoint_0099.pth.tar" \
+   '

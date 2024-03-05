@@ -16,6 +16,7 @@ import torch.nn.parallel
 import torch.optim
 import torch.utils.data
 import torch.utils.data.distributed
+from torch import distributed as dist
 from torch import nn
 from torch.backends import cudnn
 from torch.nn.parallel import DistributedDataParallel as DDP  # noqa: N817
@@ -25,7 +26,6 @@ from tqdm import tqdm
 
 from SimCLR import distributed as dist_utils
 from simsiam import builder, loader
-from torch import distributed as dist
 
 
 model_names = sorted(
@@ -187,6 +187,7 @@ def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> No
     worker_seed = num_workers * rank + worker_id + seed
     torch.manual_seed(worker_seed)
     random.seed(worker_seed)
+
 
 def setup() -> None:
     """Initialize the process group."""

@@ -493,7 +493,7 @@ def main_worker(gpu, ngpus_per_node, args):
                 ],
             ),
         )
-        val_dataset = datasets.INaturalist(
+        val_dataset = INAT(
             root=args.data,
             ann_file=os.path.join(args.data, "val2018.json"),
             transform=transforms.Compose(

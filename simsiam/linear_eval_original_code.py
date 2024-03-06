@@ -13,21 +13,22 @@ import random
 import shutil
 import time
 import warnings
+from datetime import datetime
 
 import torch
-import torch.nn as nn
-import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
-import torch.optim
 import torch.multiprocessing as mp
+import torch.nn as nn
+import torch.nn.parallel
+import torch.optim
 import torch.utils.data
 import torch.utils.data.distributed
-import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
-
+import torchvision.transforms as transforms
 from tqdm import tqdm
+
 
 model_names = sorted(
     name
@@ -151,11 +152,25 @@ parser.add_argument("--lars", action="store_true", help="Use LARS")
 
 parser.add_argument("--dataset_name", default="imagenet", help="Name of the dataset.")
 
+parser.add_argument(
+    "--checkpoint_dir",
+    default="/projects/imagenet_synthetic/model_checkpoints",
+    help="Checkpoint root directory.",
+)
+
 best_acc1 = 0
 
 
 def main():
     args = parser.parse_args()
+    current_time = datetime.now().strftime("%Y-%m-%d-%H-%M")
+    checkpoint_subdir = (
+        f"{args.experiment}_{current_time}" if args.experiment else f"{current_time}"
+    )
+    args.checkpoint_dir = os.path.join(args.checkpoint_dir, checkpoint_subdir)
+    os.makedirs(args.checkpoint_dir, exist_ok=True)
+
+    print(args)
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -377,17 +392,15 @@ def main_worker(gpu, ngpus_per_node, args):
                 ]
             ),
         )
-        val_dataset = (
-            datasets.ImageFolder(
-                valdir,
-                transforms.Compose(
-                    [
-                        transforms.Resize(256),
-                        transforms.CenterCrop(224),
-                        transforms.ToTensor(),
-                        normalize,
-                    ]
-                ),
+        val_dataset = datasets.ImageFolder(
+            valdir,
+            transforms.Compose(
+                [
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    normalize,
+                ]
             ),
         )
     elif args.dataset_name == "food101":
@@ -440,6 +453,31 @@ def main_worker(gpu, ngpus_per_node, args):
                     transforms.CenterCrop(224),
                     transforms.ToTensor(),
                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                ],
+            ),
+        )
+    elif args.dataset_name == "places365":
+        train_dataset = datasets.Places365(
+            root=args.data,
+            split="train-standard",
+            transform=transforms.Compose(
+                [
+                    transforms.RandomResizedCrop(224),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                    normalize,
+                ],
+            ),
+        )
+        val_dataset = datasets.Places365(
+            root=args.data,
+            split="val",
+            transform=transforms.Compose(
+                [
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    normalize,
                 ],
             ),
         )
@@ -517,6 +555,8 @@ def main_worker(gpu, ngpus_per_node, args):
         if not args.multiprocessing_distributed or (
             args.multiprocessing_distributed and args.rank % ngpus_per_node == 0
         ):
+            checkpoint_name = "checkpoint_{:04d}.pth.tar".format(epoch + 1)
+            checkpoint_file = os.path.join(args.checkpoint_dir, checkpoint_name)
             save_checkpoint(
                 {
                     "epoch": epoch + 1,
@@ -526,6 +566,7 @@ def main_worker(gpu, ngpus_per_node, args):
                     "optimizer": optimizer.state_dict(),
                 },
                 is_best,
+                filename=checkpoint_file,
             )
             if epoch == args.start_epoch:
                 sanity_check(model.state_dict(), args.pretrained)
@@ -631,7 +672,9 @@ def validate(val_loader, model, criterion, args):
 
         # # TODO: this should also be done with the ProgressMeter
         print(
-            " * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}".format(top1=top1, top5=top5)
+            "\n * Accuracy@1 {top1.avg:.3f} Accuracy@5 {top5.avg:.3f}".format(
+                top1=top1, top5=top5
+            )
         )
 
     return top1.avg

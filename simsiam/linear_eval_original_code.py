@@ -120,6 +120,7 @@ parser.add_argument('--pretrained', default='', type=str,
 parser.add_argument('--lars', action='store_true',
                     help='Use LARS')
 
+parser.add_argument("--dataset_name", default="imagenet", help="Name of the dataset.")
 
 best_acc1 = 0
 
@@ -308,14 +309,100 @@ def main_worker(gpu, ngpus_per_node, args):
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
 
-    train_dataset = datasets.ImageFolder(
-        traindir,
-        transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            normalize,
-        ]))
+    if args.dataset_name == "imagenet":
+        train_dataset = datasets.ImageFolder(
+            traindir,
+            transforms.Compose([
+                transforms.RandomResizedCrop(224),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                normalize,
+            ]))
+        val_dataset = datasets.ImageFolder(valdir, transforms.Compose([
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                normalize,
+            ])),
+    elif args.dataset_name == "food101":
+        print("=> using food101 dataset.", flush=True)
+        train_dataset=datasets.Food101(
+            root=args.data, 
+            split="train", 
+            transform=transforms.Compose(
+                [
+                    transforms.RandomResizedCrop(224),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                    normalize,
+                ],
+            ),)
+        val_dataset=datasets.Food101(
+            root=args.data, 
+            split="test", 
+            transform=transforms.Compose(
+                [
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    normalize,
+                ],
+            ),)
+    elif args.dataset_name == "cifar10":
+        train_dataset = datasets.CIFAR10(
+            root=args.data, 
+            train=True, 
+            download=True, 
+            transform=transforms.Compose(
+                [
+                    transforms.RandomResizedCrop(224),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                ],
+            ),
+        )
+        val_dataset = datasets.CIFAR10(
+            root=args.data, 
+            train=False, 
+            download=True, 
+            transform=transforms.Compose(
+                [
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                ],
+            ),
+        )
+    elif args.dataset_name == "INaturalist":
+        train_dataset = datasets.INaturalist(
+            root=args.data, 
+            version="2018",
+            target_type="full",
+            mode="train",
+            transform=transforms.Compose(
+                [
+                    transforms.RandomResizedCrop(224),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                    normalize,
+                ],
+            ),
+        )
+        val_dataset = datasets.INaturalist(
+            root=args.data_dir, 
+            split="val", 
+            transform=transforms.Compose(
+                [
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    normalize,
+                ],
+            ),
+        )
+    
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
@@ -325,17 +412,12 @@ def main_worker(gpu, ngpus_per_node, args):
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
         num_workers=args.workers, pin_memory=True, sampler=train_sampler)
-
+    
     val_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(valdir, transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            normalize,
-        ])),
-        batch_size=256, shuffle=False,
-        num_workers=args.workers, pin_memory=True)
-
+            val_dataset,
+            batch_size=256, shuffle=False,
+            num_workers=args.workers, pin_memory=True)
+    
     if args.evaluate:
         validate(val_loader, model, criterion, args)
         return

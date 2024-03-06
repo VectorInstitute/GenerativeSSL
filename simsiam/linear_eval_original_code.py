@@ -164,10 +164,7 @@ best_acc1 = 0
 def main():
     args = parser.parse_args()
     current_time = datetime.now().strftime("%Y-%m-%d-%H-%M")
-    checkpoint_subdir = (
-        f"{args.experiment}_{current_time}" if args.experiment else f"{current_time}"
-    )
-    args.checkpoint_dir = os.path.join(args.checkpoint_dir, checkpoint_subdir)
+    args.checkpoint_dir = os.path.join(args.checkpoint_dir, f"eval_{current_time}")
     os.makedirs(args.checkpoint_dir, exist_ok=True)
 
     print(args)

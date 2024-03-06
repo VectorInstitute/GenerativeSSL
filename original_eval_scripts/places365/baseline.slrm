@@ -1,0 +1,47 @@
+#!/bin/bash
+
+#SBATCH --job-name="places365"
+#SBATCH --partition=rtx6000
+#SBATCH --qos=deadline
+#SBATCH --account=deadline	
+#SBATCH --nodes=1
+#SBATCH --gres=gpu:4
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=0
+#SBATCH --output=places365_baseline_160_%j.out
+#SBATCH --error=places365_baseline_160_%j.err
+#SBATCH --open-mode=append
+#SBATCH --wait-all-nodes=1
+#SBATCH --time=72:00:00
+
+# load virtual environment
+source /ssd003/projects/aieng/envs/genssl2/bin/activate
+
+export NCCL_IB_DISABLE=1  # Our cluster does not have InfiniBand. We need to disable usage using this flag.
+export TORCH_NCCL_ASYNC_ERROR_HANDLING=1 # set to 1 for NCCL backend
+# export CUDA_LAUNCH_BLOCKING=1
+export MASTER_ADDR="$(hostname --fqdn)"
+export MASTER_PORT="$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1])')"
+export RDVZ_ID=$RANDOM
+echo "RDZV Endpoint $MASTER_ADDR:$MASTER_PORT"
+
+echo $MASTER_ADDR
+echo $MASTER_PORT
+
+export PYTHONPATH="."
+nvidia-smi
+
+python simsiam/linear_eval_original_code.py \
+    --data="/projects/imagenet_synthetic/fereshteh_datasets/places365" \
+    --arch="resnet50" \
+    --multiprocessing-distributed \
+    --lars \
+    --batch-size=4096 \
+    --epochs=100 \
+    -j=16 \
+    --world-size 1 \
+    --rank 0 \
+    --pretrained="/projects/imagenet_synthetic/model_checkpoints/simsiam_baseline_seed43_bs128_rforig_2024-03-05-12-27/checkpoint_0160.pth.tar"\
+    --dist-url "tcp://$MASTER_ADDR:$MASTER_PORT" \
+    --dataset_name="places365"

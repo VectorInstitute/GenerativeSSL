@@ -318,12 +318,14 @@ def main_worker(gpu, ngpus_per_node, args):
                 transforms.ToTensor(),
                 normalize,
             ]))
-        val_dataset = datasets.ImageFolder(valdir, transforms.Compose([
+        val_dataset = datasets.ImageFolder(
+            valdir, 
+            transforms.Compose([
                 transforms.Resize(256),
                 transforms.CenterCrop(224),
                 transforms.ToTensor(),
                 normalize,
-            ])),
+            ]))
     elif args.dataset_name == "food101":
         print("=> using food101 dataset.", flush=True)
         train_dataset=datasets.Food101(
@@ -375,6 +377,29 @@ def main_worker(gpu, ngpus_per_node, args):
                 ],
             ),
         )
+    elif args.dataset_name == "places365":
+        train_dataset=datasets.Places365(
+            root=args.data, 
+            split="train-standard", 
+            transform=transforms.Compose(
+                [
+                    transforms.RandomResizedCrop(224),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                    normalize,
+                ],
+            ),)
+        val_dataset=datasets.Places365(
+            root=args.data, 
+            split="val", 
+            transform=transforms.Compose(
+                [
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    normalize,
+                ],
+            ),)
     elif args.dataset_name == "INaturalist":
         train_dataset = datasets.INaturalist(
             root=args.data, 

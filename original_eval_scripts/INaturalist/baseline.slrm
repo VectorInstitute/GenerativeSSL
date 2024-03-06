@@ -33,7 +33,7 @@ export PYTHONPATH="."
 nvidia-smi
 
 python simsiam/linear_eval_original_code.py \
-    --data="/projects/imagenet_synthetic/fereshteh_datasets" \
+    --data="/datasets/inat_comp/2018/" \
     --arch="resnet50" \
     --multiprocessing-distributed \
     --lars \

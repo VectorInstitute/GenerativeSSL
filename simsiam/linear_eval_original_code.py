@@ -29,6 +29,8 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 from tqdm import tqdm
 
+from inatural_dataset import INAT
+
 
 model_names = sorted(
     name
@@ -479,11 +481,9 @@ def main_worker(gpu, ngpus_per_node, args):
             ),
         )
     elif args.dataset_name == "INaturalist":
-        train_dataset = datasets.INaturalist(
+        train_dataset = INAT(
             root=args.data,
-            version="2018",
-            target_type="full",
-            mode="train",
+            ann_file=os.path.join(args.data, "train2018.json"),
             transform=transforms.Compose(
                 [
                     transforms.RandomResizedCrop(224),
@@ -494,8 +494,8 @@ def main_worker(gpu, ngpus_per_node, args):
             ),
         )
         val_dataset = datasets.INaturalist(
-            root=args.data_dir,
-            split="val",
+            root=args.data,
+            ann_file=os.path.join(args.data, "val2018.json"),
             transform=transforms.Compose(
                 [
                     transforms.Resize(256),

@@ -160,6 +160,13 @@ parser.add_argument(
     help="Checkpoint root directory.",
 )
 
+parser.add_argument(
+    "--num_classes",
+    default=1000,
+    type=int,
+    help="Number of classes in the dataset.",
+)
+
 best_acc1 = 0
 
 
@@ -254,6 +261,8 @@ def main_worker(gpu, ngpus_per_node, args):
     # create model
     print("=> creating model '{}'".format(args.arch), flush=True)
     model = models.__dict__[args.arch]()
+
+    model.fc = nn.Linear(2048, args.num_classes)
 
     print("model", model.state_dict().keys(), flush=True)
 

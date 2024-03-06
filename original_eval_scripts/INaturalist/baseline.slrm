@@ -44,4 +44,5 @@ python simsiam/linear_eval_original_code.py \
     --rank 0 \
     --pretrained="/projects/imagenet_synthetic/model_checkpoints/simsiam_baseline_seed43_bs128_rforig_2024-03-05-12-27/checkpoint_0160.pth.tar"\
     --dist-url "tcp://$MASTER_ADDR:$MASTER_PORT" \
-    --dataset_name="INaturalist"
+    --dataset_name="INaturalist" \
+    --num_classes=8142

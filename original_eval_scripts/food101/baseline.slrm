@@ -9,8 +9,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=0
-#SBATCH --output=food101_baseline_160_%j.out
-#SBATCH --error=food101_baseline_160_%j.err
+#SBATCH --output=slurm-food101_baseline_160_%j.out
 #SBATCH --open-mode=append
 #SBATCH --wait-all-nodes=1
 #SBATCH --time=72:00:00

@@ -160,6 +160,13 @@ parser.add_argument(
     help="Checkpoint root directory.",
 )
 
+parser.add_argument(
+    "--num_classes",
+    default=1000,
+    type=int,
+    help="Number of classes in the dataset.",
+)
+
 best_acc1 = 0
 
 
@@ -254,6 +261,8 @@ def main_worker(gpu, ngpus_per_node, args):
     # create model
     print("=> creating model '{}'".format(args.arch), flush=True)
     model = models.__dict__[args.arch]()
+
+    model.fc = nn.Linear(2048, args.num_classes)
 
     print("model", model.state_dict().keys(), flush=True)
 
@@ -455,6 +464,31 @@ def main_worker(gpu, ngpus_per_node, args):
                 ],
             ),
         )
+    elif args.dataset_name == "cifar100":
+        train_dataset = datasets.CIFAR100(
+            root=args.data,
+            train=True,
+            transform=transforms.Compose(
+                [
+                    transforms.RandomResizedCrop(224),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                ],
+            ),
+        )
+        val_dataset = datasets.CIFAR100(
+            root=args.data,
+            train=False,
+            transform=transforms.Compose(
+                [
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                ],
+            ),
+        )
     elif args.dataset_name == "places365":
         train_dataset = datasets.Places365(
             root=args.data,
@@ -493,7 +527,7 @@ def main_worker(gpu, ngpus_per_node, args):
                 ],
             ),
         )
-        val_dataset = datasets.INaturalist(
+        val_dataset = INAT(
             root=args.data,
             ann_file=os.path.join(args.data, "val2018.json"),
             transform=transforms.Compose(

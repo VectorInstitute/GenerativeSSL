@@ -464,6 +464,31 @@ def main_worker(gpu, ngpus_per_node, args):
                 ],
             ),
         )
+    elif args.dataset_name == "cifar100":
+        train_dataset = datasets.CIFAR100(
+            root=args.data,
+            train=True,
+            transform=transforms.Compose(
+                [
+                    transforms.RandomResizedCrop(224),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                ],
+            ),
+        )
+        val_dataset = datasets.CIFAR100(
+            root=args.data,
+            train=False,
+            transform=transforms.Compose(
+                [
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                ],
+            ),
+        )
     elif args.dataset_name == "places365":
         train_dataset = datasets.Places365(
             root=args.data,

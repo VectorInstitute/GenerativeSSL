@@ -170,10 +170,10 @@ parser.add_argument(
 
 parser.add_argument(
     "--ablation_mode",
-    default="ICGAN",
+    default="icgan",
     type=str,
-    help="Using ICGAN or stable diffusion feature extractor for ablation study.",
-    hint="ICGAN or stable_diffusion",
+    help="Using icgan or stable diffusion feature extractor for ablation study.",
+    hint="icgan or stable_diffusion",
 )
 
 best_acc1 = 0
@@ -268,7 +268,8 @@ def main_worker(gpu, ngpus_per_node, args):
         print("init_process_group", flush=True)
         torch.distributed.barrier()
 
-    if args.ablation_mode == "ICGAN":
+    if args.ablation_mode == "icgan":
+        print("=> using icgan feature extractor.", flush=True)
         model = data_utils.load_pretrained_feature_extractor(
             args.pretrained, feature_extractor="selfsupervised"
         )

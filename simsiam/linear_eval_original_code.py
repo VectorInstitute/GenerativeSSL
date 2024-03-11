@@ -282,6 +282,8 @@ def main_worker(gpu, ngpus_per_node, args):
         # init the fc layer
         model.fc.weight.data.normal_(mean=0.0, std=0.01)
         model.fc.bias.data.zero_()
+
+        args.start_epoch = 0
     else:
         # create model
         print("=> creating model '{}'".format(args.arch), flush=True)

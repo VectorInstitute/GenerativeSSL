@@ -173,7 +173,6 @@ parser.add_argument(
     default="icgan",
     type=str,
     help="Using icgan or stable diffusion feature extractor for ablation study.",
-    hint="icgan or stable_diffusion",
 )
 
 best_acc1 = 0

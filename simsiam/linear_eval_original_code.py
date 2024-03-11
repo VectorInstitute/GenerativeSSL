@@ -622,8 +622,7 @@ def main_worker(gpu, ngpus_per_node, args):
                 filename=checkpoint_file,
             )
             if epoch == args.start_epoch:
-                if args.ablation_mode != "icgan":
-                    sanity_check(model.state_dict(), args.pretrained)
+                sanity_check(model.state_dict(), args.pretrained, args.ablation_mode)
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
@@ -740,26 +739,37 @@ def save_checkpoint(state, is_best, filename="checkpoint.pth.tar"):
         shutil.copyfile(filename, "model_best.pth.tar")
 
 
-def sanity_check(state_dict, pretrained_weights):
+def sanity_check(state_dict, pretrained_weights, ablation_mode):
     """
     Linear classifier should not change any weights other than the linear layer.
     This sanity check asserts nothing wrong happens (e.g., BN stats updated).
     """
     print("=> loading '{}' for sanity check".format(pretrained_weights))
     checkpoint = torch.load(pretrained_weights, map_location="cpu")
-    state_dict_pre = checkpoint["state_dict"]
+    if ablation_mode == "icgan":
+        state_dict_pre = checkpoint
+    else:
+        state_dict_pre = checkpoint["state_dict"]
 
     for k in list(state_dict.keys()):
         # only ignore fc layer
         if "fc.weight" in k or "fc.bias" in k:
             continue
+        if ablation_mode == "icgan":
+            # name in pretrained model
+            k_pre = (
+                "module." + k[len("module.") :]
+                if k.startswith("module.")
+                else "module." + k
+            )
 
-        # name in pretrained model
-        k_pre = (
-            "module.encoder." + k[len("module.") :]
-            if k.startswith("module.")
-            else "module.encoder." + k
-        )
+        else:
+            # name in pretrained model
+            k_pre = (
+                "module.encoder." + k[len("module.") :]
+                if k.startswith("module.")
+                else "module.encoder." + k
+            )
 
         assert (
             state_dict[k].cpu() == state_dict_pre[k_pre]

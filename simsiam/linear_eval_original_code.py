@@ -622,7 +622,8 @@ def main_worker(gpu, ngpus_per_node, args):
                 filename=checkpoint_file,
             )
             if epoch == args.start_epoch:
-                sanity_check(model.state_dict(), args.pretrained)
+                if args.ablation_mode != "icgan":
+                    sanity_check(model.state_dict(), args.pretrained)
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):

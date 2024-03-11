@@ -273,6 +273,8 @@ def main_worker(gpu, ngpus_per_node, args):
             args.pretrained, feature_extractor="selfsupervised"
         )
 
+        model.fc = nn.Linear(2048, args.num_classes)
+
         # freeze all layers but the last fc
         for name, param in model.named_parameters():
             if name not in ["fc.weight", "fc.bias"]:

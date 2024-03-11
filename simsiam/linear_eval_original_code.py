@@ -28,6 +28,7 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 import torchvision.transforms as transforms
 from tqdm import tqdm
+from icgan.data_utils import utils as data_utils
 
 from inatural_dataset import INAT
 
@@ -167,6 +168,14 @@ parser.add_argument(
     help="Number of classes in the dataset.",
 )
 
+parser.add_argument(
+    "--ablation_mode",
+    default="ICGAN",
+    type=str,
+    help="Using ICGAN or stable diffusion feature extractor for ablation study.",
+    hint="ICGAN or stable_diffusion",
+)
+
 best_acc1 = 0
 
 
@@ -258,47 +267,61 @@ def main_worker(gpu, ngpus_per_node, args):
         )
         print("init_process_group", flush=True)
         torch.distributed.barrier()
-    # create model
-    print("=> creating model '{}'".format(args.arch), flush=True)
-    model = models.__dict__[args.arch]()
 
-    model.fc = nn.Linear(2048, args.num_classes)
+    if args.ablation_mode == "ICGAN":
+        model = data_utils.load_pretrained_feature_extractor(
+            args.pretrained, feature_extractor="selfsupervised"
+        )
 
-    print("model", model.state_dict().keys(), flush=True)
+        # freeze all layers but the last fc
+        for name, param in model.named_parameters():
+            if name not in ["fc.weight", "fc.bias"]:
+                param.requires_grad = False
+        # init the fc layer
+        model.fc.weight.data.normal_(mean=0.0, std=0.01)
+        model.fc.bias.data.zero_()
+    else:
+        # create model
+        print("=> creating model '{}'".format(args.arch), flush=True)
+        model = models.__dict__[args.arch]()
 
-    # freeze all layers but the last fc
-    for name, param in model.named_parameters():
-        if name not in ["fc.weight", "fc.bias"]:
-            param.requires_grad = False
-    # init the fc layer
-    model.fc.weight.data.normal_(mean=0.0, std=0.01)
-    model.fc.bias.data.zero_()
+        model.fc = nn.Linear(2048, args.num_classes)
 
-    # load from pre-trained, before DistributedDataParallel constructor
-    if args.pretrained:
-        if os.path.isfile(args.pretrained):
-            print("=> loading checkpoint '{}'".format(args.pretrained), flush=True)
-            checkpoint = torch.load(args.pretrained, map_location="cpu")
+        print("model", model.state_dict().keys(), flush=True)
 
-            # rename moco pre-trained keys
-            state_dict = checkpoint["state_dict"]
-            for k in list(state_dict.keys()):
-                # retain only encoder up to before the embedding layer
-                if k.startswith("module.encoder") and not k.startswith(
-                    "module.encoder.fc"
-                ):
-                    # remove prefix
-                    state_dict[k[len("module.encoder.") :]] = state_dict[k]
-                # delete renamed or unused k
-                del state_dict[k]
+        # freeze all layers but the last fc
+        for name, param in model.named_parameters():
+            if name not in ["fc.weight", "fc.bias"]:
+                param.requires_grad = False
+        # init the fc layer
+        model.fc.weight.data.normal_(mean=0.0, std=0.01)
+        model.fc.bias.data.zero_()
 
-            args.start_epoch = 0
-            msg = model.load_state_dict(state_dict, strict=False)
-            assert set(msg.missing_keys) == {"fc.weight", "fc.bias"}
+        # load from pre-trained, before DistributedDataParallel constructor
+        if args.pretrained:
+            if os.path.isfile(args.pretrained):
+                print("=> loading checkpoint '{}'".format(args.pretrained), flush=True)
+                checkpoint = torch.load(args.pretrained, map_location="cpu")
 
-            print("=> loaded pre-trained model '{}'".format(args.pretrained))
-        else:
-            print("=> no checkpoint found at '{}'".format(args.pretrained))
+                # rename moco pre-trained keys
+                state_dict = checkpoint["state_dict"]
+                for k in list(state_dict.keys()):
+                    # retain only encoder up to before the embedding layer
+                    if k.startswith("module.encoder") and not k.startswith(
+                        "module.encoder.fc"
+                    ):
+                        # remove prefix
+                        state_dict[k[len("module.encoder.") :]] = state_dict[k]
+                    # delete renamed or unused k
+                    del state_dict[k]
+
+                args.start_epoch = 0
+                msg = model.load_state_dict(state_dict, strict=False)
+                assert set(msg.missing_keys) == {"fc.weight", "fc.bias"}
+
+                print("=> loaded pre-trained model '{}'".format(args.pretrained))
+            else:
+                print("=> no checkpoint found at '{}'".format(args.pretrained))
 
     # infer learning rate before changing batch size
     init_lr = args.lr * args.batch_size / 256

@@ -267,50 +267,42 @@ def main_worker(gpu, ngpus_per_node, args):
         print("init_process_group", flush=True)
         torch.distributed.barrier()
 
-    if args.ablation_mode == "icgan":
-        print("=> using icgan feature extractor.", flush=True)
-        model = data_utils.load_pretrained_feature_extractor(
-            args.pretrained, feature_extractor="selfsupervised"
-        )
 
-        model.fc = nn.Linear(2048, args.num_classes)
+    # create model
+    print("=> creating model '{}'".format(args.arch), flush=True)
+    model = models.__dict__[args.arch]()
 
-        # freeze all layers but the last fc
-        for name, param in model.named_parameters():
-            if name not in ["fc.weight", "fc.bias"]:
-                param.requires_grad = False
-        # init the fc layer
-        model.fc.weight.data.normal_(mean=0.0, std=0.01)
-        model.fc.bias.data.zero_()
+    model.fc = nn.Linear(2048, args.num_classes)
 
-        args.start_epoch = 0
-    else:
-        # create model
-        print("=> creating model '{}'".format(args.arch), flush=True)
-        model = models.__dict__[args.arch]()
+    print("model", model.state_dict().keys(), flush=True)
 
-        model.fc = nn.Linear(2048, args.num_classes)
+    # freeze all layers but the last fc
+    for name, param in model.named_parameters():
+        if name not in ["fc.weight", "fc.bias"]:
+            param.requires_grad = False
+    # init the fc layer
+    model.fc.weight.data.normal_(mean=0.0, std=0.01)
+    model.fc.bias.data.zero_()
 
-        print("model", model.state_dict().keys(), flush=True)
+    # load from pre-trained, before DistributedDataParallel constructor
+    if args.pretrained:
+        if os.path.isfile(args.pretrained):
+            print("=> loading checkpoint '{}'".format(args.pretrained), flush=True)
+            checkpoint = torch.load(args.pretrained, map_location="cpu")
 
-        # freeze all layers but the last fc
-        for name, param in model.named_parameters():
-            if name not in ["fc.weight", "fc.bias"]:
-                param.requires_grad = False
-        # init the fc layer
-        model.fc.weight.data.normal_(mean=0.0, std=0.01)
-        model.fc.bias.data.zero_()
-
-        # load from pre-trained, before DistributedDataParallel constructor
-        if args.pretrained:
-            if os.path.isfile(args.pretrained):
-                print("=> loading checkpoint '{}'".format(args.pretrained), flush=True)
-                checkpoint = torch.load(args.pretrained, map_location="cpu")
-
-                # rename moco pre-trained keys
-                state_dict = checkpoint["state_dict"]
-                for k in list(state_dict.keys()):
-                    # retain only encoder up to before the embedding layer
+            # rename moco pre-trained keys
+            state_dict = checkpoint["state_dict"]
+            for k in list(state_dict.keys()):
+                # retain only encoder up to before the embedding layer
+                if args.ablation_mode == "icgan":
+                    if k.startswith("module") and not k.startswith(
+                        "module.fc"
+                    ):
+                        # remove prefix
+                        state_dict[k[len("module.") :]] = state_dict[k]
+                    # delete renamed or unused k
+                    del state_dict[k]
+                else:
                     if k.startswith("module.encoder") and not k.startswith(
                         "module.encoder.fc"
                     ):
@@ -319,13 +311,13 @@ def main_worker(gpu, ngpus_per_node, args):
                     # delete renamed or unused k
                     del state_dict[k]
 
-                args.start_epoch = 0
-                msg = model.load_state_dict(state_dict, strict=False)
-                assert set(msg.missing_keys) == {"fc.weight", "fc.bias"}
+            args.start_epoch = 0
+            msg = model.load_state_dict(state_dict, strict=False)
+            assert set(msg.missing_keys) == {"fc.weight", "fc.bias"}
 
-                print("=> loaded pre-trained model '{}'".format(args.pretrained))
-            else:
-                print("=> no checkpoint found at '{}'".format(args.pretrained))
+            print("=> loaded pre-trained model '{}'".format(args.pretrained))
+        else:
+            print("=> no checkpoint found at '{}'".format(args.pretrained))
 
     # infer learning rate before changing batch size
     init_lr = args.lr * args.batch_size / 256

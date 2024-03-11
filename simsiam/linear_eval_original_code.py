@@ -291,7 +291,10 @@ def main_worker(gpu, ngpus_per_node, args):
             checkpoint = torch.load(args.pretrained, map_location="cpu")
 
             # rename moco pre-trained keys
-            state_dict = checkpoint["state_dict"]
+            if args.ablation_mode == "icgan":
+                state_dict = checkpoint
+            else:
+                state_dict = checkpoint["state_dict"]
             for k in list(state_dict.keys()):
                 # retain only encoder up to before the embedding layer
                 if args.ablation_mode == "icgan":

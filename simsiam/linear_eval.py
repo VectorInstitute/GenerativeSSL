@@ -28,7 +28,7 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 import torchvision.transforms as transforms
 from tqdm import tqdm
-from icgan.data_utils import utils as data_utils
+from data_generation.icgan.data_utils import utils as data_utils
 
 from inatural_dataset import INAT
 

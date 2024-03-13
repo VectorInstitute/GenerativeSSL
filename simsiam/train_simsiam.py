@@ -24,7 +24,7 @@ from torch.utils.data.distributed import DistributedSampler
 from torchvision import datasets, models
 from tqdm import tqdm
 
-from SimCLR import distributed as dist_utils
+from simsiam import distributed as dist_utils
 from simsiam import builder, loader
 
 

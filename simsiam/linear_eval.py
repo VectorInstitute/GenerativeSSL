@@ -190,7 +190,7 @@ def main():
         random.seed(args.seed)
         torch.manual_seed(args.seed)
         # NOTE: this line can reduce speed considerably
-        # cudnn.deterministic = True
+        cudnn.deterministic = True
         warnings.warn(
             "You have chosen to seed training. "
             "This will turn on the CUDNN deterministic setting, "
@@ -207,8 +207,6 @@ def main():
 
     if args.dist_url == "env://" and args.world_size == -1:
         args.world_size = int(os.environ["WORLD_SIZE"])
-        print(args.world_size)
-
     args.distributed = args.world_size > 1 or args.multiprocessing_distributed
 
     ngpus_per_node = torch.cuda.device_count()
@@ -216,7 +214,6 @@ def main():
         # Since we have ngpus_per_node processes per node, the total world_size
         # needs to be adjusted accordingly
         args.world_size = ngpus_per_node * args.world_size
-        print("second", args.world_size)
         # Use torch.multiprocessing.spawn to launch distributed processes: the
         # main_worker process function
         mp.spawn(
@@ -234,7 +231,6 @@ def main():
 
 def main_worker(gpu, ngpus_per_node, args):
     global best_acc1
-    print("spawn performed, gpu", gpu, flush=True)
     args.gpu = gpu
 
     # suppress printing if not master
@@ -249,22 +245,18 @@ def main_worker(gpu, ngpus_per_node, args):
         print("Use GPU: {} for training".format(args.gpu), flush=True)
 
     if args.distributed:
-        print("here", flush=True)
         if args.dist_url == "env://" and args.rank == -1:
             args.rank = int(os.environ["RANK"])
-            print("rank", args.rank, flush=True)
         if args.multiprocessing_distributed:
             # For multiprocessing distributed training, rank needs to be the
             # global rank among all the processes
             args.rank = args.rank * ngpus_per_node + gpu
-            print("second rank", args.rank, flush=True)
         dist.init_process_group(
             backend=args.dist_backend,
             init_method=args.dist_url,
             world_size=args.world_size,
             rank=args.rank,
         )
-        print("init_process_group", flush=True)
         torch.distributed.barrier()
 
 
@@ -273,8 +265,6 @@ def main_worker(gpu, ngpus_per_node, args):
     model = models.__dict__[args.arch]()
 
     model.fc = nn.Linear(2048, args.num_classes)
-
-    print("model", model.state_dict().keys(), flush=True)
 
     # freeze all layers but the last fc
     for name, param in model.named_parameters():
@@ -291,28 +281,16 @@ def main_worker(gpu, ngpus_per_node, args):
             checkpoint = torch.load(args.pretrained, map_location="cpu")
 
             # rename moco pre-trained keys
-            if args.ablation_mode == "icgan":
-                state_dict = checkpoint
-            else:
-                state_dict = checkpoint["state_dict"]
+            state_dict = checkpoint["state_dict"]
             for k in list(state_dict.keys()):
                 # retain only encoder up to before the embedding layer
-                if args.ablation_mode == "icgan":
-                    if k.startswith("module") and not k.startswith(
-                        "module.fc"
-                    ):
-                        # remove prefix
-                        state_dict[k[len("module.") :]] = state_dict[k]
-                    # delete renamed or unused k
-                    del state_dict[k]
-                else:
-                    if k.startswith("module.encoder") and not k.startswith(
-                        "module.encoder.fc"
-                    ):
-                        # remove prefix
-                        state_dict[k[len("module.encoder.") :]] = state_dict[k]
-                    # delete renamed or unused k
-                    del state_dict[k]
+                if k.startswith("module.encoder") and not k.startswith(
+                    "module.encoder.fc"
+                ):
+                    # remove prefix
+                    state_dict[k[len("module.encoder.") :]] = state_dict[k]
+                # delete renamed or unused k
+                del state_dict[k]
 
             args.start_epoch = 0
             msg = model.load_state_dict(state_dict, strict=False)
@@ -336,10 +314,7 @@ def main_worker(gpu, ngpus_per_node, args):
             # DistributedDataParallel, we need to divide the batch size
             # ourselves based on the total number of GPUs we have
             args.batch_size = int(args.batch_size / ngpus_per_node)
-            print("batchsize", args.batch_size, flush=True)
             args.workers = int((args.workers + ngpus_per_node - 1) / ngpus_per_node)
-            print("workers", args.workers, flush=True)
-            print("gpu", args.gpu, flush=True)
             model = torch.nn.parallel.DistributedDataParallel(
                 model, device_ids=[args.gpu]
             )
@@ -593,8 +568,6 @@ def main_worker(gpu, ngpus_per_node, args):
             train_sampler.set_epoch(epoch)
         adjust_learning_rate(optimizer, init_lr, epoch, args)
 
-        print("epoch", epoch, flush=True)
-
         # train for one epoch
         train(train_loader, model, criterion, optimizer, epoch, args)
 
@@ -622,7 +595,7 @@ def main_worker(gpu, ngpus_per_node, args):
                 filename=checkpoint_file,
             )
             if epoch == args.start_epoch:
-                sanity_check(model.state_dict(), args.pretrained, args.ablation_mode)
+                sanity_check(model.state_dict(), args.pretrained)
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
@@ -665,9 +638,6 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         losses.update(loss.item(), images.size(0))
         top1.update(acc1[0], images.size(0))
         top5.update(acc5[0], images.size(0))
-
-        if i == 0:
-            print("first step passed", flush=True)
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -739,37 +709,27 @@ def save_checkpoint(state, is_best, filename="checkpoint.pth.tar"):
         shutil.copyfile(filename, "model_best.pth.tar")
 
 
-def sanity_check(state_dict, pretrained_weights, ablation_mode):
+def sanity_check(state_dict, pretrained_weights):
     """
     Linear classifier should not change any weights other than the linear layer.
     This sanity check asserts nothing wrong happens (e.g., BN stats updated).
     """
     print("=> loading '{}' for sanity check".format(pretrained_weights))
     checkpoint = torch.load(pretrained_weights, map_location="cpu")
-    if ablation_mode == "icgan":
-        state_dict_pre = checkpoint
-    else:
-        state_dict_pre = checkpoint["state_dict"]
+    
+    state_dict_pre = checkpoint["state_dict"]
 
     for k in list(state_dict.keys()):
         # only ignore fc layer
         if "fc.weight" in k or "fc.bias" in k:
             continue
-        if ablation_mode == "icgan":
-            # name in pretrained model
-            k_pre = (
-                "module." + k[len("module.") :]
-                if k.startswith("module.")
-                else "module." + k
-            )
 
-        else:
-            # name in pretrained model
-            k_pre = (
-                "module.encoder." + k[len("module.") :]
-                if k.startswith("module.")
-                else "module.encoder." + k
-            )
+        # name in pretrained model
+        k_pre = (
+            "module.encoder." + k[len("module.") :]
+            if k.startswith("module.")
+            else "module.encoder." + k
+        )
 
         assert (
             state_dict[k].cpu() == state_dict_pre[k_pre]
@@ -780,7 +740,6 @@ def sanity_check(state_dict, pretrained_weights, ablation_mode):
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
-
     def __init__(self, name, fmt=":f"):
         self.name = name
         self.fmt = fmt

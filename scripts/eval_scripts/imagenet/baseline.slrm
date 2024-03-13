@@ -33,7 +33,7 @@ echo $MASTER_PORT
 export PYTHONPATH="."
 nvidia-smi
 
-python simsiam/linear_eval_original_code.py \
+python simsiam/linear_eval.py \
     --data="/scratch/ssd004/datasets/imagenet256" \
     --arch="resnet50" \
     --multiprocessing-distributed \

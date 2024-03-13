@@ -17,7 +17,7 @@ import os
 import os.path
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
-from icgan.data_utils import utils as data_utils
+from data_generation.icgan.data_utils import utils as data_utils
 from PIL import Image
 import numpy as np
 from tqdm import tqdm

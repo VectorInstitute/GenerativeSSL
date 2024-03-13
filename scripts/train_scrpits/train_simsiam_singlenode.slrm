@@ -24,7 +24,7 @@ export TORCH_NCCL_ASYNC_ERROR_HANDLING=1 # set to 1 for NCCL backend
 export PYTHONPATH="."
 nvidia-smi
 
-torchrun --nproc-per-node=4 --nnodes=1 simsiam/adil_main_simsiam.py \
+torchrun --nproc-per-node=4 --nnodes=1 simsiam/train_simsiam.py \
     -a resnet50 \
     --fix-pred-lr \
     --distributed_mode \

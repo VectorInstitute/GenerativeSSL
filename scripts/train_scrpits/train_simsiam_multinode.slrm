@@ -41,7 +41,7 @@ srun -p $SLURM_JOB_PARTITION \
     --rdzv-endpoint $MASTER_ADDR:$MASTER_PORT \
     --rdzv-id $RDVZ_ID \
     --rdzv-backend c10d \
-    simsiam/adil_main_simsiam.py \
+    simsiam/train_simsiam.py \
     -a resnet50 \
     --fix-pred-lr \
     --distributed_mode \

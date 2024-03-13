@@ -31,7 +31,7 @@ echo $MASTER_PORT
 export PYTHONPATH="."
 nvidia-smi
 
-python simsiam/linear_eval_original_code.py \
+python simsiam/linear_eval.py \
     --data="/projects/imagenet_synthetic/fereshteh_datasets" \
     --arch="resnet50" \
     --multiprocessing-distributed \

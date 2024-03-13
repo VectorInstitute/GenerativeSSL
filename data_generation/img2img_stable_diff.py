@@ -13,7 +13,7 @@ from diffusers import (
 )
 from torchvision import datasets, transforms
 
-from icgan.data_utils import utils as data_utils
+from data_generation.icgan.data_utils import utils as data_utils
 
 
 class StableGenerator(object):

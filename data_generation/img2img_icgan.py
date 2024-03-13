@@ -2,10 +2,10 @@ import argparse
 from torchvision import datasets, transforms
 import time
 import os
-from icgan.config import get_config
-from icgan.icgan_inference import ICGANInference
+from data_generation.icgan.config import get_config
+from data_generation.icgan.icgan_inference import ICGANInference
 from pytorch_pretrained_biggan import convert_to_images
-from icgan.data_utils import utils as data_utils
+from data_generation.icgan.data_utils import utils as data_utils
 import torch
 import numpy as np
 from tqdm import tqdm

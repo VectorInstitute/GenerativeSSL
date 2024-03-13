@@ -18,9 +18,9 @@ import functools
 
 import torch
 import torch.nn as nn
-from icgan.BigGAN_PyTorch import utils as biggan_utils
-from icgan.BigGAN_PyTorch import BigGAN as BigGANModel
-from icgan.data_utils import utils as data_utils
+from data_generation.icgan.BigGAN_PyTorch import utils as biggan_utils
+from data_generation.icgan.BigGAN_PyTorch import BigGAN as BigGANModel
+from data_generation.icgan.data_utils import utils as data_utils
 
 
 def get_sampling_funct(

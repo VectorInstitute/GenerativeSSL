@@ -3,7 +3,7 @@
 #SBATCH --job-name=gen_image
 #SBATCH --partition=a100
 #SBATCH --time=72:00:00
-#SBATCH --qos=a100_arashaf
+#SBATCH --qos=deadline
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks-per-node=1
@@ -13,8 +13,8 @@
 
 PY_ARGS=${@:1}
 
-# load virtual environment
-source /ssd003/projects/aieng/envs/genssl2/bin/activate
+# activate virtual environment
+source Path to the virtual environment
 
 export TORCH_NCCL_ASYNC_ERROR_HANDLING=1 # set to 1 for NCCL backend
 export CUDA_LAUNCH_BLOCKING=1
@@ -26,7 +26,7 @@ export PYTHONPATH="."
 nvidia-smi
 
 srun python data_generation/img2img_stable_diff.py \
---outdir /projects/imagenet_synthetic/arashaf_stablediff_batched \
+--outdir PATH of Output Dir \
 --num_shards=7 \
 --shard_index=2 \
 --image_version=1 \

@@ -41,7 +41,7 @@ python simsiam/linear_eval.py \
     -j=16 \
     --world-size 1 \
     --rank 0 \
-    --pretrained="Path to Baseline Checkpoint"\
+    --pretrained="Path to model trained with Stable Diffusion data"\
     --dist-url "tcp://$MASTER_ADDR:$MASTER_PORT" \
     --dataset_name="cifar10" \
     --num_classes=10

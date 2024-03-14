@@ -1,15 +1,16 @@
 #!/bin/bash
 
-#SBATCH --job-name="cifar"
+#SBATCH --job-name="inaturalist"
 #SBATCH --partition=a40
 #SBATCH --qos=deadline
-#SBATCH --account=deadline
+#SBATCH --account=deadline	
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:4
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=0
-#SBATCH --output=slurm-cifar10_baseline_160_%j.out
+#SBATCH --output=inaturalist_baseline_%j.out
+#SBATCH --error=inaturalist_baseline_%j.err
 #SBATCH --open-mode=append
 #SBATCH --wait-all-nodes=1
 #SBATCH --time=72:00:00
@@ -32,7 +33,7 @@ export PYTHONPATH="."
 nvidia-smi
 
 python simsiam/linear_eval.py \
-    --data="Path to CIFAR10 Dataset" \
+    --data="Path to ImageNet Dataset" \
     --arch="resnet50" \
     --multiprocessing-distributed \
     --lars \
@@ -41,7 +42,7 @@ python simsiam/linear_eval.py \
     -j=16 \
     --world-size 1 \
     --rank 0 \
-    --pretrained="Path to Baseline Checkpoint"\
+    --pretrained="Path to model trained with Stable Diffusion data"\
     --dist-url "tcp://$MASTER_ADDR:$MASTER_PORT" \
-    --dataset_name="cifar10" \
-    --num_classes=10
+    --dataset_name="INaturalist" \
+    --num_classes=8142

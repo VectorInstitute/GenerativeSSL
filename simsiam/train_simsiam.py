@@ -295,7 +295,7 @@ def main():
 
     # infer learning rate before changing batch size
     # init_lr = args.lr * args.batch_size / 256.0
-    # TODO(arashaf): Hard-code init-lr to match the original paper with bs=512.
+    # TODO Hard-code init-lr to match the original paper with bs=512.
     init_lr = args.lr * 2.0
 
     optimizer = torch.optim.SGD(

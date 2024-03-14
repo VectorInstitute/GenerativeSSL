@@ -150,7 +150,7 @@ def main():
     transform_list = [
         data_utils.CenterCropLongEdge(),
         transforms.Resize(size=(opt.img_size, opt.img_size)),
-        transforms.ToTensor(),  # TODO(arashaf)
+        transforms.ToTensor(), 
     ]
     transform = transforms.Compose(transform_list)
 

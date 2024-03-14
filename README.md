@@ -9,7 +9,7 @@ To create the virtual environment for running the experiments, you need to run:
 `pip install -r requirements.txt`
 
 **Note:** 
-> You always need to set the proper path to the virtual environment, the dataset and the model in each SLURM file before submitting the job. Here are the options for the datasets and models that we used in our experiments:
+**You always need to set the proper path to the virtual environment, the dataset and the model in each SLURM file before submitting the job. Here are the options for the datasets and models that we used in our experiments:**
 
 > - Datasets: ImageNet, iNaturalist2018, Food101, Places365, CIFAR10/100
 > - Models: Baseline (SimSiam model trained on ImageNet), SimSiam model trained with ICGAN augmentations, SimSiam model trained with Stable Diffusion augmentations

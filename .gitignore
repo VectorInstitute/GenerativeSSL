@@ -133,3 +133,51 @@ dmypy.json
 
 # Trained models
 trained_models/
+
+# wandb dir
+wandb/
+wandb*/
+!scripts/**
+
+# umap dir
+auto_umap/
+
+# datasets dir
+datasets/
+
+# saved models
+*.pt
+*.pth
+*.ckpt
+*.tar
+*.pkl
+
+bash_files/*.png
+bash_files/*.jpg
+bash_files/*.jpeg
+
+downstream/*.png
+downstream/*.jpg
+downstream/*.jpeg
+
+solo/*.png
+solo/*.jpg
+solo/*.jpeg
+
+tests/*.png
+tests/*.jpg
+tests/*.jpeg
+
+zoo/*.png
+zoo/*.jpg
+zoo/*.jpeg
+
+saved_models/
+model_storage*/
+lightning_logs/
+
+*.json
+
+*logs*/
+*output*/
+

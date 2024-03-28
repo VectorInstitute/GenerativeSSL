@@ -1,6 +1,5 @@
 defaults:
   - _self_
-  - augmentations: asymmetric.yaml
   - wandb: private.yaml
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
@@ -11,17 +10,11 @@ hydra:
   run:
     dir: .
 
-name: "byol-imagenet"
-method: "byol"
+name: "simsiam-linear"
+pretrained_feature_extractor: "/h/sayromlou/GenSSL2/solo-learn/trained_models/simsiam/5/simsiam-imagenet-5-ep=99.ckpt"
 backbone:
   name: "resnet50"
-method_kwargs:
-  proj_hidden_dim: 4096
-  proj_output_dim: 256
-  pred_hidden_dim: 4096
-momentum:
-  base_tau: 0.99
-  final_tau: 1.0
+pretrain_method: "simsiam"
 data:
   dataset: imagenet
   train_path: "/datasets/imagenet/train"
@@ -29,23 +22,19 @@ data:
   format: "dali"
   num_workers: 4
 optimizer:
-  name: "lars"
-  batch_size: 64
-  lr: 0.45
-  classifier_lr: 0.2
-  weight_decay: 1e-6
-  kwargs:
-    clip_lr: False
-    eta: 0.001
-    exclude_bias_n_norm: True
+  name: "sgd"
+  batch_size: 256
+  lr: 30.0
+  weight_decay: 0
 scheduler:
-  name: "warmup_cosine"
+  name: "step"
+  lr_decay_steps: [60, 80]
 checkpoint:
   enabled: True
   dir: "trained_models"
   frequency: 1
 auto_resume:
-  enabled: True
+  enabled: False
 
 # overwrite PL stuff
 max_epochs: 100
@@ -53,5 +42,4 @@ devices: 4
 sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"
-precision: 16-mixed
-accumulate_grad_batches: 16
+precision: 16

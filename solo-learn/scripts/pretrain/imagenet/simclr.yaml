@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - augmentations: asymmetric.yaml
+  - augmentations: symmetric.yaml
   - wandb: private.yaml
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
@@ -11,17 +11,14 @@ hydra:
   run:
     dir: .
 
-name: "byol-imagenet"
-method: "byol"
+name: "simclr-imagenet"
+method: "simclr"
 backbone:
   name: "resnet50"
 method_kwargs:
   proj_hidden_dim: 4096
-  proj_output_dim: 256
-  pred_hidden_dim: 4096
-momentum:
-  base_tau: 0.99
-  final_tau: 1.0
+  proj_output_dim: 512
+  temperature: 0.2
 data:
   dataset: imagenet
   train_path: "/datasets/imagenet/train"
@@ -31,12 +28,12 @@ data:
 optimizer:
   name: "lars"
   batch_size: 64
-  lr: 0.45
-  classifier_lr: 0.2
-  weight_decay: 1e-6
+  lr: 0.3
+  classifier_lr: 0.1
+  weight_decay: 1e-4
   kwargs:
-    clip_lr: False
-    eta: 0.001
+    clip_lr: True
+    eta: 0.02
     exclude_bias_n_norm: True
 scheduler:
   name: "warmup_cosine"
@@ -54,4 +51,3 @@ sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"
 precision: 16-mixed
-accumulate_grad_batches: 16

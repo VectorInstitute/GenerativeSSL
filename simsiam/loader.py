@@ -1,34 +1,58 @@
-"""ImageNet synthetic dataset."""
+# Copyright (c) Facebook, Inc. and its affiliates.
+# All rights reserved.
+
+# This source code is licensed under the license found in the
+# LICENSE file in the root directory of this source tree.
 
 import os
 import random
 
 import torch
-from PIL import Image
+from PIL import Image, ImageFilter
 from torchvision import datasets, transforms
 
-from SimCLR.data_aug.gaussian_blur import GaussianBlur
+
+class GaussianBlur(object):
+    """Gaussian blur augmentation in SimCLR https://arxiv.org/abs/2002.05709."""
+
+    def __init__(self, sigma=[0.1, 2.0]):
+        self.sigma = sigma
+
+    def __call__(self, x):
+        sigma = random.uniform(self.sigma[0], self.sigma[1])
+        x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
+        return x
 
 
-def _get_simclr_transforms(size, random_crop=False, s=1):
-    """Return a set of data augmentation transformations as described in the SimCLR paper.
+_normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
-    Args:
-        size (int): Image size.
-        s (float, optional): Magnitude of the color distortion. Defaults to 1.
-    """
-    color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
-    transform_list = [
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomApply([color_jitter], p=0.8),
-        transforms.RandomGrayscale(p=0.2),
-        GaussianBlur(kernel_size=int(0.1 * size)),
-        transforms.ToTensor(),
-    ]
-    if random_crop:
-        transform_list.insert(0, transforms.RandomResizedCrop(size=size))
+# MoCo v2's aug: similar to SimCLR https://arxiv.org/abs/2002.05709
+_real_augmentations = [
+    transforms.RandomResizedCrop(224, scale=(0.2, 1.0)),
+    transforms.RandomApply(
+        [
+            transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
+        ],
+        p=0.8,
+    ),
+    transforms.RandomGrayscale(p=0.2),
+    transforms.RandomApply([GaussianBlur([0.1, 2.0])], p=0.5),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    _normalize,
+]
 
-    return transforms.Compose(transform_list)
+
+class TwoCropsTransform:
+    """Take two random crops of one image as the query and key."""
+
+    def __init__(self):
+        self.base_transform = transforms.Compose(_real_augmentations)
+
+    def __call__(self, x):
+        q = self.base_transform(x)
+        k = self.base_transform(x)
+        return [q, k]
 
 
 class ImageNetSynthetic(datasets.ImageNet):
@@ -52,8 +76,9 @@ class ImageNetSynthetic(datasets.ImageNet):
         self.index_max = index_max
         self.generative_augmentation_prob = generative_augmentation_prob
         self.load_one_real_image = load_one_real_image
-        self.synthetic_transforms = _get_simclr_transforms(size=224)
-        self.real_transforms = _get_simclr_transforms(size=224, random_crop=True)
+        self.real_transforms = transforms.Compose(_real_augmentations)
+        # Remove random crop for synthetic image augmentation.
+        self.synthetic_transforms = transforms.Compose(_real_augmentations[1:])
         self.split = split
 
     def __getitem__(self, index):
@@ -98,4 +123,4 @@ class ImageNetSynthetic(datasets.ImageNet):
             image2 = _synthetic_image(imagenet_filename)
             image2 = self.synthetic_transforms(image2)
 
-        return {"view1": image1, "view2": image2}, label
+        return [image1, image2], label

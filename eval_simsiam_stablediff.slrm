@@ -1,14 +1,15 @@
 #!/bin/bash
 
-#SBATCH --job-name=simclr_icgan
-#SBATCH --partition=a100
-#SBATCH --qos=a100_arashaf
+#SBATCH --job-name="simsiam_eval"
+#SBATCH --partition=a40
 #SBATCH --time=72:00:00
+#SBATCH --account=deadline
+#SBATCH --qos=deadline
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:4
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=4
-#SBATCH --mem-per-cpu=4G
+#SBATCH --mem-per-cpu=8G
 #SBATCH --output=slurm-%j.out
 
 PY_ARGS=${@:1}
@@ -26,13 +27,12 @@ export PYTHONPATH="."
 nvidia-smi
 
 # “srun” executes the script <ntasks-per-node * nodes> times
-srun python run_simCLR.py \
---fp16-precision \
+srun python simsiam/linear_eval.py \
+--data_dir="/scratch/ssd004/datasets/imagenet256" \
+--arch="resnet50" \
 --distributed_mode \
---batch-size=512 \
---epochs=100 \
---use_synthetic_data \
---synthetic_data_dir="/projects/imagenet_synthetic/synthetic_icgan" \
---synthetic_index_min=0 \
---synthetic_index_max=4 \
---generative_augmentation_prob=0.5
+--batch-size=1024 \
+--lars \
+--pretrained_checkpoint="/projects/imagenet_synthetic/model_checkpoints/simsiam_stablediff_2024-02-29-15-27/checkpoint_0099.pth.tar" \
+
+# --checkpoint_dir="/projects/imagenet_synthetic/model_checkpoints/eval_simsiam_stablediff_ep0099"

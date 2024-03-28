@@ -177,6 +177,17 @@ parser.add_argument(
     type=int,
     help="Synthetic data files are named filename_i.JPEG. This index determines the upper bound for i.",
 )
+parser.add_argument(
+    "--last_checkpoint",
+    default="",
+    help="Last model checkpoint file to resume training from.",
+)
+parser.add_argument(
+    "--generative_augmentation_prob",
+    default=None,
+    type=float,
+    help="The probability of applying a generative model augmentation to a view. Applies to the views separately.",
+)
 
 
 def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> None:
@@ -231,6 +242,7 @@ def main():
             args.synthetic_data_dir,
             index_min=args.synthetic_index_min,
             index_max=args.synthetic_index_max,
+            generative_augmentation_prob=args.generative_augmentation_prob,
         )
     else:
         print(f"Using real data for training at {args.data}.")

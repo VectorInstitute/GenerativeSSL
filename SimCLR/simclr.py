@@ -23,6 +23,17 @@ class SimCLR(object):
             self.device_id,
         )
         self.checkpoint_dir = self.args.checkpoint_dir
+        self.start_epoch = 0
+
+        if self.args.last_checkpoint:
+            checkpoint = torch.load(self.args.last_checkpoint)
+            self.model.load_state_dict(checkpoint["state_dict"])
+            self.optimizer.load_state_dict(checkpoint["optimizer"])
+            # Start from the next epoch.
+            self.start_epoch = checkpoint["epoch"] + 1
+            print(
+                f"Checkpoint loaded. Resuming training from epoch: {self.start_epoch}"
+            )
 
     def train(self, train_loader):
         scaler = GradScaler(enabled=self.args.fp16_precision)
@@ -32,9 +43,12 @@ class SimCLR(object):
         print(f"Log dir: {self.writer.log_dir}")
 
         n_iter = 0
-        print(f"Start SimCLR training for {self.args.epochs} epochs.")
+        print(
+            f"Start SimCLR training for {self.args.epochs} epochs starting from {self.start_epoch}."
+        )
 
-        for epoch_counter in tqdm(range(self.args.epochs), desc="Training Progress"):
+        train_range = range(self.start_epoch, self.args.epochs)
+        for epoch_counter in tqdm(train_range, desc="Training Progress"):
             if dist_utils.is_dist_avail_and_initialized():
                 train_loader.sampler.set_epoch(epoch_counter)
             for images, _ in tqdm(train_loader):
@@ -77,7 +91,7 @@ class SimCLR(object):
             checkpoint_file = os.path.join(self.checkpoint_dir, checkpoint_name)
             save_checkpoint(
                 {
-                    "epoch": self.args.epochs,
+                    "epoch": epoch_counter,
                     "arch": self.args.arch,
                     "state_dict": self.model.state_dict(),
                     "optimizer": self.optimizer.state_dict(),

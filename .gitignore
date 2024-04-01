@@ -182,4 +182,4 @@ solo-learn/lightning_logs/
 *output*/
 
 # Ignore all .DS_Store files
-*.DS_Store
+.DS_Store

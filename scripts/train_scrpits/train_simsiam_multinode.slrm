@@ -1,0 +1,57 @@
+#!/bin/bash
+
+#SBATCH --job-name="simsiam_multi_train"
+#SBATCH --partition=a40
+#SBATCH --account=deadline
+#SBATCH --qos=deadline
+#SBATCH --nodes=2
+#SBATCH --gres=gpu:a40:4
+#SBATCH --ntasks-per-node=1
+#SBATCH --open-mode=append
+#SBATCH --wait-all-nodes=1
+#SBATCH --time=01:00:00
+#SBATCH --cpus-per-task=4
+#SBATCH --mem-per-cpu=8G
+#SBATCH --output=slurm-%j.out
+
+# load virtual environment
+source /ssd003/projects/aieng/envs/genssl2/bin/activate
+
+export NCCL_IB_DISABLE=1  # Our cluster does not have InfiniBand. We need to disable usage using this flag.
+export TORCH_NCCL_ASYNC_ERROR_HANDLING=1 # set to 1 for NCCL backend
+# export CUDA_LAUNCH_BLOCKING=1
+
+
+export MASTER_ADDR="$(hostname --fqdn)"
+export MASTER_PORT="$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1])')"
+export RDVZ_ID=$RANDOM
+echo "RDZV Endpoint $MASTER_ADDR:$MASTER_PORT"
+
+export PYTHONPATH="."
+nvidia-smi
+
+srun -p $SLURM_JOB_PARTITION \
+    -c $SLURM_CPUS_ON_NODE \
+    -N $SLURM_JOB_NUM_NODES \
+    --mem=0 \
+    --gres=gpu:$SLURM_JOB_PARTITION:$SLURM_GPUS_ON_NODE \
+    bash -c 'torchrun \
+    --nproc-per-node=$SLURM_GPUS_ON_NODE \
+    --nnodes=$SLURM_JOB_NUM_NODES \
+    --rdzv-endpoint $MASTER_ADDR:$MASTER_PORT \
+    --rdzv-id $RDVZ_ID \
+    --rdzv-backend c10d \
+    simsiam/train_simsiam.py.py \
+    -a resnet50 \
+    --fix-pred-lr \
+    --distributed_mode \
+    --batch-size=128 \
+    --epochs=200 \
+    --experiment="simsiam_icgan_seed43_bs128_rforig" \
+    --resume_from_checkpoint="/projects/imagenet_synthetic/model_checkpoints/_original_simsiam/checkpoint_0099.pth.tar" \
+    --seed=43 \
+    --use_synthetic_data \
+    --synthetic_data_dir="/projects/imagenet_synthetic/synthetic_icgan" \
+    --synthetic_index_min=0 \
+    --synthetic_index_max=4 \
+    --generative_augmentation_prob=0.5'

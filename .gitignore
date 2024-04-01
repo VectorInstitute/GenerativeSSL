@@ -130,3 +130,53 @@ dmypy.json
 
 # pycharm
 .idea/
+
+# Trained models
+trained_models/
+
+# wandb dir
+wandb/
+wandb*/
+!scripts/**
+
+# umap dir
+auto_umap/
+
+# datasets dir
+datasets/
+
+# saved models
+*.pt
+*.pth
+*.ckpt
+*.tar
+*.pkl
+
+solo-learn/bash_files/*.png
+solo-learn/bash_files/*.jpg
+solo-learn/bash_files/*.jpeg
+
+solo-learn/downstream/*.png
+solo-learn/downstream/*.jpg
+solo-learn/downstream/*.jpeg
+
+solo-learn/solo/*.png
+solo-learn/solo/*.jpg
+solo-learn/solo/*.jpeg
+
+solo-learn/tests/*.png
+solo-learn/tests/*.jpg
+solo-learn/tests/*.jpeg
+
+solo-learn/zoo/*.png
+solo-learn/zoo/*.jpg
+solo-learn/zoo/*.jpeg
+
+solo-learn/saved_models/
+solo-learn/model_storage*/
+solo-learn/lightning_logs/
+
+*.json
+
+*logs*/
+*output*/

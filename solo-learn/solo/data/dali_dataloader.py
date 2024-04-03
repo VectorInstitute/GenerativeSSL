@@ -35,7 +35,9 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from solo.data.temp_dali_fix import TempDALIGenericIterator
 from solo.utils.misc import omegaconf_select
 
+import random.shuffle as shuffle
 import random
+import numpy as np
 
 
 class RandomSyntheticDataChoice:
@@ -476,8 +478,7 @@ def build_transform_pipeline_dali(dataset, cfg, dali_device):
 
     return AugWrapper(augmentations=augmentations, cmn=cmn, coin=coin)
 
-def get_synthetic_image_path(filename, imagenet_synthetic_root, split="train"):
-    rand_int = 0
+def get_synthetic_image_path(filename, imagenet_synthetic_root, rand_int ,split="train"):
     filename_and_extension = filename.split("/")[-1]
     filename_parent_dir = filename.split("/")[-2]
     image_path = os.path.join(
@@ -488,63 +489,28 @@ def get_synthetic_image_path(filename, imagenet_synthetic_root, split="train"):
     )
     return image_path
 
-class PretrainPipelineBuilder:
-    def __init__(
-        self,
-        data_path: Union[str, Path],
-        synthetic_data_path: Optional[Union[str, Path]],
-        synthetic_index_min: int,
-        synthetic_index_max: int,
-        batch_size: int,
-        device: str,
-        transforms: Callable,
-        random_shuffle: bool = True,
-        device_id: int = 0,
-        shard_id: int = 0,
-        num_shards: int = 1,
-        num_threads: int = 4,
-        seed: int = 12,
-        no_labels: bool = False,
-        encode_indexes_into_labels: bool = False,
-        data_fraction: float = -1.0,
-    ):
-        """Builder for a pretrain pipeline with Nvidia DALI.
-
-        Args:
-            data_path (str): directory that contains the data.
-            batch_size (int): batch size.
-            device (str): device on which the operation will be performed.
-            transforms (Callable): list of transformations.
-            num_crops_per_aug (List[int]): number of crops per pipeline.
-            random_shuffle (bool, optional): whether to randomly shuffle the samples.
-                Defaults to True.
-            device_id (int, optional): id of the device used to initialize the seed and
-                for parent class. Defaults to 0.
-            shard_id (int, optional): id of the shard (chuck of samples). Defaults to 0.
-            num_shards (int, optional): total number of shards. Defaults to 1.
-            num_threads (int, optional): number of threads to run in parallel. Defaults to 4.
-            seed (int, optional): seed for random number generation. Defaults to 12.
-            no_labels (bool, optional): if the data has no labels. Defaults to False.
-            encode_indexes_into_labels (bool, optional): uses sample indexes as labels
-                and then gets the labels from a lookup table. This may use more CPU memory,
-                so just use when needed. Defaults to False.
-            data_fraction (float): percentage of data to use. Use all data when set to -1.
-                Defaults to -1.
-        """
-
-        super().__init__()
-
+class ExternalInputIterator(object):
+    def __init__(self,
+                 data_path: Union[str, Path],
+                 synthetic_data_path: Optional[Union[str, Path]],
+                 synthetic_index_min: int,
+                 synthetic_index_max: int,
+                 batch_size: int, 
+                 shard_id: int = 0,
+                 random_shuffle: bool = True,
+                 num_shards: int = 1,
+                 no_labels: bool = False,
+                 encode_indexes_into_labels: bool = False,
+                 data_fraction: float = -1.0,
+                 ):
+        
         self.batch_size = batch_size
-        self.num_threads = num_threads
-        self.device_id = device_id
-        self.seed = seed + device_id
-
-        self.device = device
 
         data_path = Path(data_path)
         self.synthetic_data_path = synthetic_data_path
         self.synthetic_index_min = synthetic_index_min
         self.synthetic_index_max = synthetic_index_max
+        self.random_shuffle = random_shuffle
         print("MAX MIN",self.synthetic_index_min,self.synthetic_index_max,flush=True)
 
         # manually load files and labels
@@ -597,24 +563,119 @@ class PretrainPipelineBuilder:
             
         print("synthetic_data_path", self.synthetic_data_path, flush=True)
         print("a sample", synthetic_files[0][0])
-        self.reader = ops.readers.File(
-            files=files,
-            labels=labels,
-            shard_id=shard_id,
-            num_shards=num_shards,
-            shuffle_after_epoch=random_shuffle,
-            seed=self.seed,
-        )
 
-        if self.synthetic_data_path:
-            self.synthetic_readers = {i: ops.readers.File(
-                files=synthetic_files[i],
-                labels=[x + i for x in labels],
-                shard_id=shard_id,
-                num_shards=num_shards,
-                shuffle_after_epoch=random_shuffle,
-                seed=self.seed,
-            ) for i in range(synthetic_index_min, synthetic_index_max + 1)}
+        
+        # whole data set size
+        self.data_set_len = len(self.files)
+
+        # based on the shard_id and total number of GPUs - world size
+        # get proper shard
+        self.files = self.files[self.data_set_len * shard_id // num_shards:
+                                self.data_set_len * (shard_id + 1) // num_shards]
+        self.n = len(self.files)
+
+
+    def __iter__(self):
+        self.i = 0
+        if self.random_shuffle:
+            shuffle(self.files)
+        return self
+
+    def __next__(self):
+        batch = []
+        labels = []
+        synthetic_batch = []
+        if self.i >= self.n:
+            self.__iter__()
+            raise StopIteration
+
+        for _ in range(self.batch_size):
+            jpeg_filename, label = self.files[self.i % self.n].split(' ')
+            file = np.fromfile(jpeg_filename, dtype = np.uint8)
+            batch.append(file)  # we can use numpy
+            labels.append(torch.tensor([int(label)], dtype = torch.uint8)) # or PyTorch's native tensors
+            if self.synthetic_data_path:
+                rand_int = random.randint(self.synthetic_index_min, self.synthetic_index_max)
+                synth_jpeg_filename = get_synthetic_image_path(jpeg_filename, self.imagenet_synthetic_root, rand_int ,split="train")
+                synthetic_batch.append(np.fromfile(synth_jpeg_filename, dtype=np.uint8))
+            else:
+                synthetic_batch.append(file)
+
+
+            self.i += 1
+
+        return (batch, labels, synthetic_batch)
+
+    def __len__(self):
+        return self.data_set_len
+
+    next = __next__
+
+class PretrainPipelineBuilder:
+    def __init__(
+        self,
+        data_path: Union[str, Path],
+        synthetic_data_path: Optional[Union[str, Path]],
+        synthetic_index_min: int,
+        synthetic_index_max: int,
+        batch_size: int,
+        device: str,
+        transforms: Callable,
+        random_shuffle: bool = True,
+        device_id: int = 0,
+        shard_id: int = 0,
+        num_shards: int = 1,
+        num_threads: int = 4,
+        seed: int = 12,
+        no_labels: bool = False,
+        encode_indexes_into_labels: bool = False,
+        data_fraction: float = -1.0,
+    ):
+        """Builder for a pretrain pipeline with Nvidia DALI.
+
+        Args:
+            data_path (str): directory that contains the data.
+            batch_size (int): batch size.
+            device (str): device on which the operation will be performed.
+            transforms (Callable): list of transformations.
+            num_crops_per_aug (List[int]): number of crops per pipeline.
+            random_shuffle (bool, optional): whether to randomly shuffle the samples.
+                Defaults to True.
+            device_id (int, optional): id of the device used to initialize the seed and
+                for parent class. Defaults to 0.
+            shard_id (int, optional): id of the shard (chuck of samples). Defaults to 0.
+            num_shards (int, optional): total number of shards. Defaults to 1.
+            num_threads (int, optional): number of threads to run in parallel. Defaults to 4.
+            seed (int, optional): seed for random number generation. Defaults to 12.
+            no_labels (bool, optional): if the data has no labels. Defaults to False.
+            encode_indexes_into_labels (bool, optional): uses sample indexes as labels
+                and then gets the labels from a lookup table. This may use more CPU memory,
+                so just use when needed. Defaults to False.
+            data_fraction (float): percentage of data to use. Use all data when set to -1.
+                Defaults to -1.
+        """
+
+        super().__init__()
+        self.synthetic_data_path = synthetic_data_path
+        self.batch_size = batch_size
+        self.num_threads = num_threads
+        self.device_id = device_id
+        self.seed = seed + device_id
+
+        self.device = device
+
+        self.eei = ExternalInputIterator(data_path = data_path,
+                                         synthetic_data_path = synthetic_data_path,
+                                         synthetic_index_min = synthetic_index_min,
+                                         synthetic_index_max = synthetic_index_max,
+                                         batch_size = batch_size,
+                                         world_size = num_shards,
+                                         shard_id = shard_id,
+                                         random_shuffle = random_shuffle,
+                                         num_shards = num_shards,
+                                         no_labels = no_labels,
+                                         encode_indexes_into_labels = encode_indexes_into_labels,
+                                         data_fraction = data_fraction)
 
         decoder_device = "mixed" if self.device == "gpu" else "cpu"
         device_memory_padding = 211025920 if decoder_device == "mixed" else 0
@@ -634,34 +695,19 @@ class PretrainPipelineBuilder:
         """Defines the computational pipeline for dali operations."""
 
         # read images from memory
-        inputs, labels = self.reader(name="Reader")
+        inputs, labels, synthetic_batch = fn.external_source(self.eei, num_outputs=3)
         images = self.decode(inputs)
+        synthetic_images = self.decode(synthetic_batch)
 
-        if self.synthetic_data_path:
-            synthetic_images_list = [images]
-            for i in range(len(self.synthetic_readers)):
-                name = "SyntheticReader" + str(i)
-                synthetic_inputs, labels_synth = self.synthetic_readers[i](name=name)
-                synthetic_images = self.decode(synthetic_inputs)
-                synthetic_images_list.append(synthetic_images)
-        else:
 
-            synthetic_images = None
-
-        crops = self.transforms(images, synthetic_images_list)
+        crops = self.transforms(images, synthetic_images)
 
         if self.device == "gpu":
             labels = labels.gpu()
         # PyTorch expects labels as INT64
         labels = self.to_int64(labels)
-        
-        if self.synthetic_data_path:
-            if self.device == "gpu":
-                labels_synth = labels_synth.gpu()
-            # PyTorch expects labels as INT64
-            labels_synth = self.to_int64(labels_synth)
 
-        return (*crops, labels, labels_synth)
+        return (*crops, labels)
 
     def __repr__(self) -> str:
         return str(self.transforms)

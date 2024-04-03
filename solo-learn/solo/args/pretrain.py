@@ -55,6 +55,9 @@ def add_and_assert_dataset_cfg(cfg: omegaconf.DictConfig) -> omegaconf.DictConfi
 
     # if validation path is not available, assume that we want to skip eval
     cfg.data.val_path = omegaconf_select(cfg, "data.val_path", None)
+    cfg.data.synthetic_path = omegaconf_select(cfg, "data.synthetic_path", None)
+    cfg.data.synthetic_index_min = omegaconf_select(cfg, "data.synthetic_index_min", 0)
+    cfg.data.synthetic_index_max = omegaconf_select(cfg, "data.synthetic_index_max", 0)
     cfg.data.format = omegaconf_select(cfg, "data.format", "image_folder")
     cfg.data.no_labels = omegaconf_select(cfg, "data.no_labels", False)
     cfg.data.fraction = omegaconf_select(cfg, "data.fraction", -1)

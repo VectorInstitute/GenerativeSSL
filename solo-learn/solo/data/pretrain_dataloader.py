@@ -25,6 +25,7 @@ from typing import Callable, List, Optional, Sequence, Type, Union
 import torch
 import torchvision
 from PIL import Image, ImageFilter, ImageOps
+import PIL
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
@@ -156,19 +157,22 @@ class FullTransformPipeline:
     def __init__(self, transforms: Callable) -> None:
         self.transforms = transforms
 
-    def __call__(self, x: Image) -> List[torch.Tensor]:
+    def __call__(self, x: PIL.Image, x_s: Optional[PIL.Image]) -> List[torch.Tensor]:
         """Applies transforms n times to generate n crops.
 
         Args:
             x (Image): an image in the PIL.Image format.
-
+            x_s (Optional[Image]): an image in the PIL.Image format.
         Returns:
             List[torch.Tensor]: an image in the tensor format.
         """
 
         out = []
-        for transform in self.transforms:
-            out.extend(transform(x))
+        for i,transform in enumerate(self.transforms):
+            if i > 0 and x_s is not None:
+                out.extend(transform(x_s))
+            else:
+                out.extend(transform(x))
         return out
 
     def __repr__(self) -> str:

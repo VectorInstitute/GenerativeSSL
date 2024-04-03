@@ -35,6 +35,8 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from solo.data.temp_dali_fix import TempDALIGenericIterator
 from solo.utils.misc import omegaconf_select
 
+import random
+
 
 class RandomGrayScaleConversion:
     def __init__(self, prob: float = 0.2, device: str = "gpu"):
@@ -450,11 +452,25 @@ def build_transform_pipeline_dali(dataset, cfg, dali_device):
 
     return AugWrapper(augmentations=augmentations, cmn=cmn, coin=coin)
 
+def get_synthetic_image_path(filename, imagenet_synthetic_root, split="train"):
+    rand_int = 0
+    filename_and_extension = filename.split("/")[-1]
+    filename_parent_dir = filename.split("/")[-2]
+    image_path = os.path.join(
+        imagenet_synthetic_root,
+        split,
+        filename_parent_dir,
+        filename_and_extension.split(".")[0] + f"_{rand_int}.JPEG",
+    )
+    return image_path
 
 class PretrainPipelineBuilder:
     def __init__(
         self,
         data_path: Union[str, Path],
+        synthetic_data_path: Optional[Union[str, Path]],
+        synthetic_index_min: int,
+        synthetic_index_max: int,
         batch_size: int,
         device: str,
         transforms: Callable,
@@ -502,6 +518,7 @@ class PretrainPipelineBuilder:
         self.device = device
 
         data_path = Path(data_path)
+        self.synthetic_data_path = synthetic_data_path
 
         # manually load files and labels
         if no_labels:
@@ -529,13 +546,13 @@ class PretrainPipelineBuilder:
             files, _, labels, _ = train_test_split(
                 files, labels, train_size=data_fraction, stratify=labels, random_state=42
             )
-            self.reader = ops.readers.File(
-                files=files,
-                labels=labels,
-                shard_id=shard_id,
-                num_shards=num_shards,
-                shuffle_after_epoch=random_shuffle,
-            )
+        
+        if self.synthetic_data_path:
+            synthetic_files = {
+                i:[
+                    Path(get_synthetic_image_path(fp,synthetic_data_path)) for fp in files
+                    ] for i in range(
+                    synthetic_index_min, synthetic_index_max + 1)}
 
         if encode_indexes_into_labels:
             encoded_labels = []
@@ -558,7 +575,18 @@ class PretrainPipelineBuilder:
             shard_id=shard_id,
             num_shards=num_shards,
             shuffle_after_epoch=random_shuffle,
+            seed=self.seed,
         )
+
+        if self.synthetic_data_path:
+            self.synthetic_readers = {i: ops.readers.File(
+                files=synthetic_files[i],
+                labels=labels,
+                shard_id=shard_id,
+                num_shards=num_shards,
+                shuffle_after_epoch=random_shuffle,
+                seed=self.seed,
+            ) for i in range(synthetic_index_min, synthetic_index_max + 1)}
 
         decoder_device = "mixed" if self.device == "gpu" else "cpu"
         device_memory_padding = 211025920 if decoder_device == "mixed" else 0
@@ -579,10 +607,20 @@ class PretrainPipelineBuilder:
 
         # read images from memory
         inputs, labels = self.reader(name="Reader")
-
         images = self.decode(inputs)
 
-        crops = self.transforms(images)
+        if self.synthetic_data_path:
+
+            rand_int = random.randint(self.index_min, self.index_max)
+
+            synthetic_inputs, _ = self.synthetic_readers[rand_int](name="SyntheticReader")
+            synthetic_images = self.decode(synthetic_inputs)
+
+        else:
+
+            synthetic_images = None
+
+        crops = self.transforms(images, synthetic_images)
 
         if self.device == "gpu":
             labels = labels.gpu()
@@ -687,11 +725,14 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         self,
         dataset: str,
         train_data_path: Union[str, Path],
+        synthetic_data_path: Optional[Union[str, Path]],
         transforms: List[Callable],
         num_large_crops: int,
         num_small_crops: int,
         batch_size: int,
         num_workers: int = 4,
+        synthetic_index_min: int = 0,
+        synthetic_index_max: int = 0,
         no_labels=False,
         data_fraction: float = -1.0,
         dali_device: str = "gpu",
@@ -724,7 +765,10 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         self.dataset = dataset
 
         # paths
-        self.train_data_path = Path(train_data_path)
+        self.train_data_path = train_data_path
+        self.synthetic_data_path = synthetic_data_path
+        self.synthetic_index_min = synthetic_index_min
+        self.synthetic_index_max = synthetic_index_max
 
         # augmentation-related
         self.transforms = transforms
@@ -775,6 +819,9 @@ class PretrainDALIDataModule(pl.LightningDataModule):
 
         train_pipeline_builder = PretrainPipelineBuilder(
             self.train_data_path,
+            synthetic_data_path=self.synthetic_data_path,
+            synthetic_index_min=self.synthetic_index_min,
+            synthetic_index_max=self.synthetic_index_max,
             batch_size=self.batch_size,
             transforms=self.transforms,
             device=self.dali_device,

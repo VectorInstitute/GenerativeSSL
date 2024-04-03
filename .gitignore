@@ -183,3 +183,5 @@ solo-learn/lightning_logs/
 
 # Ignore all .DS_Store files
 .DS_Store
+
+check.ipynb

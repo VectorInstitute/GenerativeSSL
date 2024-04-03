@@ -74,7 +74,6 @@ class CustomDatasetWithoutLabels(Dataset):
     def __len__(self):
         return len(self.images)
 
-
 class GaussianBlur:
     def __init__(self, sigma: Sequence[float] = None):
         """Gaussian blur as a callable object.
@@ -146,7 +145,7 @@ class NCropAugmentation:
         Returns:
             List[torch.Tensor]: an image in the tensor format.
         """
-
+        print("fucking herrrrrreeeee22222222",flush=True)
         return [self.transform(x) for _ in range(self.num_crops)]
 
     def __repr__(self) -> str:
@@ -166,12 +165,15 @@ class FullTransformPipeline:
         Returns:
             List[torch.Tensor]: an image in the tensor format.
         """
-
+        print("herrrrrreeeee",flush=True)
         out = []
         for i,transform in enumerate(self.transforms):
             if i > 0 and x_s is not None:
-                out.extend(transform(x_s))
+                print("synth",flush=True)
+                for x_s_i in x_s:
+                    out.extend(transform(x_s_i))
             else:
+                print("original",flush=True)
                 out.extend(transform(x))
         return out
 

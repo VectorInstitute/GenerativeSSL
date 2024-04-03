@@ -38,6 +38,22 @@ from solo.utils.misc import omegaconf_select
 import random
 
 
+class RandomSyntheticDataChoice:
+    def __init__(self, prob: float = 0.2, len_choice = 1,device: str = "gpu"):
+
+        self.prob = prob
+        self.len_choice = len_choice
+
+    def __call__(self, images):
+        do_op = fn.random.coin_flip(probability=self.prob, dtype=types.DALIDataType.BOOL)
+        if do_op:
+            choice = fn.random.uniform(range=[0, self.len_choice], dtype=types.DALIDataType.INT32)
+            out = images[choice]
+        else:
+            out = images
+        return out
+
+
 class RandomGrayScaleConversion:
     def __init__(self, prob: float = 0.2, device: str = "gpu"):
         """Converts image to greyscale with probability.
@@ -118,6 +134,7 @@ class RandomColorJitter:
             self.hue = ops.random.Uniform(range=[-hue, hue])
 
     def __call__(self, images):
+        print("well I am here")
         do_op = fn.random.coin_flip(probability=self.prob, dtype=types.DALIDataType.BOOL)
         if do_op:
             out = self.color(
@@ -374,6 +391,13 @@ def build_transform_pipeline_dali(dataset, cfg, dali_device):
     )
 
     augmentations = []
+#     if cfg.synthetic.enabled:
+#         augmentations.append(
+#             RandomSyntheticDataChoice(
+#                 prob= cfg.synthetic.prob,
+#                 len_choice = cfg.synthetic.max_index - cfg.synthetic.min_index + 1,
+#             )
+#         )
     if cfg.rrc.enabled:
         augmentations.append(
             ops.RandomResizedCrop(
@@ -519,6 +543,9 @@ class PretrainPipelineBuilder:
 
         data_path = Path(data_path)
         self.synthetic_data_path = synthetic_data_path
+        self.synthetic_index_min = synthetic_index_min
+        self.synthetic_index_max = synthetic_index_max
+        print("MAX MIN",self.synthetic_index_min,self.synthetic_index_max,flush=True)
 
         # manually load files and labels
         if no_labels:
@@ -550,10 +577,9 @@ class PretrainPipelineBuilder:
         if self.synthetic_data_path:
             synthetic_files = {
                 i:[
-                    Path(get_synthetic_image_path(fp,synthetic_data_path)) for fp in files
+                    Path(get_synthetic_image_path(fp.absolute().as_posix(),synthetic_data_path)) for fp in files
                     ] for i in range(
                     synthetic_index_min, synthetic_index_max + 1)}
-
         if encode_indexes_into_labels:
             encoded_labels = []
 
@@ -568,7 +594,9 @@ class PretrainPipelineBuilder:
 
             # use the encoded labels which will be decoded later
             labels = encoded_labels
-
+            
+        print("synthetic_data_path", self.synthetic_data_path, flush=True)
+        print("a sample", synthetic_files[0][0])
         self.reader = ops.readers.File(
             files=files,
             labels=labels,
@@ -581,7 +609,7 @@ class PretrainPipelineBuilder:
         if self.synthetic_data_path:
             self.synthetic_readers = {i: ops.readers.File(
                 files=synthetic_files[i],
-                labels=labels,
+                labels=[x + i for x in labels],
                 shard_id=shard_id,
                 num_shards=num_shards,
                 shuffle_after_epoch=random_shuffle,
@@ -610,24 +638,30 @@ class PretrainPipelineBuilder:
         images = self.decode(inputs)
 
         if self.synthetic_data_path:
-
-            rand_int = random.randint(self.index_min, self.index_max)
-
-            synthetic_inputs, _ = self.synthetic_readers[rand_int](name="SyntheticReader")
-            synthetic_images = self.decode(synthetic_inputs)
-
+            synthetic_images_list = [images]
+            for i in range(len(self.synthetic_readers)):
+                name = "SyntheticReader" + str(i)
+                synthetic_inputs, labels_synth = self.synthetic_readers[i](name=name)
+                synthetic_images = self.decode(synthetic_inputs)
+                synthetic_images_list.append(synthetic_images)
         else:
 
             synthetic_images = None
 
-        crops = self.transforms(images, synthetic_images)
+        crops = self.transforms(images, synthetic_images_list)
 
         if self.device == "gpu":
             labels = labels.gpu()
         # PyTorch expects labels as INT64
         labels = self.to_int64(labels)
+        
+        if self.synthetic_data_path:
+            if self.device == "gpu":
+                labels_synth = labels_synth.gpu()
+            # PyTorch expects labels as INT64
+            labels_synth = self.to_int64(labels_synth)
 
-        return (*crops, labels)
+        return (*crops, labels, labels_synth)
 
     def __repr__(self) -> str:
         return str(self.transforms)
@@ -678,9 +712,12 @@ class PretrainWrapper(TempDALIGenericIterator):
         # I think we don't need the .detach().clone() anymore,
         # but I'll keep it commented just to be sure.
         if self.conversion_map is not None:
-            *all_X, indexes = (batch[v] for v in self.output_map)
+            *all_X, indexes, indexs_synth = (batch[v] for v in self.output_map)
             targets = self.conversion_map(indexes).flatten().long()  # .detach().clone()
             indexes = indexes.flatten().long()  # .detach().clone()
+            indexs_synth = indexs_synth.flatten().long()  # .detach().clone()
+            print("indexes yes", indexes)
+            print("indexes synth yes", indexs_synth)
         else:
             *all_X, targets = (batch[v] for v in self.output_map)
             targets = targets.squeeze(-1).long()  # .detach().clone()
@@ -691,8 +728,13 @@ class PretrainWrapper(TempDALIGenericIterator):
                 # .detach()
                 # .clone()
             )
+            print("indexes no", indexes)
+             
         # .detach().clone()
-        all_X = [x for x in all_X]
+        print("len crops previous", len(all_X))
+        all_X = [x for i,x in enumerate(all_X) if i < 2]
+        print("len crops", len(all_X))
+        print("equal", torch.all(torch.eq(all_X[0],all_X[1])))
         return [indexes, all_X, targets]
 
 
@@ -801,7 +843,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         cfg.dali = omegaconf_select(cfg, "dali", {})
         cfg.dali.device = omegaconf_select(cfg, "dali.device", "gpu")
         cfg.dali.encode_indexes_into_labels = omegaconf_select(
-            cfg, "dali.encode_indexes_into_labels", False
+            cfg, "dali.encode_indexes_into_labels", True
         )
         return cfg
 
@@ -845,6 +887,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             [f"large{i}" for i in range(self.num_large_crops)]
             + [f"small{i}" for i in range(self.num_small_crops)]
             + ["label"]
+            + ["label_synth"]
         )
 
         policy = LastBatchPolicy.DROP

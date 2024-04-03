@@ -42,11 +42,11 @@ checkpoint:
   dir: "trained_models"
   frequency: 1
 auto_resume:
-  enabled: True
+  enabled: False
 
 # overwrite PL stuff
 max_epochs: 100
-devices: 4
+devices: 1
 sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"

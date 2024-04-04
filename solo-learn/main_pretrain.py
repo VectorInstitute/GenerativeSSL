@@ -232,7 +232,9 @@ def main(cfg: DictConfig):
 
     if cfg.data.format == "dali":
         from solo.data.dali_dataloader_new import Scheduler
-        trainer = Trainer(callbacks=Scheduler,**trainer_kwargs)
+        print(trainer_kwargs, flush = True)
+        trainer_kwargs['callbacks'].append(Scheduler())
+        trainer = Trainer(**trainer_kwargs)
         trainer.fit(model, ckpt_path=ckpt_path, datamodule=dali_datamodule)
     else:
         trainer = Trainer(**trainer_kwargs)

@@ -35,8 +35,6 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from solo.data.temp_dali_fix import TempDALIGenericIterator
 from solo.utils.misc import omegaconf_select
 
-from solo.data.dali_external_source import ExternalInputIterator
-
 
 class RandomGrayScaleConversion:
     def __init__(self, prob: float = 0.2, device: str = "gpu"):
@@ -457,9 +455,6 @@ class PretrainPipelineBuilder:
     def __init__(
         self,
         data_path: Union[str, Path],
-        synthetic_data_path: Optional[Union[str, Path]],
-        synthetic_index_min: int,
-        synthetic_index_max: int,
         batch_size: int,
         device: str,
         transforms: Callable,
@@ -498,9 +493,8 @@ class PretrainPipelineBuilder:
         """
 
         super().__init__()
-        self.synthetic_data_path = synthetic_data_path
+
         self.batch_size = batch_size
-        self.shard_id = shard_id
         self.num_threads = num_threads
         self.device_id = device_id
         self.seed = seed + device_id
@@ -535,6 +529,13 @@ class PretrainPipelineBuilder:
             files, _, labels, _ = train_test_split(
                 files, labels, train_size=data_fraction, stratify=labels, random_state=42
             )
+            self.reader = ops.readers.File(
+                files=files,
+                labels=labels,
+                shard_id=shard_id,
+                num_shards=num_shards,
+                shuffle_after_epoch=random_shuffle,
+            )
 
         if encode_indexes_into_labels:
             encoded_labels = []
@@ -551,25 +552,13 @@ class PretrainPipelineBuilder:
             # use the encoded labels which will be decoded later
             labels = encoded_labels
 
-        if synthetic_data_path:
-            self.batch_size = self.batch_size * num_shards
-            self.eei = ExternalInputIterator(files = files,
-                                             labels = labels,
-                                             synthetic_data_path = self.synthetic_data_path,
-                                             synthetic_index_min = synthetic_index_min,
-                                             synthetic_index_max = synthetic_index_max,
-                                             batch_size = self.batch_size,
-                                             shard_id = shard_id,
-                                             random_shuffle = random_shuffle,
-                                             num_shards = num_shards)
-        else:
-            self.reader = ops.readers.File(
-                files=files,
-                labels=labels,
-                shard_id=shard_id,
-                num_shards=num_shards,
-                shuffle_after_epoch=random_shuffle,
-            )
+        self.reader = ops.readers.File(
+            files=files,
+            labels=labels,
+            shard_id=shard_id,
+            num_shards=num_shards,
+            shuffle_after_epoch=random_shuffle,
+        )
 
         decoder_device = "mixed" if self.device == "gpu" else "cpu"
         device_memory_padding = 211025920 if decoder_device == "mixed" else 0
@@ -589,18 +578,11 @@ class PretrainPipelineBuilder:
         """Defines the computational pipeline for dali operations."""
 
         # read images from memory
-        if self.synthetic_data_path:
-            inputs, labels, synthetic_batch = fn.external_source(self.eei, num_outputs=3)
-        else:
-            inputs, labels = self.reader(name="Reader")
+        inputs, labels = self.reader(name="Reader")
+
         images = self.decode(inputs)
-        if self.synthetic_data_path:
-            synthetic_images = self.decode(synthetic_batch)
-        else:
-            synthetic_images = None
 
-
-        crops = self.transforms(images, synthetic_images)
+        crops = self.transforms(images)
 
         if self.device == "gpu":
             labels = labels.gpu()
@@ -705,14 +687,11 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         self,
         dataset: str,
         train_data_path: Union[str, Path],
-        synthetic_data_path: Optional[Union[str, Path]],
         transforms: List[Callable],
         num_large_crops: int,
         num_small_crops: int,
         batch_size: int,
         num_workers: int = 4,
-        synthetic_index_min: int = 0,
-        synthetic_index_max: int = 0,
         no_labels=False,
         data_fraction: float = -1.0,
         dali_device: str = "gpu",
@@ -745,10 +724,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         self.dataset = dataset
 
         # paths
-        self.train_data_path = train_data_path
-        self.synthetic_data_path = synthetic_data_path
-        self.synthetic_index_min = synthetic_index_min
-        self.synthetic_index_max = synthetic_index_max
+        self.train_data_path = Path(train_data_path)
 
         # augmentation-related
         self.transforms = transforms
@@ -781,7 +757,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         cfg.dali = omegaconf_select(cfg, "dali", {})
         cfg.dali.device = omegaconf_select(cfg, "dali.device", "gpu")
         cfg.dali.encode_indexes_into_labels = omegaconf_select(
-            cfg, "dali.encode_indexes_into_labels", True
+            cfg, "dali.encode_indexes_into_labels", False
         )
         return cfg
 
@@ -799,9 +775,6 @@ class PretrainDALIDataModule(pl.LightningDataModule):
 
         train_pipeline_builder = PretrainPipelineBuilder(
             self.train_data_path,
-            synthetic_data_path=self.synthetic_data_path,
-            synthetic_index_min=self.synthetic_index_min,
-            synthetic_index_max=self.synthetic_index_max,
             batch_size=self.batch_size,
             transforms=self.transforms,
             device=self.dali_device,
@@ -831,21 +804,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         conversion_map = (
             train_pipeline_builder.conversion_map if self.encode_indexes_into_labels else None
         )
-        if self.synthetic_data_path:
-            self.train_loader = PretrainWrapper(
-                model_batch_size=train_pipeline_builder.batch_size,
-                model_rank=self.device_id,
-                model_device=self.device,
-                dataset_size=train_pipeline_builder.eei.data_set_len,
-                size=train_pipeline_builder.eei.data_set_len,
-                conversion_map=conversion_map,
-                pipelines=train_pipeline,
-                output_map=output_map, 
-                last_batch_policy=policy,
-                auto_reset=True,
-            )
-        else:
-            self.train_loader = PretrainWrapper(
+        self.train_loader = PretrainWrapper(
             model_batch_size=self.batch_size,
             model_rank=self.device_id,
             model_device=self.device,

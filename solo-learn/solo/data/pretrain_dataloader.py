@@ -170,8 +170,8 @@ class FullTransformPipeline:
         for i,transform in enumerate(self.transforms):
             if i > 0 and x_s is not None:
                 print("synth",flush=True)
-                for x_s_i in x_s:
-                    out.extend(transform(x_s_i))
+#                 for x_s_i in x_s:
+                out.extend(transform(x_s))
             else:
                 print("original",flush=True)
                 out.extend(transform(x))

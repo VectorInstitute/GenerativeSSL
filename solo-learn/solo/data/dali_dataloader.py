@@ -35,7 +35,7 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from solo.data.temp_dali_fix import TempDALIGenericIterator
 from solo.utils.misc import omegaconf_select
 
-import random.shuffle as shuffle
+from random import shuffle
 import random
 import numpy as np
 
@@ -540,12 +540,7 @@ class ExternalInputIterator(object):
                 files, labels, train_size=data_fraction, stratify=labels, random_state=42
             )
         
-        if self.synthetic_data_path:
-            synthetic_files = {
-                i:[
-                    Path(get_synthetic_image_path(fp.absolute().as_posix(),synthetic_data_path)) for fp in files
-                    ] for i in range(
-                    synthetic_index_min, synthetic_index_max + 1)}
+
         if encode_indexes_into_labels:
             encoded_labels = []
 
@@ -560,10 +555,8 @@ class ExternalInputIterator(object):
 
             # use the encoded labels which will be decoded later
             labels = encoded_labels
-            
-        print("synthetic_data_path", self.synthetic_data_path, flush=True)
-        print("a sample", synthetic_files[0][0])
-
+        self.files = files
+        self.labels = labels
         
         # whole data set size
         self.data_set_len = len(self.files)
@@ -578,7 +571,10 @@ class ExternalInputIterator(object):
     def __iter__(self):
         self.i = 0
         if self.random_shuffle:
-            shuffle(self.files)
+            indexes = np.arange(len(self.files))
+            np.random.shuffle(indexes)
+            self.files[:] = [self.files[i] for i in indexes]
+            self.labels[:] = [self.labels[i] for i in indexes]
         return self
 
     def __next__(self):
@@ -590,13 +586,14 @@ class ExternalInputIterator(object):
             raise StopIteration
 
         for _ in range(self.batch_size):
-            jpeg_filename, label = self.files[self.i % self.n].split(' ')
+            jpeg_filename = self.files[self.i % self.n]
+            label = self.labels[self.i % self.n]
             file = np.fromfile(jpeg_filename, dtype = np.uint8)
             batch.append(file)  # we can use numpy
-            labels.append(torch.tensor([int(label)], dtype = torch.uint8)) # or PyTorch's native tensors
+            labels.append(torch.tensor([int(label)], dtype = torch.int64)) # or PyTorch's native tensors
             if self.synthetic_data_path:
                 rand_int = random.randint(self.synthetic_index_min, self.synthetic_index_max)
-                synth_jpeg_filename = get_synthetic_image_path(jpeg_filename, self.imagenet_synthetic_root, rand_int ,split="train")
+                synth_jpeg_filename = get_synthetic_image_path(jpeg_filename.absolute().as_posix(), self.synthetic_data_path, rand_int ,split="train")
                 synthetic_batch.append(np.fromfile(synth_jpeg_filename, dtype=np.uint8))
             else:
                 synthetic_batch.append(file)
@@ -669,7 +666,6 @@ class PretrainPipelineBuilder:
                                          synthetic_index_min = synthetic_index_min,
                                          synthetic_index_max = synthetic_index_max,
                                          batch_size = batch_size,
-                                         world_size = num_shards,
                                          shard_id = shard_id,
                                          random_shuffle = random_shuffle,
                                          num_shards = num_shards,
@@ -758,12 +754,12 @@ class PretrainWrapper(TempDALIGenericIterator):
         # I think we don't need the .detach().clone() anymore,
         # but I'll keep it commented just to be sure.
         if self.conversion_map is not None:
-            *all_X, indexes, indexs_synth = (batch[v] for v in self.output_map)
+            *all_X, indexes = (batch[v] for v in self.output_map)
             targets = self.conversion_map(indexes).flatten().long()  # .detach().clone()
             indexes = indexes.flatten().long()  # .detach().clone()
-            indexs_synth = indexs_synth.flatten().long()  # .detach().clone()
-            print("indexes yes", indexes)
-            print("indexes synth yes", indexs_synth)
+#             indexs_synth = indexs_synth.flatten().long()  # .detach().clone()
+#             print("indexes yes", indexes)
+#             print("indexes synth yes", indexs_synth)
         else:
             *all_X, targets = (batch[v] for v in self.output_map)
             targets = targets.squeeze(-1).long()  # .detach().clone()
@@ -774,13 +770,13 @@ class PretrainWrapper(TempDALIGenericIterator):
                 # .detach()
                 # .clone()
             )
-            print("indexes no", indexes)
+#             print("indexes no", indexes)
              
         # .detach().clone()
-        print("len crops previous", len(all_X))
-        all_X = [x for i,x in enumerate(all_X) if i < 2]
-        print("len crops", len(all_X))
-        print("equal", torch.all(torch.eq(all_X[0],all_X[1])))
+#         print("len crops previous", len(all_X))
+        all_X = [x for i,x in enumerate(all_X)]
+#         print("len crops", len(all_X))
+#         print("equal", torch.all(torch.eq(all_X[0],all_X[1])))
         return [indexes, all_X, targets]
 
 
@@ -933,22 +929,22 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             [f"large{i}" for i in range(self.num_large_crops)]
             + [f"small{i}" for i in range(self.num_small_crops)]
             + ["label"]
-            + ["label_synth"]
         )
 
         policy = LastBatchPolicy.DROP
         conversion_map = (
-            train_pipeline_builder.conversion_map if self.encode_indexes_into_labels else None
+            train_pipeline_builder.eei.conversion_map if self.encode_indexes_into_labels else None
         )
         self.train_loader = PretrainWrapper(
             model_batch_size=self.batch_size,
             model_rank=self.device_id,
             model_device=self.device,
-            dataset_size=train_pipeline.epoch_size("Reader"),
+            dataset_size=train_pipeline_builder.eei.data_set_len,
+            size=train_pipeline_builder.eei.data_set_len,
             conversion_map=conversion_map,
             pipelines=train_pipeline,
             output_map=output_map,
-            reader_name="Reader",
+#             reader_name="Reader",
             last_batch_policy=policy,
             auto_reset=True,
         )

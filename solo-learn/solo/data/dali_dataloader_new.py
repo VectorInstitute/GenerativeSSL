@@ -491,6 +491,10 @@ class PretrainPipelineBuilder:
 
         Args:
             data_path (str): directory that contains the data.
+            synthetic_data_path (Optional[str]): directory that contains the synthetic 
+            data.
+            synthetic_index_min (int): minimum index for synthetic data.
+            synthetic_index_max (int): maximum index for synthetic data.
             batch_size (int): batch size.
             device (str): device on which the operation will be performed.
             transforms (Callable): list of transformations.
@@ -581,7 +585,7 @@ class PretrainPipelineBuilder:
                     synthetic_index_max,
                     split="train",
                 )  for jpeg_filename in files]
-            print(synthetic_files, flush=True)
+
             self.synth_reader = ops.readers.File(
                 files=synthetic_files,
                 labels=labels,
@@ -609,12 +613,9 @@ class PretrainPipelineBuilder:
 
         # read images from memory
         inputs, labels = self.reader(name="Reader")
-        if self.synthetic_data_path:
-            synthetic_batch, _ = self.synth_reader(name="SynthReader")
-        # else:
-        #     inputs, labels = self.reader(name="Reader")
         images = self.decode(inputs)
         if self.synthetic_data_path:
+            synthetic_batch, _ = self.synth_reader(name="SynthReader")
             synthetic_images = self.decode(synthetic_batch)
         else:
             synthetic_images = None
@@ -719,6 +720,12 @@ class Wrapper(TempDALIGenericIterator):
         target = target.detach().clone()
         return x, target
 
+class Scheduler(pl.Callback):
+    def _prepare_epoch(self, trainer, model, epoch):
+        trainer.datamodule.reset_train_loader()
+
+    def on_epoch_end(self, trainer, model):
+        self._prepare_epoch(trainer, model, trainer.current_epoch + 1)
 
 class PretrainDALIDataModule(pl.LightningDataModule):
     def __init__(
@@ -743,6 +750,8 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         Args:
             dataset (str): dataset name.
             train_data_path (Union[str, Path]): path where the training data is located.
+            synthetic_data_path (Optional[Union[str, Path]]): path where the synthetic 
+            data is located.
             unique_augs (int): number of unique augmentation pielines
             transforms (List[Callable]): list of transformations.
             num_crops_per_aug (List[int]): number of crops per pipeline.
@@ -750,6 +759,10 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             num_small_crops (int): total number of small crops.
             batch_size (int): batch size..
             num_workers (int, optional): number of parallel workers. Defaults to 4.
+            synthetic_index_min (int, optional): minimum index for synthetic data. 
+            Defaults to 0.
+            synthetic_index_max (int, optional): maximum index for synthetic data.
+            Defaults to 0.
             data_fraction (Optional[float]): percentage of data to use.
                 Use all data when set to -1.0. Defaults to -1.0.
             dali_device (str, optional): device used by the dali pipeline.
@@ -806,6 +819,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         return cfg
     
     def reset_train_loader(self):
+        print("resetting train loader", flush=True)
         train_pipeline_builder = PretrainPipelineBuilder(
             self.train_data_path,
             synthetic_data_path=self.synthetic_data_path,
@@ -869,13 +883,6 @@ class PretrainDALIDataModule(pl.LightningDataModule):
 
     def train_dataloader(self):
         return self.train_loader
-    
-class Scheduler(pl.Callback):
-    def _prepare_epoch(self, trainer, model, epoch):
-        trainer.datamodule.reset_train_loader()
-
-    def on_epoch_end(self, trainer, model):
-        self._prepare_epoch(trainer, model, trainer.current_epoch + 1)
 
 
 class ClassificationDALIDataModule(pl.LightningDataModule):

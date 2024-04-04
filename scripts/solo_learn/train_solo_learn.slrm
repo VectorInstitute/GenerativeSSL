@@ -4,8 +4,8 @@
 #SBATCH --partition=a40
 #SBATCH --qos=a40_arashaf
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:a40:1
-#SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:a40:4
+#SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=0
 #SBATCH --output=singlenode-%j.out

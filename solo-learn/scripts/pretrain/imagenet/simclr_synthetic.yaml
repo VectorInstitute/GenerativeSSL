@@ -25,9 +25,9 @@ data:
   val_path: "/datasets/imagenet/val"
   synthetic_path: "/projects/imagenet_synthetic/arashaf_stablediff_batched"
   synthetic_index_min: 0
-  synthetic_index_max: 3
+  synthetic_index_max: 9
   format: "dali"
-  num_workers: 16
+  num_workers: 4
 optimizer:
   name: "lars"
   batch_size: 64
@@ -49,7 +49,7 @@ auto_resume:
 
 # overwrite PL stuff
 max_epochs: 100
-devices: 4
+devices: 1
 sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"

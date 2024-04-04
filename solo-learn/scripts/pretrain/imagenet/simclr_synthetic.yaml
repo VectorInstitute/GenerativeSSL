@@ -27,7 +27,7 @@ data:
   synthetic_index_min: 0
   synthetic_index_max: 3
   format: "dali"
-  num_workers: 4
+  num_workers: 16
 optimizer:
   name: "lars"
   batch_size: 64

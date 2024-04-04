@@ -489,6 +489,12 @@ def get_synthetic_image_path(filename, imagenet_synthetic_root, rand_int ,split=
     )
     return image_path
 
+def pil_loader(path: str):
+    # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
+    with open(path, "rb") as f:
+        img = Image.open(f)
+        return img.convert("RGB")
+
 class ExternalInputIterator(object):
     def __init__(self,
                  data_path: Union[str, Path],
@@ -512,6 +518,7 @@ class ExternalInputIterator(object):
         self.synthetic_index_max = synthetic_index_max
         self.random_shuffle = random_shuffle
         print("MAX MIN",self.synthetic_index_min,self.synthetic_index_max,flush=True)
+        print("shard_id,num_shards",shard_id,num_shards,flush=True)
 
         # manually load files and labels
         if no_labels:
@@ -588,13 +595,13 @@ class ExternalInputIterator(object):
         for _ in range(self.batch_size):
             jpeg_filename = self.files[self.i % self.n]
             label = self.labels[self.i % self.n]
-            file = np.fromfile(jpeg_filename, dtype = np.uint8)
+            file = pil_loader(jpeg_filename)
             batch.append(file)  # we can use numpy
             labels.append(torch.tensor([int(label)], dtype = torch.int64)) # or PyTorch's native tensors
             if self.synthetic_data_path:
                 rand_int = random.randint(self.synthetic_index_min, self.synthetic_index_max)
                 synth_jpeg_filename = get_synthetic_image_path(jpeg_filename.absolute().as_posix(), self.synthetic_data_path, rand_int ,split="train")
-                synthetic_batch.append(np.fromfile(synth_jpeg_filename, dtype=np.uint8))
+                synthetic_batch.append(pil_loader(synth_jpeg_filename))
             else:
                 synthetic_batch.append(file)
 

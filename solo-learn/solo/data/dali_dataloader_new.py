@@ -456,17 +456,21 @@ def get_random_synthetic_image_path(filename,
                                     imagenet_synthetic_root, 
                                     synthetic_index_min, 
                                     synthetic_index_max,
+                                    generative_augmentation_prob,
                                     split="train"):
+    gen_prob = random.random()
+    if gen_prob > generative_augmentation_prob:
+        return filename
     rand_int = random.randint(synthetic_index_min, synthetic_index_max)
     filename_and_extension = filename.split("/")[-1]
     filename_parent_dir = filename.split("/")[-2]
-    image_path = os.path.join(
+    synth_filename = os.path.join(
         imagenet_synthetic_root,
         split,
         filename_parent_dir,
         filename_and_extension.split(".")[0] + f"_{rand_int}.JPEG",
     )
-    return image_path
+    return synth_filename
 class PretrainPipelineBuilder:
     def __init__(
         self,
@@ -474,6 +478,7 @@ class PretrainPipelineBuilder:
         synthetic_data_path: Optional[Union[str, Path]],
         synthetic_index_min: int,
         synthetic_index_max: int,
+        generative_augmentation_prob: float,
         batch_size: int,
         device: str,
         transforms: Callable,
@@ -495,6 +500,7 @@ class PretrainPipelineBuilder:
             data.
             synthetic_index_min (int): minimum index for synthetic data.
             synthetic_index_max (int): maximum index for synthetic data.
+            generative_augmentation_prob (float): probability of using generative augmentation.
             batch_size (int): batch size.
             device (str): device on which the operation will be performed.
             transforms (Callable): list of transformations.
@@ -583,6 +589,7 @@ class PretrainPipelineBuilder:
                     synthetic_data_path,
                     synthetic_index_min,
                     synthetic_index_max,
+                    generative_augmentation_prob,
                     split="train",
                 )  for jpeg_filename in files]
 
@@ -740,6 +747,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         num_workers: int = 4,
         synthetic_index_min: int = 0,
         synthetic_index_max: int = 0,
+        generative_augmentation_prob: float = 0.0,
         no_labels=False,
         data_fraction: float = -1.0,
         dali_device: str = "gpu",
@@ -763,6 +771,8 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             Defaults to 0.
             synthetic_index_max (int, optional): maximum index for synthetic data.
             Defaults to 0.
+            generative_augmentation_prob (float, optional): probability of using 
+            generative augmentation. Defaults to 0.0.
             data_fraction (Optional[float]): percentage of data to use.
                 Use all data when set to -1.0. Defaults to -1.0.
             dali_device (str, optional): device used by the dali pipeline.
@@ -782,6 +792,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         self.synthetic_data_path = synthetic_data_path
         self.synthetic_index_min = synthetic_index_min
         self.synthetic_index_max = synthetic_index_max
+        self.generative_augmentation_prob = generative_augmentation_prob
 
         # augmentation-related
         self.transforms = transforms
@@ -825,6 +836,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             synthetic_data_path=self.synthetic_data_path,
             synthetic_index_min=self.synthetic_index_min,
             synthetic_index_max=self.synthetic_index_max,
+            generative_augmentation_prob = self.generative_augmentation_prob,
             batch_size=self.batch_size,
             transforms=self.transforms,
             device=self.dali_device,

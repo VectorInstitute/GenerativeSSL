@@ -11,7 +11,7 @@ hydra:
   run:
     dir: .
 
-name: "simclr-imagenet"
+name: "simclr-synthetic-imagenet"
 method: "simclr"
 backbone:
   name: "resnet50"
@@ -26,6 +26,7 @@ data:
   synthetic_path: "/projects/imagenet_synthetic/arashaf_stablediff_batched"
   synthetic_index_min: 0
   synthetic_index_max: 9
+  generative_augmentation_prob: 0.5
   format: "dali"
   num_workers: 4
 optimizer:

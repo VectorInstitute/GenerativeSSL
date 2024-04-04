@@ -713,6 +713,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         num_workers: int = 4,
         synthetic_index_min: int = 0,
         synthetic_index_max: int = 0,
+        generative_augmentation_prob: float = 0.0,
         no_labels=False,
         data_fraction: float = -1.0,
         dali_device: str = "gpu",

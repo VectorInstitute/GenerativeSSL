@@ -36,7 +36,7 @@ from solo.data.temp_dali_fix import TempDALIGenericIterator
 from solo.utils.misc import omegaconf_select
 
 from solo.data.dali_external_source import ExternalInputIterator
-
+import random
 
 class RandomGrayScaleConversion:
     def __init__(self, prob: float = 0.2, device: str = "gpu"):
@@ -452,7 +452,21 @@ def build_transform_pipeline_dali(dataset, cfg, dali_device):
 
     return AugWrapper(augmentations=augmentations, cmn=cmn, coin=coin)
 
-
+def get_random_synthetic_image_path(filename, 
+                                    imagenet_synthetic_root, 
+                                    synthetic_index_min, 
+                                    synthetic_index_max,
+                                    split="train"):
+    rand_int = random.randint(synthetic_index_min, synthetic_index_max)
+    filename_and_extension = filename.split("/")[-1]
+    filename_parent_dir = filename.split("/")[-2]
+    image_path = os.path.join(
+        imagenet_synthetic_root,
+        split,
+        filename_parent_dir,
+        filename_and_extension.split(".")[0] + f"_{rand_int}.JPEG",
+    )
+    return image_path
 class PretrainPipelineBuilder:
     def __init__(
         self,
@@ -559,31 +573,22 @@ class PretrainPipelineBuilder:
             )
         
         if synthetic_data_path:
-            # self.batch_size = self.batch_size * num_shards
-            # self.eei = ExternalInputIterator(files = files,
-            #                                  labels = labels,
-            #                                  synthetic_data_path = self.synthetic_data_path,
-            #                                  synthetic_index_min = synthetic_index_min,
-            #                                  synthetic_index_max = synthetic_index_max,
-            #                                  batch_size = self.batch_size,
-            #                                  shard_id = shard_id,
-            #                                  random_shuffle = random_shuffle,
-            #                                  num_shards = num_shards)
+            synthetic_files = [
+                get_random_synthetic_image_path(
+                    jpeg_filename.absolute().as_posix(),
+                    synthetic_data_path,
+                    synthetic_index_min,
+                    synthetic_index_max,
+                    split="train",
+                )  for jpeg_filename in files]
+            print(synthetic_files, flush=True)
             self.synth_reader = ops.readers.File(
-                files=files,
+                files=synthetic_files,
                 labels=labels,
                 shard_id=shard_id,
                 num_shards=num_shards,
                 shuffle_after_epoch=random_shuffle,
             )
-        # else:
-        #     self.reader = ops.readers.File(
-        #         files=files,
-        #         labels=labels,
-        #         shard_id=shard_id,
-        #         num_shards=num_shards,
-        #         shuffle_after_epoch=random_shuffle,
-        #     )
 
         decoder_device = "mixed" if self.device == "gpu" else "cpu"
         device_memory_padding = 211025920 if decoder_device == "mixed" else 0

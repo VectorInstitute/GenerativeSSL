@@ -42,7 +42,7 @@ from solo.utils.checkpointer import Checkpointer
 from solo.utils.misc import make_contiguous, omegaconf_select
 
 try:
-    from solo.data.dali_dataloader_new import PretrainDALIDataModule, build_transform_pipeline_dali
+    from solo.data.dali_dataloader import PretrainDALIDataModule, build_transform_pipeline_dali
 except ImportError:
     _dali_avaliable = False
 else:
@@ -232,11 +232,9 @@ def main(cfg: DictConfig):
     )
 
     if cfg.data.format == "dali":
-        from solo.data.dali_dataloader_new import Scheduler
-        print(trainer_kwargs, flush = True)
+        from solo.data.dali_dataloader import Scheduler
         trainer_kwargs['callbacks'].append(Scheduler())
         trainer_kwargs['reload_dataloaders_every_n_epochs'] = 1
-        print(trainer_kwargs, flush = True)
         trainer = Trainer(**trainer_kwargs)
         trainer.fit(model, ckpt_path=ckpt_path, datamodule=dali_datamodule)
     else:

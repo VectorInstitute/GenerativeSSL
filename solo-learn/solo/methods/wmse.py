@@ -88,7 +88,9 @@ class WMSE(BaseMethod):
             "method_kwargs.whitening_size",
             256,
         )
-        cfg.method_kwargs.whitening_eps = omegaconf_select(cfg, "method_kwargs.whitening_eps", 0.0)
+        cfg.method_kwargs.whitening_eps = omegaconf_select(
+            cfg, "method_kwargs.whitening_eps", 0.0
+        )
 
         return cfg
 
@@ -100,7 +102,9 @@ class WMSE(BaseMethod):
             List[dict]: list of learnable parameters.
         """
 
-        extra_learnable_params = [{"name": "projector", "params": self.projector.parameters()}]
+        extra_learnable_params = [
+            {"name": "projector", "params": self.projector.parameters()}
+        ]
         return super().learnable_params + extra_learnable_params
 
     def forward(self, X: torch.Tensor) -> Dict[str, Any]:

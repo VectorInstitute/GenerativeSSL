@@ -21,7 +21,9 @@ import torch
 import torch.nn.functional as F
 
 
-def wmse_loss_func(z1: torch.Tensor, z2: torch.Tensor, simplified: bool = True) -> torch.Tensor:
+def wmse_loss_func(
+    z1: torch.Tensor, z2: torch.Tensor, simplified: bool = True
+) -> torch.Tensor:
     """Computes W-MSE's loss given two batches of whitened features z1 and z2.
 
     Args:

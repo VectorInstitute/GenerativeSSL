@@ -30,9 +30,7 @@ _normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224,
 _real_augmentations = [
     transforms.RandomResizedCrop(224, scale=(0.2, 1.0)),
     transforms.RandomApply(
-        [
-            transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
-        ],
+        [transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)],  # not strengthened
         p=0.8,
     ),
     transforms.RandomGrayscale(p=0.2),

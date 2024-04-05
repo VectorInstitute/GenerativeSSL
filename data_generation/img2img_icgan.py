@@ -16,14 +16,9 @@ parser.add_argument(
     type=str,
     nargs="?",
     help="dir to write results to",
-    default="/projects/imagenet_synthetic/synthetic_icgan"
+    default="/projects/imagenet_synthetic/synthetic_icgan",
 )
-parser.add_argument(
-    "--img_save_size",
-    type=int,
-    default=224,
-    help="image saving size"
-)
+parser.add_argument("--img_save_size", type=int, default=224, help="image saving size")
 parser.add_argument(
     "--start",
     type=int,
@@ -45,6 +40,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+
 def save(out, torch_format=True):
     if torch_format:
         with torch.no_grad():
@@ -52,11 +48,18 @@ def save(out, torch_format=True):
     img = convert_to_images(out)[0]
     return img
 
+
 def save_images(path, images, out_dir):
     for img in images:
-        out_folder = path.split("/")[-1].split(".")[0].split("_")[0] # get the class name
-        file_name = path.split("/")[-1].split(".")[0] # get the (class name_image number)
-        save_folder = os.path.join(out_dir, out_folder) # create a folder for each class
+        out_folder = (
+            path.split("/")[-1].split(".")[0].split("_")[0]
+        )  # get the class name
+        file_name = path.split("/")[-1].split(".")[
+            0
+        ]  # get the (class name_image number)
+        save_folder = os.path.join(
+            out_dir, out_folder
+        )  # create a folder for each class
 
         if not os.path.exists(save_folder):
             os.makedirs(save_folder, exist_ok=True)
@@ -66,6 +69,7 @@ def save_images(path, images, out_dir):
         pil_img.thumbnail((args.img_save_size, args.img_save_size))
         pil_img.save(save_file, format="JPEG")
 
+
 def main():
     if args.outdir is not None:
         os.makedirs(args.outdir, exist_ok=True)
@@ -73,13 +77,17 @@ def main():
     config = get_config()
     config.seed = args.ith_sample
     icgan_inference = ICGANInference(config)
-    transform = transforms.Compose([
-        data_utils.CenterCropLongEdge(),
-        transforms.ToTensor(),
-        transforms.Normalize(config.norm_mean, config.norm_std)])
+    transform = transforms.Compose(
+        [
+            data_utils.CenterCropLongEdge(),
+            transforms.ToTensor(),
+            transforms.Normalize(config.norm_mean, config.norm_std),
+        ]
+    )
 
-
-    imagenet_dataset = datasets.ImageNet("/scratch/ssd004/datasets/imagenet256", split="train", transform=transform)
+    imagenet_dataset = datasets.ImageNet(
+        "/scratch/ssd004/datasets/imagenet256", split="train", transform=transform
+    )
 
     n = len(imagenet_dataset)
     if args.end == -1:
@@ -90,10 +98,13 @@ def main():
     for i in tqdm(range(args.start, args.end)):
         batch = imagenet_dataset[i]
         images = batch[0]
-        generated_images = icgan_inference.run_inference(input_image_tensor=images.unsqueeze(0))
+        generated_images = icgan_inference.run_inference(
+            input_image_tensor=images.unsqueeze(0)
+        )
         ## save images
         path = imagenet_dataset.samples[i][0]
         save_images(path, generated_images, args.outdir)
+
 
 if __name__ == "__main__":
     main()

@@ -116,7 +116,9 @@ def test_transforms():
     pipelines = []
     for aug_cfg in [cfg, cfg_small]:
         pipelines.append(
-            NCropAugmentation(build_transform_pipeline("imagenet100", aug_cfg), aug_cfg.num_crops)
+            NCropAugmentation(
+                build_transform_pipeline("imagenet100", aug_cfg), aug_cfg.num_crops
+            )
         )
     transform = FullTransformPipeline(pipelines)
     crops = transform(im)
@@ -157,7 +159,9 @@ def test_data():
     pipelines = []
     for aug_cfg in [cfg]:
         pipelines.append(
-            NCropAugmentation(build_transform_pipeline("imagenet100", aug_cfg), aug_cfg.num_crops)
+            NCropAugmentation(
+                build_transform_pipeline("imagenet100", aug_cfg), aug_cfg.num_crops
+            )
         )
     transform = FullTransformPipeline(pipelines)
 

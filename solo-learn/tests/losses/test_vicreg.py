@@ -26,7 +26,9 @@ def test_vicreg_loss():
     z1 = torch.randn(b, f).requires_grad_()
     z2 = torch.randn(b, f).requires_grad_()
 
-    loss = vicreg_loss_func(z1, z2, sim_loss_weight=25.0, var_loss_weight=25.0, cov_loss_weight=1.0)
+    loss = vicreg_loss_func(
+        z1, z2, sim_loss_weight=25.0, var_loss_weight=25.0, cov_loss_weight=1.0
+    )
     initial_loss = loss.item()
     assert loss != 0
 

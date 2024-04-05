@@ -39,4 +39,6 @@ def test_simsiam_loss():
 
     assert loss < initial_loss
 
-    assert abs(simsiam_loss_func(p, z) - simsiam_loss_func(p, z, simplified=False)) < 1e-6
+    assert (
+        abs(simsiam_loss_func(p, z) - simsiam_loss_func(p, z, simplified=False)) < 1e-6
+    )

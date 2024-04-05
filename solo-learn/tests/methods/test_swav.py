@@ -62,12 +62,14 @@ def test_swav():
     assert (
         "z" in out
         and isinstance(out["z"], torch.Tensor)
-        and out["z"].size() == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
+        and out["z"].size()
+        == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
     )
     assert (
         "p" in out
         and isinstance(out["p"], torch.Tensor)
-        and out["p"].size() == (cfg.optimizer.batch_size, method_kwargs["num_prototypes"])
+        and out["p"].size()
+        == (cfg.optimizer.batch_size, method_kwargs["num_prototypes"])
     )
 
     # imagenet

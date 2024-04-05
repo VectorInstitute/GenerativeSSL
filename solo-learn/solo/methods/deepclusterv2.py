@@ -86,13 +86,17 @@ class DeepClusterV2(BaseMethod):
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.proj_hidden_dim")
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.proj_output_dim")
 
-        cfg.method_kwargs.temperature = omegaconf_select(cfg, "method_kwargs.temperature", 0.1)
+        cfg.method_kwargs.temperature = omegaconf_select(
+            cfg, "method_kwargs.temperature", 0.1
+        )
         cfg.method_kwargs.num_prototypes = omegaconf_select(
             cfg,
             "method_kwargs.num_prototypes",
             [3000, 3000, 3000],
         )
-        cfg.method_kwargs.kmeans_iters = omegaconf_select(cfg, "method_kwargs.kmeans_iters", 10)
+        cfg.method_kwargs.kmeans_iters = omegaconf_select(
+            cfg, "method_kwargs.kmeans_iters", 10
+        )
 
         return cfg
 
@@ -104,7 +108,9 @@ class DeepClusterV2(BaseMethod):
             List[dict]: list of learnable parameters.
         """
 
-        extra_learnable_params = [{"name": "projector", "params": self.projector.parameters()}]
+        extra_learnable_params = [
+            {"name": "projector", "params": self.projector.parameters()}
+        ]
         return super().learnable_params + extra_learnable_params
 
     def on_train_start(self):
@@ -133,12 +139,16 @@ class DeepClusterV2(BaseMethod):
         size_memory_per_process = len(self.trainer.train_dataloader) * self.batch_size
         self.register_buffer(
             "local_memory_index",
-            torch.zeros(size_memory_per_process).long().to(self.device, non_blocking=True),
+            torch.zeros(size_memory_per_process)
+            .long()
+            .to(self.device, non_blocking=True),
         )
         self.register_buffer(
             "local_memory_embeddings",
             F.normalize(
-                torch.randn(self.num_large_crops, size_memory_per_process, self.proj_output_dim),
+                torch.randn(
+                    self.num_large_crops, size_memory_per_process, self.proj_output_dim
+                ),
                 dim=-1,
             ).to(self.device, non_blocking=True),
         )
@@ -157,7 +167,9 @@ class DeepClusterV2(BaseMethod):
             for proto, centro in zip(self.prototypes, centroids):
                 proto.weight.copy_(centro)
 
-    def update_memory_banks(self, idxs: torch.Tensor, z: torch.Tensor, batch_idx: int) -> None:
+    def update_memory_banks(
+        self, idxs: torch.Tensor, z: torch.Tensor, batch_idx: int
+    ) -> None:
         """Updates DeepClusterV2's memory banks of indices and features.
 
         Args:
@@ -166,7 +178,10 @@ class DeepClusterV2(BaseMethod):
             batch_idx (int): batch index relative to the current epoch.
         """
 
-        start_idx, end_idx = batch_idx * self.batch_size, (batch_idx + 1) * self.batch_size
+        start_idx, end_idx = (
+            batch_idx * self.batch_size,
+            (batch_idx + 1) * self.batch_size,
+        )
         self.local_memory_index[start_idx:end_idx] = idxs
         for c, z_c in enumerate(z):
             self.local_memory_embeddings[c][start_idx:end_idx] = z_c.detach()
@@ -216,6 +231,8 @@ class DeepClusterV2(BaseMethod):
         # ------- update memory banks -------
         self.update_memory_banks(idxs, [z1, z2], batch_idx)
 
-        self.log("train_deepcluster_loss", deepcluster_loss, on_epoch=True, sync_dist=True)
+        self.log(
+            "train_deepcluster_loss", deepcluster_loss, on_epoch=True, sync_dist=True
+        )
 
         return deepcluster_loss + class_loss

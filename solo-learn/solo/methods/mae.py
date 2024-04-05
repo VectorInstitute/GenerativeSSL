@@ -30,7 +30,14 @@ from timm.models.vision_transformer import Block
 
 class MAEDecoder(nn.Module):
     def __init__(
-        self, in_dim, embed_dim, depth, num_heads, num_patches, patch_size, mlp_ratio=4.0
+        self,
+        in_dim,
+        embed_dim,
+        depth,
+        num_heads,
+        num_patches,
+        patch_size,
+        mlp_ratio=4.0,
     ) -> None:
         super().__init__()
 
@@ -73,7 +80,9 @@ class MAEDecoder(nn.Module):
             int(self.num_patches**0.5),
             cls_token=True,
         )
-        self.decoder_pos_embed.data.copy_(torch.from_numpy(decoder_pos_embed).float().unsqueeze(0))
+        self.decoder_pos_embed.data.copy_(
+            torch.from_numpy(decoder_pos_embed).float().unsqueeze(0)
+        )
 
         # timm's trunc_normal_(std=.02) is effectively normal_(std=0.02) as cutoff is too big (2.)
         nn.init.normal_(self.mask_token, std=0.02)
@@ -96,10 +105,14 @@ class MAEDecoder(nn.Module):
         x = self.decoder_embed(x)
 
         # append mask tokens to sequence
-        mask_tokens = self.mask_token.repeat(x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1)
+        mask_tokens = self.mask_token.repeat(
+            x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1
+        )
         x_ = torch.cat([x[:, 1:, :], mask_tokens], dim=1)  # no cls token
         # unshuffle
-        x_ = torch.gather(x_, dim=1, index=ids_restore.unsqueeze(-1).repeat(1, 1, x.shape[2]))
+        x_ = torch.gather(
+            x_, dim=1, index=ids_restore.unsqueeze(-1).repeat(1, 1, x.shape[2])
+        )
         x = torch.cat([x[:, :1, :], x_], dim=1)  # append cls token
 
         # add pos embed
@@ -146,7 +159,9 @@ class MAE(BaseMethod):
         self._vit_embed_dim: int = self.backbone.pos_embed.size(-1)
         # if patch size is not available, defaults to 16 or 14 depending on backbone
         default_patch_size = 14 if self.backbone_name == "vit_huge" else 16
-        self._vit_patch_size: int = self.backbone_args.get("patch_size", default_patch_size)
+        self._vit_patch_size: int = self.backbone_args.get(
+            "patch_size", default_patch_size
+        )
         self._vit_num_patches: int = self.backbone.patch_embed.num_patches
 
         decoder_embed_dim: int = cfg.method_kwargs.decoder_embed_dim
@@ -177,11 +192,17 @@ class MAE(BaseMethod):
 
         cfg = super(MAE, MAE).add_and_assert_specific_cfg(cfg)
 
-        assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.decoder_embed_dim")
+        assert not omegaconf.OmegaConf.is_missing(
+            cfg, "method_kwargs.decoder_embed_dim"
+        )
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.decoder_depth")
-        assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.decoder_num_heads")
+        assert not omegaconf.OmegaConf.is_missing(
+            cfg, "method_kwargs.decoder_num_heads"
+        )
 
-        cfg.method_kwargs.mask_ratio = omegaconf_select(cfg, "method_kwargs.mask_ratio", 0.75)
+        cfg.method_kwargs.mask_ratio = omegaconf_select(
+            cfg, "method_kwargs.mask_ratio", 0.75
+        )
         cfg.method_kwargs.norm_pix_loss = omegaconf_select(
             cfg,
             "method_kwargs.norm_pix_loss",

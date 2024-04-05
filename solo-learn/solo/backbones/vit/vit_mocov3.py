@@ -41,7 +41,9 @@ class VisionTransformerMoCo(VisionTransformer):
             if isinstance(m, nn.Linear):
                 if "qkv" in name:
                     # treat the weights of Q, K, V separately
-                    val = math.sqrt(6.0 / float(m.weight.shape[0] // 3 + m.weight.shape[1]))
+                    val = math.sqrt(
+                        6.0 / float(m.weight.shape[0] // 3 + m.weight.shape[1])
+                    )
                     nn.init.uniform_(m.weight, -val, val)
                 else:
                     nn.init.xavier_uniform_(m.weight)
@@ -51,7 +53,10 @@ class VisionTransformerMoCo(VisionTransformer):
         if isinstance(self.patch_embed, PatchEmbed):
             # xavier_uniform initialization
             val = math.sqrt(
-                6.0 / float(3 * reduce(mul, self.patch_embed.patch_size, 1) + self.embed_dim)
+                6.0
+                / float(
+                    3 * reduce(mul, self.patch_embed.patch_size, 1) + self.embed_dim
+                )
             )
             nn.init.uniform_(self.patch_embed.proj.weight, -val, val)
             nn.init.zeros_(self.patch_embed.proj.bias)
@@ -76,7 +81,8 @@ class VisionTransformerMoCo(VisionTransformer):
         out_w = torch.einsum("m,d->md", [grid_w.flatten(), omega])
         out_h = torch.einsum("m,d->md", [grid_h.flatten(), omega])
         pos_emb = torch.cat(
-            [torch.sin(out_w), torch.cos(out_w), torch.sin(out_h), torch.cos(out_h)], dim=1
+            [torch.sin(out_w), torch.cos(out_w), torch.sin(out_h), torch.cos(out_h)],
+            dim=1,
         )[None, :, :]
 
         assert self.num_prefix_tokens == 1, "Assuming one and only one token, [cls]"

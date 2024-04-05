@@ -235,6 +235,8 @@ def main(cfg: DictConfig):
         from solo.data.dali_dataloader_new import Scheduler
         print(trainer_kwargs, flush = True)
         trainer_kwargs['callbacks'].append(Scheduler())
+        trainer_kwargs['reload_dataloaders_every_n_epochs'] = 1
+        print(trainer_kwargs, flush = True)
         trainer = Trainer(**trainer_kwargs)
         trainer.fit(model, ckpt_path=ckpt_path, datamodule=dali_datamodule)
     else:

@@ -728,11 +728,12 @@ class Wrapper(TempDALIGenericIterator):
         return x, target
 
 class Scheduler(pl.Callback):
-    def _prepare_epoch(self, trainer, model, epoch):
+    def _prepare_epoch(self, trainer):
         trainer.datamodule.reset_train_loader()
 
-    def on_epoch_end(self, trainer, model):
-        self._prepare_epoch(trainer, model, trainer.current_epoch + 1)
+    def on_train_epoch_end(self, trainer, pl_module):
+        print("epoch is finishing", flush = True)
+        self._prepare_epoch(trainer)
 
 class PretrainDALIDataModule(pl.LightningDataModule):
     def __init__(

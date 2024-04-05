@@ -127,7 +127,7 @@ def main(cfg: DictConfig):
             synthetic_data_path=cfg.data.synthetic_path,
             synthetic_index_min=cfg.data.synthetic_index_min,
             synthetic_index_max=cfg.data.synthetic_index_max,
-            generative_augmentation_prob=cfg.generative_augmentation_prob,
+            generative_augmentation_prob=cfg.data.generative_augmentation_prob,
             transforms=transform,
             num_large_crops=cfg.data.num_large_crops,
             num_small_crops=cfg.data.num_small_crops,

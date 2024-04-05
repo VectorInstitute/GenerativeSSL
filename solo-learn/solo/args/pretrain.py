@@ -58,8 +58,8 @@ def add_and_assert_dataset_cfg(cfg: omegaconf.DictConfig) -> omegaconf.DictConfi
     cfg.data.synthetic_path = omegaconf_select(cfg, "data.synthetic_path", None)
     cfg.data.synthetic_index_min = omegaconf_select(cfg, "data.synthetic_index_min", 0)
     cfg.data.synthetic_index_max = omegaconf_select(cfg, "data.synthetic_index_max", 0)
-    cfg.generative_augmentation_prob = omegaconf_select(
-        cfg, "generative_augmentation_prob", 0.0
+    cfg.data.generative_augmentation_prob = omegaconf_select(
+        cfg, "data.generative_augmentation_prob", 0.0
     )
     cfg.data.format = omegaconf_select(cfg, "data.format", "image_folder")
     cfg.data.no_labels = omegaconf_select(cfg, "data.no_labels", False)

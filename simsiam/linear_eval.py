@@ -259,7 +259,6 @@ def main_worker(gpu, ngpus_per_node, args):
         )
         torch.distributed.barrier()
 
-
     # create model
     print("=> creating model '{}'".format(args.arch), flush=True)
     model = models.__dict__[args.arch]()
@@ -716,7 +715,7 @@ def sanity_check(state_dict, pretrained_weights):
     """
     print("=> loading '{}' for sanity check".format(pretrained_weights))
     checkpoint = torch.load(pretrained_weights, map_location="cpu")
-    
+
     state_dict_pre = checkpoint["state_dict"]
 
     for k in list(state_dict.keys()):
@@ -740,6 +739,7 @@ def sanity_check(state_dict, pretrained_weights):
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
+
     def __init__(self, name, fmt=":f"):
         self.name = name
         self.fmt = fmt

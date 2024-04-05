@@ -39,7 +39,9 @@ def dataset_args(parser: ArgumentParser):
         "custom",
     ]
 
-    parser.add_argument("--dataset", choices=SUPPORTED_DATASETS, type=str, required=True)
+    parser.add_argument(
+        "--dataset", choices=SUPPORTED_DATASETS, type=str, required=True
+    )
 
     # dataset path
     parser.add_argument("--train_data_path", type=Path, required=True)

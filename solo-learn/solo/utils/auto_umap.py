@@ -82,17 +82,25 @@ class AutoUMAP(Callback):
         """
 
         cfg.auto_umap = omegaconf_select(cfg, "auto_umap", default={})
-        cfg.auto_umap.enabled = omegaconf_select(cfg, "auto_umap.enabled", default=False)
+        cfg.auto_umap.enabled = omegaconf_select(
+            cfg, "auto_umap.enabled", default=False
+        )
         cfg.auto_umap.dir = omegaconf_select(cfg, "auto_umap.dir", default="auto_umap")
-        cfg.auto_umap.frequency = omegaconf_select(cfg, "auto_umap.frequency", default=1)
+        cfg.auto_umap.frequency = omegaconf_select(
+            cfg, "auto_umap.frequency", default=1
+        )
 
         return cfg
 
     @staticmethod
     def random_string(letter_count=4, digit_count=4):
         tmp_random = random.Random(time.time())
-        rand_str = "".join(tmp_random.choice(string.ascii_lowercase) for _ in range(letter_count))
-        rand_str += "".join(tmp_random.choice(string.digits) for _ in range(digit_count))
+        rand_str = "".join(
+            tmp_random.choice(string.ascii_lowercase) for _ in range(letter_count)
+        )
+        rand_str += "".join(
+            tmp_random.choice(string.digits) for _ in range(digit_count)
+        )
         rand_str = list(rand_str)
         tmp_random.shuffle(rand_str)
         return "".join(rand_str)
@@ -199,7 +207,11 @@ class AutoUMAP(Callback):
             else:
                 anchor = (0.5, 1.35)
 
-            plt.legend(loc="upper center", bbox_to_anchor=anchor, ncol=math.ceil(num_classes / 10))
+            plt.legend(
+                loc="upper center",
+                bbox_to_anchor=anchor,
+                ncol=math.ceil(num_classes / 10),
+            )
             plt.tight_layout()
 
             if isinstance(trainer.logger, pl.loggers.WandbLogger):
@@ -301,7 +313,9 @@ class OfflineUMAP:
         else:
             anchor = (0.5, 1.35)
 
-        plt.legend(loc="upper center", bbox_to_anchor=anchor, ncol=math.ceil(num_classes / 10))
+        plt.legend(
+            loc="upper center", bbox_to_anchor=anchor, ncol=math.ceil(num_classes / 10)
+        )
         plt.tight_layout()
 
         # save plot locally as well

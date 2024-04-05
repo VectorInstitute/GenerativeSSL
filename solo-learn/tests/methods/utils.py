@@ -38,7 +38,12 @@ from solo.data.pretrain_dataloader import (
 
 
 def gen_base_cfg(
-    method_name, batch_size, num_classes, num_large_crops=2, num_small_crops=0, momentum=False
+    method_name,
+    batch_size,
+    num_classes,
+    num_large_crops=2,
+    num_small_crops=0,
+    momentum=False,
 ):
     cfg = {
         "name": "test",
@@ -86,8 +91,12 @@ def gen_trainer(cfg, callbacks=None):
     trainer_kwargs = OmegaConf.to_container(cfg)
     # we only want to pass in valid Trainer args, the rest may be user specific
     valid_kwargs = inspect.signature(Trainer.__init__).parameters
-    trainer_kwargs = {name: trainer_kwargs[name] for name in valid_kwargs if name in trainer_kwargs}
-    trainer_kwargs.update({"logger": None, "enable_checkpointing": False, "fast_dev_run": True})
+    trainer_kwargs = {
+        name: trainer_kwargs[name] for name in valid_kwargs if name in trainer_kwargs
+    }
+    trainer_kwargs.update(
+        {"logger": None, "enable_checkpointing": False, "fast_dev_run": True}
+    )
     trainer = Trainer(**trainer_kwargs, callbacks=callbacks)
     return trainer
 
@@ -191,7 +200,9 @@ def prepare_dummy_dataloaders(
     pipelines = []
     for aug_cfg in cfg.augmentations:
         pipelines.append(
-            NCropAugmentation(build_transform_pipeline(dataset, aug_cfg), aug_cfg.num_crops)
+            NCropAugmentation(
+                build_transform_pipeline(dataset, aug_cfg), aug_cfg.num_crops
+            )
         )
     transform = FullTransformPipeline(pipelines)
 
@@ -211,7 +222,9 @@ def prepare_dummy_dataloaders(
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
         ]
     )
-    dataset = FakeData(image_size=(3, 224, 224), num_classes=num_classes, transform=T_val)
+    dataset = FakeData(
+        image_size=(3, 224, 224), num_classes=num_classes, transform=T_val
+    )
     val_dl = DataLoader(dataset, batch_size=batch_size, num_workers=0, drop_last=False)
 
     return train_dl, val_dl
@@ -227,7 +240,11 @@ def prepare_classification_dummy_dataloaders(dataset, num_classes):
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
         ]
     )
-    dataset = FakeData(image_size=(3, 224, 224), num_classes=num_classes, transform=T_val)
-    train_dl = val_dl = DataLoader(dataset, batch_size=2, num_workers=0, drop_last=False)
+    dataset = FakeData(
+        image_size=(3, 224, 224), num_classes=num_classes, transform=T_val
+    )
+    train_dl = val_dl = DataLoader(
+        dataset, batch_size=2, num_workers=0, drop_last=False
+    )
 
     return train_dl, val_dl

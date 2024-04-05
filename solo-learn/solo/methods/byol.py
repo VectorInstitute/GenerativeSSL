@@ -191,7 +191,11 @@ class BYOL(BaseMomentumMethod):
 
         # calculate std of features
         with torch.no_grad():
-            z_std = F.normalize(torch.stack(Z[: self.num_large_crops]), dim=-1).std(dim=1).mean()
+            z_std = (
+                F.normalize(torch.stack(Z[: self.num_large_crops]), dim=-1)
+                .std(dim=1)
+                .mean()
+            )
 
         metrics = {
             "train_neg_cos_sim": neg_cos_sim,

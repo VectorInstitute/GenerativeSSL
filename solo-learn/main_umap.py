@@ -35,7 +35,9 @@ def main():
     # build paths
     ckpt_dir = Path(args.pretrained_checkpoint_dir)
     args_path = ckpt_dir / "args.json"
-    ckpt_path = [ckpt_dir / ckpt for ckpt in os.listdir(ckpt_dir) if ckpt.endswith(".ckpt")][0]
+    ckpt_path = [
+        ckpt_dir / ckpt for ckpt in os.listdir(ckpt_dir) if ckpt.endswith(".ckpt")
+    ][0]
 
     # load arguments
     with open(args_path) as f:

@@ -61,12 +61,16 @@ class DINOLoss(nn.Module):
         # a too high temperature makes the training unstable at the beginning
         self.teacher_temp_schedule = np.concatenate(
             (
-                np.linspace(warmup_teacher_temp, teacher_temp, warmup_teacher_temp_epochs),
+                np.linspace(
+                    warmup_teacher_temp, teacher_temp, warmup_teacher_temp_epochs
+                ),
                 np.ones(num_epochs - warmup_teacher_temp_epochs) * teacher_temp,
             )
         )
 
-    def forward(self, student_output: torch.Tensor, teacher_output: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, student_output: torch.Tensor, teacher_output: torch.Tensor
+    ) -> torch.Tensor:
         """Computes DINO's loss given a batch of logits of the student and a batch of logits of the
         teacher.
 
@@ -115,4 +119,6 @@ class DINOLoss(nn.Module):
         batch_center = batch_center / len(teacher_output)
 
         # ema update
-        self.center = self.center * self.center_momentum + batch_center * (1 - self.center_momentum)
+        self.center = self.center * self.center_momentum + batch_center * (
+            1 - self.center_momentum
+        )

@@ -93,13 +93,17 @@ class SwAV(BaseMethod):
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.proj_hidden_dim")
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.temperature")
 
-        cfg.method_kwargs.queue_size = omegaconf_select(cfg, "method_kwargs.queue_size", 65536)
+        cfg.method_kwargs.queue_size = omegaconf_select(
+            cfg, "method_kwargs.queue_size", 65536
+        )
         cfg.method_kwargs.num_prototypes = omegaconf_select(
             cfg,
             "method_kwargs.num_prototypes",
             3000,
         )
-        cfg.method_kwargs.sk_epsilon = omegaconf_select(cfg, "method_kwargs.sk_epsilon", 0.05)
+        cfg.method_kwargs.sk_epsilon = omegaconf_select(
+            cfg, "method_kwargs.sk_epsilon", 0.05
+        )
         cfg.method_kwargs.sk_iters = omegaconf_select(cfg, "method_kwargs.sk_iters", 3)
         cfg.method_kwargs.freeze_prototypes_epochs = omegaconf_select(
             cfg,

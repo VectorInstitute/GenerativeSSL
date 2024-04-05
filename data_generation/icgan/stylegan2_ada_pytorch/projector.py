@@ -75,7 +75,9 @@ def project(
         target_images = F.interpolate(target_images, size=(256, 256), mode="area")
     target_features = vgg16(target_images, resize_images=False, return_lpips=True)
 
-    w_opt = torch.tensor(w_avg, dtype=torch.float32, device=device, requires_grad=True)  # pylint: disable=not-callable
+    w_opt = torch.tensor(
+        w_avg, dtype=torch.float32, device=device, requires_grad=True
+    )  # pylint: disable=not-callable
     w_out = torch.zeros(
         [num_steps] + list(w_opt.shape[1:]), dtype=torch.float32, device=device
     )
@@ -220,7 +222,9 @@ def run_projection(
     start_time = perf_counter()
     projected_w_steps = project(
         G,
-        target=torch.tensor(target_uint8.transpose([2, 0, 1]), device=device),  # pylint: disable=not-callable
+        target=torch.tensor(
+            target_uint8.transpose([2, 0, 1]), device=device
+        ),  # pylint: disable=not-callable
         num_steps=num_steps,
         device=device,
         verbose=True,

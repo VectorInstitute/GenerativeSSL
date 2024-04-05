@@ -22,7 +22,9 @@ import torch.nn.functional as F
 from solo.utils.misc import gather, get_rank
 
 
-def nnclr_loss_func(nn: torch.Tensor, p: torch.Tensor, temperature: float = 0.1) -> torch.Tensor:
+def nnclr_loss_func(
+    nn: torch.Tensor, p: torch.Tensor, temperature: float = 0.1
+) -> torch.Tensor:
     """Computes NNCLR's loss given batch of nearest-neighbors nn from view 1 and
     predicted features p from view 2.
 

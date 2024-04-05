@@ -269,7 +269,9 @@ def compute_dataset_size(
     size = None
 
     if dataset is not None:
-        size = DATASET_SIZES.get(dataset.lower(), {}).get("train" if train else "val", None)
+        size = DATASET_SIZES.get(dataset.lower(), {}).get(
+            "train" if train else "val", None
+        )
 
     if data_format == "h5":
         assert _h5_available
@@ -280,7 +282,8 @@ def compute_dataset_size(
             size = len(os.listdir(data_path))
         else:
             size = sum(
-                len(os.listdir(os.path.join(data_path, class_))) for class_ in os.listdir(data_path)
+                len(os.listdir(os.path.join(data_path, class_)))
+                for class_ in os.listdir(data_path)
             )
 
     if data_fraction != -1:
@@ -325,8 +328,12 @@ def generate_2d_sincos_pos_embed_from_grid(embed_dim, grid):
     assert embed_dim % 2 == 0
 
     # use half of dimensions to encode grid_h
-    emb_h = generate_1d_sincos_pos_embed_from_grid(embed_dim // 2, grid[0])  # (H*W, D/2)
-    emb_w = generate_1d_sincos_pos_embed_from_grid(embed_dim // 2, grid[1])  # (H*W, D/2)
+    emb_h = generate_1d_sincos_pos_embed_from_grid(
+        embed_dim // 2, grid[0]
+    )  # (H*W, D/2)
+    emb_w = generate_1d_sincos_pos_embed_from_grid(
+        embed_dim // 2, grid[1]
+    )  # (H*W, D/2)
 
     emb = np.concatenate([emb_h, emb_w], axis=1)  # (H*W, D)
     return emb
@@ -371,7 +378,9 @@ def param_groups_layer_decay(
 
     if hasattr(model, "group_matcher"):
         # FIXME interface needs more work
-        layer_map = group_parameters(model, model.group_matcher(coarse=False), reverse=True)
+        layer_map = group_parameters(
+            model, model.group_matcher(coarse=False), reverse=True
+        )
     else:
         # fallback
         layer_map = _layer_map(model)

@@ -389,9 +389,8 @@ class AugmentPipe(torch.nn.Module):
             Hz_fbank = scipy.signal.convolve(Hz_fbank, [Hz_lo2])
             Hz_fbank[
                 i,
-                (Hz_fbank.shape[1] - Hz_hi2.size) // 2 : (
-                    Hz_fbank.shape[1] + Hz_hi2.size
-                )
+                (Hz_fbank.shape[1] - Hz_hi2.size)
+                // 2 : (Hz_fbank.shape[1] + Hz_hi2.size)
                 // 2,
             ] += Hz_hi2
         self.register_buffer("Hz_fbank", torch.as_tensor(Hz_fbank, dtype=torch.float32))

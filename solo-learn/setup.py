@@ -21,7 +21,12 @@ import os
 from pkg_resources import parse_requirements
 from setuptools import find_packages, setup
 
-KW = ["artificial intelligence", "deep learning", "unsupervised learning", "contrastive learning"]
+KW = [
+    "artificial intelligence",
+    "deep learning",
+    "unsupervised learning",
+    "contrastive learning",
+]
 
 REQUIREMENTS_FILE = os.path.join(os.path.dirname(__file__), "requirements.txt")
 with open(REQUIREMENTS_FILE) as fo:
@@ -42,7 +47,9 @@ def parse_requirements(path):
 
 setup(
     name="solo-learn",
-    packages=find_packages(exclude=["bash_files", "docs", "downstream", "tests", "zoo"]),
+    packages=find_packages(
+        exclude=["bash_files", "docs", "downstream", "tests", "zoo"]
+    ),
     version="1.0.6",
     license="MIT",
     author="solo-learn development team",

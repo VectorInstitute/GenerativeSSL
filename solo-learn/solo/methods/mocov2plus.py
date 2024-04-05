@@ -86,7 +86,9 @@ class MoCoV2Plus(BaseMomentumMethod):
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.proj_hidden_dim")
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.temperature")
 
-        cfg.method_kwargs.queue_size = omegaconf_select(cfg, "method_kwargs.queue_size", 65536)
+        cfg.method_kwargs.queue_size = omegaconf_select(
+            cfg, "method_kwargs.queue_size", 65536
+        )
 
         return cfg
 
@@ -98,7 +100,9 @@ class MoCoV2Plus(BaseMomentumMethod):
             List[dict]: list of learnable parameters.
         """
 
-        extra_learnable_params = [{"name": "projector", "params": self.projector.parameters()}]
+        extra_learnable_params = [
+            {"name": "projector", "params": self.projector.parameters()}
+        ]
         return super().learnable_params + extra_learnable_params
 
     @property

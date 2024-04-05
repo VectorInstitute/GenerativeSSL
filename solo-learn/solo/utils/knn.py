@@ -138,7 +138,9 @@ class WeightedKNNClassifier(Metric):
             if self.distance_fx == "cosine":
                 similarities = torch.mm(features, train_features.t())
             elif self.distance_fx == "euclidean":
-                similarities = 1 / (torch.cdist(features, train_features) + self.epsilon)
+                similarities = 1 / (
+                    torch.cdist(features, train_features) + self.epsilon
+                )
             else:
                 raise NotImplementedError
 

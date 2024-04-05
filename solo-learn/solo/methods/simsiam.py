@@ -55,7 +55,9 @@ class SimSiam(BaseMethod):
             nn.Linear(proj_hidden_dim, proj_output_dim),
             nn.BatchNorm1d(proj_output_dim, affine=False),
         )
-        self.projector[6].bias.requires_grad = False  # hack: not use bias as it is followed by BN
+        self.projector[
+            6
+        ].bias.requires_grad = False  # hack: not use bias as it is followed by BN
 
         # predictor
         self.predictor = nn.Sequential(
@@ -94,7 +96,11 @@ class SimSiam(BaseMethod):
 
         extra_learnable_params: List[dict] = [
             {"name": "projector", "params": self.projector.parameters()},
-            {"name": "predictor", "params": self.predictor.parameters(), "static_lr": True},
+            {
+                "name": "predictor",
+                "params": self.predictor.parameters(),
+                "static_lr": True,
+            },
         ]
         return super().learnable_params + extra_learnable_params
 

@@ -44,4 +44,10 @@ def poolformer_m48(method, *args, **kwargs):
     return default_poolformer_m48(*args, **kwargs)
 
 
-__all__ = ["poolformer_s12", "poolformer_s24", "poolformer_s36", "poolformer_m36", "poolformer_m48"]
+__all__ = [
+    "poolformer_s12",
+    "poolformer_s24",
+    "poolformer_s36",
+    "poolformer_m36",
+    "poolformer_m48",
+]

@@ -139,7 +139,9 @@ class LARS(Optimizer):
                 # lars scaling + weight decay part
                 if p.ndim != 1 or not group["exclude_bias_n_norm"]:
                     if p_norm != 0 and g_norm != 0:
-                        lars_lr = p_norm / (g_norm + p_norm * weight_decay + group["eps"])
+                        lars_lr = p_norm / (
+                            g_norm + p_norm * weight_decay + group["eps"]
+                        )
                         lars_lr *= group["eta"]
 
                         # clip lr

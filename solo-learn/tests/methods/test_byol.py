@@ -56,31 +56,36 @@ def test_byol():
     assert (
         "z" in out
         and isinstance(out["z"], torch.Tensor)
-        and out["z"].size() == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
+        and out["z"].size()
+        == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
     )
     assert (
         "p" in out
         and isinstance(out["p"], torch.Tensor)
-        and out["p"].size() == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
+        and out["p"].size()
+        == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
     )
 
     momentum_out = model.momentum_forward(batch[1][0])
     assert (
         "feats" in momentum_out
         and isinstance(momentum_out["feats"], torch.Tensor)
-        and momentum_out["feats"].size() == (cfg.optimizer.batch_size, model.features_dim)
+        and momentum_out["feats"].size()
+        == (cfg.optimizer.batch_size, model.features_dim)
     )
     assert (
         "z" in momentum_out
         and isinstance(momentum_out["z"], torch.Tensor)
-        and momentum_out["z"].size() == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
+        and momentum_out["z"].size()
+        == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
     )
 
     multicrop_out = model.multicrop_forward(batch[1][0])
     assert (
         "feats" in multicrop_out
         and isinstance(multicrop_out["feats"], torch.Tensor)
-        and multicrop_out["feats"].size() == (cfg.optimizer.batch_size, model.features_dim)
+        and multicrop_out["feats"].size()
+        == (cfg.optimizer.batch_size, model.features_dim)
     )
     assert (
         "z" in multicrop_out

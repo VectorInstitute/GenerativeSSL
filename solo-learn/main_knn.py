@@ -122,7 +122,9 @@ def main():
     # build paths
     ckpt_dir = Path(args.pretrained_checkpoint_dir)
     args_path = ckpt_dir / "args.json"
-    ckpt_path = [ckpt_dir / ckpt for ckpt in os.listdir(ckpt_dir) if ckpt.endswith(".ckpt")][0]
+    ckpt_path = [
+        ckpt_dir / ckpt for ckpt in os.listdir(ckpt_dir) if ckpt.endswith(".ckpt")
+    ][0]
 
     # load arguments
     with open(args_path) as f:
@@ -130,7 +132,9 @@ def main():
     cfg = OmegaConf.create(method_args)
 
     # build the model
-    model = METHODS[method_args["method"]].load_from_checkpoint(ckpt_path, strict=False, cfg=cfg)
+    model = METHODS[method_args["method"]].load_from_checkpoint(
+        ckpt_path, strict=False, cfg=cfg
+    )
 
     # prepare data
     _, T = prepare_transforms(args.dataset)
@@ -150,11 +154,15 @@ def main():
     )
 
     # extract train features
-    train_features_bb, train_features_proj, train_targets = extract_features(train_loader, model)
+    train_features_bb, train_features_proj, train_targets = extract_features(
+        train_loader, model
+    )
     train_features = {"backbone": train_features_bb, "projector": train_features_proj}
 
     # extract test features
-    test_features_bb, test_features_proj, test_targets = extract_features(val_loader, model)
+    test_features_bb, test_features_proj, test_targets = extract_features(
+        val_loader, model
+    )
     test_features = {"backbone": test_features_bb, "projector": test_features_proj}
 
     # run k-nn for all possible combinations of parameters
@@ -165,7 +173,9 @@ def main():
                 temperatures = args.temperature if distance_fx == "cosine" else [None]
                 for T in temperatures:
                     print("---")
-                    print(f"Running k-NN with params: distance_fx={distance_fx}, k={k}, T={T}...")
+                    print(
+                        f"Running k-NN with params: distance_fx={distance_fx}, k={k}, T={T}..."
+                    )
                     acc1, acc5 = run_knn(
                         train_features=train_features[feat_type],
                         train_targets=train_targets,

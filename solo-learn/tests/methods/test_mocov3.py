@@ -58,19 +58,22 @@ def test_mocov3():
     assert (
         "q" in out
         and isinstance(out["q"], torch.Tensor)
-        and out["q"].size() == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
+        and out["q"].size()
+        == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
     )
 
     momentum_out = model.momentum_forward(batch[1][0])
     assert (
         "feats" in momentum_out
         and isinstance(momentum_out["feats"], torch.Tensor)
-        and momentum_out["feats"].size() == (cfg.optimizer.batch_size, model.features_dim)
+        and momentum_out["feats"].size()
+        == (cfg.optimizer.batch_size, model.features_dim)
     )
     assert (
         "k" in momentum_out
         and isinstance(momentum_out["k"], torch.Tensor)
-        and momentum_out["k"].size() == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
+        and momentum_out["k"].size()
+        == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
     )
 
     # imagenet

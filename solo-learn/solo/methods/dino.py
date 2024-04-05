@@ -144,7 +144,9 @@ class DINO(BaseMomentumMethod):
         student_temperature: float = cfg.method_kwargs.student_temperature
         warmup_teacher_temperature: float = cfg.method_kwargs.warmup_teacher_temperature
         teacher_temperature: float = cfg.method_kwargs.teacher_temperature
-        warmup_teacher_temperature_epochs: int = cfg.method_kwargs.warmup_teacher_temperature_epochs
+        warmup_teacher_temperature_epochs: int = (
+            cfg.method_kwargs.warmup_teacher_temperature_epochs
+        )
 
         # dino head
         self.head = DINOHead(
@@ -195,7 +197,9 @@ class DINO(BaseMomentumMethod):
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.num_prototypes")
 
         # optimization settings
-        cfg.method_kwargs.clip_grad = omegaconf_select(cfg, "method_kwargs.clip_grad", 0)
+        cfg.method_kwargs.clip_grad = omegaconf_select(
+            cfg, "method_kwargs.clip_grad", 0
+        )
         cfg.method_kwargs.freeze_last_layer = omegaconf_select(
             cfg, "method_kwargs.freeze_last_layer", 1
         )

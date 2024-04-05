@@ -25,5 +25,5 @@ export PYTHONPATH="."
 nvidia-smi
 
 torchrun --nproc-per-node=4 --nnodes=1 solo-learn/main_pretrain.py \
-    --config-path solo-learn/scripts/pretrain/imagenet/ \
+    --config-path scripts/pretrain/imagenet/ \
     --config-name simclr.yaml

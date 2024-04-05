@@ -57,14 +57,16 @@ def test_supcon():
     assert (
         "z" in out
         and isinstance(out["z"], torch.Tensor)
-        and out["z"].size() == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
+        and out["z"].size()
+        == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
     )
 
     multicrop_out = model.multicrop_forward(batch[1][0])
     assert (
         "feats" in multicrop_out
         and isinstance(multicrop_out["feats"], torch.Tensor)
-        and multicrop_out["feats"].size() == (cfg.optimizer.batch_size, model.features_dim)
+        and multicrop_out["feats"].size()
+        == (cfg.optimizer.batch_size, model.features_dim)
     )
     assert (
         "z" in multicrop_out

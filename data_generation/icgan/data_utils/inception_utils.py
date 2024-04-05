@@ -271,7 +271,8 @@ def calculate_inception_score(pred, num_splits=10):
     scores = []
     for index in range(num_splits):
         pred_chunk = pred[
-            index * (pred.shape[0] // num_splits) : (index + 1)
+            index
+            * (pred.shape[0] // num_splits) : (index + 1)
             * (pred.shape[0] // num_splits),
             :,
         ]

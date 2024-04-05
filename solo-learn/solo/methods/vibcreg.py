@@ -61,7 +61,9 @@ class VIbCReg(BaseMethod):
             nn.BatchNorm1d(proj_hidden_dim),
             nn.GELU(),
             nn.Linear(proj_hidden_dim, proj_output_dim),
-            IterNorm(proj_output_dim, num_groups=64, T=5, dim=2) if iternorm else nn.Identity(),
+            IterNorm(proj_output_dim, num_groups=64, T=5, dim=2)
+            if iternorm
+            else nn.Identity(),
         )
 
     @staticmethod
@@ -95,7 +97,9 @@ class VIbCReg(BaseMethod):
             "method_kwargs.cov_loss_weight",
             200.0,
         )
-        cfg.method_kwargs.iternorm = omegaconf_select(cfg, "method_kwargs.iternorm", False)
+        cfg.method_kwargs.iternorm = omegaconf_select(
+            cfg, "method_kwargs.iternorm", False
+        )
 
         return cfg
 
@@ -107,7 +111,9 @@ class VIbCReg(BaseMethod):
             List[dict]: list of learnable parameters.
         """
 
-        extra_learnable_params = [{"name": "projector", "params": self.projector.parameters()}]
+        extra_learnable_params = [
+            {"name": "projector", "params": self.projector.parameters()}
+        ]
         return super().learnable_params + extra_learnable_params
 
     def forward(self, X: torch.Tensor) -> Dict[str, Any]:

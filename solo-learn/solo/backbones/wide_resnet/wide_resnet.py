@@ -28,7 +28,12 @@ from timm.models.registry import register_model
 
 class WideResnetBasicBlock(nn.Module):
     def __init__(
-        self, in_planes, out_planes, stride, drop_rate=0.0, activate_before_residual=False
+        self,
+        in_planes,
+        out_planes,
+        stride,
+        drop_rate=0.0,
+        activate_before_residual=False,
     ):
         super().__init__()
         self.bn1 = nn.BatchNorm2d(in_planes, momentum=0.001, eps=0.001)
@@ -45,7 +50,14 @@ class WideResnetBasicBlock(nn.Module):
         self.equalInOut = in_planes == out_planes
         self.convShortcut = (
             (not self.equalInOut)
-            and nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, padding=0, bias=True)
+            and nn.Conv2d(
+                in_planes,
+                out_planes,
+                kernel_size=1,
+                stride=stride,
+                padding=0,
+                bias=True,
+            )
             or None
         )
         self.activate_before_residual = activate_before_residual
@@ -75,11 +87,24 @@ class WideResnetNetworkBlock(nn.Module):
     ):
         super().__init__()
         self.layer = self._make_layer(
-            block, in_planes, out_planes, nb_layers, stride, drop_rate, activate_before_residual
+            block,
+            in_planes,
+            out_planes,
+            nb_layers,
+            stride,
+            drop_rate,
+            activate_before_residual,
         )
 
     def _make_layer(
-        self, block, in_planes, out_planes, nb_layers, stride, drop_rate, activate_before_residual
+        self,
+        block,
+        in_planes,
+        out_planes,
+        nb_layers,
+        stride,
+        drop_rate,
+        activate_before_residual,
     ):
         layers = []
         for i in range(int(nb_layers)):
@@ -99,7 +124,9 @@ class WideResnetNetworkBlock(nn.Module):
 
 
 class WideResNet(nn.Module):
-    def __init__(self, first_stride=1, depth=28, widen_factor=2, drop_rate=0.0, **kwargs):
+    def __init__(
+        self, first_stride=1, depth=28, widen_factor=2, drop_rate=0.0, **kwargs
+    ):
         super().__init__()
         channels = [16, 16 * widen_factor, 32 * widen_factor, 64 * widen_factor]
         self.num_features = channels[-1]
@@ -107,7 +134,9 @@ class WideResNet(nn.Module):
         n = (depth - 4) / 6
         block = WideResnetBasicBlock
         # 1st conv before any network block
-        self.conv1 = nn.Conv2d(3, channels[0], kernel_size=3, stride=1, padding=1, bias=True)
+        self.conv1 = nn.Conv2d(
+            3, channels[0], kernel_size=3, stride=1, padding=1, bias=True
+        )
         # 1st block
         self.block1 = WideResnetNetworkBlock(
             n,
@@ -119,16 +148,22 @@ class WideResNet(nn.Module):
             activate_before_residual=True,
         )
         # 2nd block
-        self.block2 = WideResnetNetworkBlock(n, channels[1], channels[2], block, 2, drop_rate)
+        self.block2 = WideResnetNetworkBlock(
+            n, channels[1], channels[2], block, 2, drop_rate
+        )
         # 3rd block
-        self.block3 = WideResnetNetworkBlock(n, channels[2], channels[3], block, 2, drop_rate)
+        self.block3 = WideResnetNetworkBlock(
+            n, channels[2], channels[3], block, 2, drop_rate
+        )
         # global average pooling
         self.bn1 = nn.BatchNorm2d(channels[3], momentum=0.001, eps=0.001)
         self.relu = nn.LeakyReLU(negative_slope=0.1, inplace=False)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="leaky_relu")
+                nn.init.kaiming_normal_(
+                    m.weight, mode="fan_out", nonlinearity="leaky_relu"
+                )
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()

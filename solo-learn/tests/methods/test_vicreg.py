@@ -58,7 +58,8 @@ def test_vicreg():
     assert (
         "z" in out
         and isinstance(out["z"], torch.Tensor)
-        and out["z"].size() == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
+        and out["z"].size()
+        == (cfg.optimizer.batch_size, method_kwargs["proj_output_dim"])
     )
 
     # imagenet

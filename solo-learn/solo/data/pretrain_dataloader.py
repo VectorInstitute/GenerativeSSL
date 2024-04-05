@@ -22,15 +22,16 @@ import random
 from pathlib import Path
 from typing import Callable, List, Optional, Sequence, Type, Union
 
+import PIL
 import torch
 import torchvision
 from PIL import Image, ImageFilter, ImageOps
-import PIL
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 from torchvision import transforms
 from torchvision.datasets import STL10, ImageFolder
+
 
 try:
     from solo.data.h5_dataset import H5Dataset
@@ -145,6 +146,7 @@ class NCropAugmentation:
         Returns:
             List[torch.Tensor]: an image in the tensor format.
         """
+
         return [self.transform(x) for _ in range(self.num_crops)]
 
     def __repr__(self) -> str:
@@ -161,6 +163,7 @@ class FullTransformPipeline:
         Args:
             x (Image): an image in the PIL.Image format.
             x_s (Optional[Image]): an image in the PIL.Image format.
+            
         Returns:
             List[torch.Tensor]: an image in the tensor format.
         """

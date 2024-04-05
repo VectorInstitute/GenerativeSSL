@@ -18,6 +18,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import os
+import random
 from pathlib import Path
 from typing import Callable, List, Optional, Union
 
@@ -35,7 +36,6 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from solo.data.temp_dali_fix import TempDALIGenericIterator
 from solo.utils.misc import omegaconf_select
 
-import random
 
 class RandomGrayScaleConversion:
     def __init__(self, prob: float = 0.2, device: str = "gpu"):
@@ -581,7 +581,7 @@ class PretrainPipelineBuilder:
                 shard_id=shard_id,
                 num_shards=num_shards,
                 shuffle_after_epoch=random_shuffle,
-                seed = self.seed,
+                seed=self.seed,
             )
         
         if synthetic_data_path:
@@ -601,7 +601,7 @@ class PretrainPipelineBuilder:
                 shard_id=shard_id,
                 num_shards=num_shards,
                 shuffle_after_epoch=random_shuffle,
-                seed = self.seed,
+                seed=self.seed,
             )
 
         decoder_device = "mixed" if self.device == "gpu" else "cpu"
@@ -840,7 +840,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         cfg.dali = omegaconf_select(cfg, "dali", {})
         cfg.dali.device = omegaconf_select(cfg, "dali.device", "gpu")
         cfg.dali.encode_indexes_into_labels = omegaconf_select(
-            cfg, "dali.encode_indexes_into_labels", True
+            cfg, "dali.encode_indexes_into_labels", False
         )
         return cfg
     
@@ -851,7 +851,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             synthetic_data_path=self.synthetic_data_path,
             synthetic_index_min=self.synthetic_index_min,
             synthetic_index_max=self.synthetic_index_max,
-            generative_augmentation_prob = self.generative_augmentation_prob,
+            generative_augmentation_prob=self.generative_augmentation_prob,
             batch_size=self.batch_size,
             transforms=self.transforms,
             device=self.dali_device,
@@ -862,7 +862,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             no_labels=self.no_labels,
             encode_indexes_into_labels=self.encode_indexes_into_labels,
             data_fraction=self.data_fraction,
-            seed = self.num_shards*epoch,
+            seed=self.num_shards*epoch,
         )
         train_pipeline = train_pipeline_builder.pipeline(
             batch_size=train_pipeline_builder.batch_size,
@@ -876,7 +876,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             [f"large{i}" for i in range(self.num_large_crops)]
             + [f"small{i}" for i in range(self.num_small_crops)]
             + ["label"]
-            + ["Synth label"]
+            + ["synth label"]
         )
 
         policy = LastBatchPolicy.DROP

@@ -53,7 +53,9 @@ class RandomGrayScaleConversion:
         )
 
     def __call__(self, images):
-        do_op = fn.random.coin_flip(probability=self.prob, dtype=types.DALIDataType.BOOL)
+        do_op = fn.random.coin_flip(
+            probability=self.prob, dtype=types.DALIDataType.BOOL
+        )
         if do_op:
             out = self.grayscale(images)
             out = fn.cat(out, out, out, axis=2)
@@ -103,13 +105,19 @@ class RandomColorJitter:
         self.hue = 0
 
         if brightness:
-            self.brightness = ops.random.Uniform(range=[max(0, 1 - brightness), 1 + brightness])
+            self.brightness = ops.random.Uniform(
+                range=[max(0, 1 - brightness), 1 + brightness]
+            )
 
         if contrast:
-            self.contrast = ops.random.Uniform(range=[max(0, 1 - contrast), 1 + contrast])
+            self.contrast = ops.random.Uniform(
+                range=[max(0, 1 - contrast), 1 + contrast]
+            )
 
         if saturation:
-            self.saturation = ops.random.Uniform(range=[max(0, 1 - saturation), 1 + saturation])
+            self.saturation = ops.random.Uniform(
+                range=[max(0, 1 - saturation), 1 + saturation]
+            )
 
         if hue:
             # dali uses hue in degrees for some reason...
@@ -117,13 +125,19 @@ class RandomColorJitter:
             self.hue = ops.random.Uniform(range=[-hue, hue])
 
     def __call__(self, images):
-        do_op = fn.random.coin_flip(probability=self.prob, dtype=types.DALIDataType.BOOL)
+        do_op = fn.random.coin_flip(
+            probability=self.prob, dtype=types.DALIDataType.BOOL
+        )
         if do_op:
             out = self.color(
                 images,
-                brightness=self.brightness() if callable(self.brightness) else self.brightness,
+                brightness=self.brightness()
+                if callable(self.brightness)
+                else self.brightness,
                 contrast=self.contrast() if callable(self.contrast) else self.contrast,
-                saturation=self.saturation() if callable(self.saturation) else self.saturation,
+                saturation=self.saturation()
+                if callable(self.saturation)
+                else self.saturation,
                 hue=self.hue() if callable(self.hue) else self.hue,
             )
         else:
@@ -144,11 +158,15 @@ class RandomGaussianBlur:
 
         self.prob = prob
         # gaussian blur
-        self.gaussian_blur = ops.GaussianBlur(device=device, window_size=(window_size, window_size))
+        self.gaussian_blur = ops.GaussianBlur(
+            device=device, window_size=(window_size, window_size)
+        )
         self.sigma = ops.random.Uniform(range=[0, 1])
 
     def __call__(self, images):
-        do_op = fn.random.coin_flip(probability=self.prob, dtype=types.DALIDataType.BOOL)
+        do_op = fn.random.coin_flip(
+            probability=self.prob, dtype=types.DALIDataType.BOOL
+        )
         if do_op:
             sigma = self.sigma() * 1.9 + 0.1
             out = self.gaussian_blur(images, sigma=sigma)
@@ -170,7 +188,9 @@ class RandomSolarize:
         self.threshold = threshold
 
     def __call__(self, images):
-        do_op = fn.random.coin_flip(probability=self.prob, dtype=types.DALIDataType.BOOL)
+        do_op = fn.random.coin_flip(
+            probability=self.prob, dtype=types.DALIDataType.BOOL
+        )
         if do_op:
             inverted_img = types.Constant(255, dtype=types.UINT8) - images
             mask = images >= self.threshold
@@ -227,7 +247,9 @@ class NormalPipelineBuilder:
         self.validation = validation
 
         # manually load files and labels
-        labels = sorted(Path(entry.name) for entry in os.scandir(data_path) if entry.is_dir())
+        labels = sorted(
+            Path(entry.name) for entry in os.scandir(data_path) if entry.is_dir()
+        )
         data = [
             (data_path / label / file, label_idx)
             for label_idx, label in enumerate(labels)
@@ -242,7 +264,11 @@ class NormalPipelineBuilder:
             from sklearn.model_selection import train_test_split
 
             files, _, labels, _ = train_test_split(
-                files, labels, train_size=data_fraction, stratify=labels, random_state=42
+                files,
+                labels,
+                train_size=data_fraction,
+                stratify=labels,
+                random_state=42,
             )
 
         self.reader = ops.readers.File(
@@ -369,7 +395,8 @@ def build_transform_pipeline_dali(dataset, cfg, dali_device):
     }
 
     mean, std = MEANS_N_STD.get(
-        dataset, (cfg.get("mean", IMAGENET_DEFAULT_MEAN), cfg.get("std", IMAGENET_DEFAULT_STD))
+        dataset,
+        (cfg.get("mean", IMAGENET_DEFAULT_MEAN), cfg.get("std", IMAGENET_DEFAULT_STD)),
     )
 
     augmentations = []
@@ -404,10 +431,14 @@ def build_transform_pipeline_dali(dataset, cfg, dali_device):
         )
 
     if cfg.grayscale.prob:
-        augmentations.append(RandomGrayScaleConversion(prob=cfg.grayscale.prob, device=dali_device))
+        augmentations.append(
+            RandomGrayScaleConversion(prob=cfg.grayscale.prob, device=dali_device)
+        )
 
     if cfg.gaussian_blur.prob:
-        augmentations.append(RandomGaussianBlur(prob=cfg.gaussian_blur.prob, device=dali_device))
+        augmentations.append(
+            RandomGaussianBlur(prob=cfg.gaussian_blur.prob, device=dali_device)
+        )
 
     if cfg.solarization.prob:
         augmentations.append(RandomSolarize(prob=cfg.solarization.prob))
@@ -451,12 +482,15 @@ def build_transform_pipeline_dali(dataset, cfg, dali_device):
 
     return AugWrapper(augmentations=augmentations, cmn=cmn, coin=coin)
 
-def get_random_synthetic_image_path(filename, 
-                                    imagenet_synthetic_root, 
-                                    synthetic_index_min, 
-                                    synthetic_index_max,
-                                    generative_augmentation_prob,
-                                    split="train"):
+
+def get_random_synthetic_image_path(
+    filename,
+    imagenet_synthetic_root,
+    synthetic_index_min,
+    synthetic_index_max,
+    generative_augmentation_prob,
+    split="train",
+):
     gen_prob = random.random()
     if gen_prob > generative_augmentation_prob:
         return filename
@@ -470,6 +504,8 @@ def get_random_synthetic_image_path(filename,
         filename_and_extension.split(".")[0] + f"_{rand_int}.JPEG",
     )
     return synth_filename
+
+
 class PretrainPipelineBuilder:
     def __init__(
         self,
@@ -495,7 +531,7 @@ class PretrainPipelineBuilder:
 
         Args:
             data_path (str): directory that contains the data.
-            synthetic_data_path (Optional[str]): directory that contains the synthetic 
+            synthetic_data_path (Optional[str]): directory that contains the synthetic
             data.
             synthetic_index_min (int): minimum index for synthetic data.
             synthetic_index_max (int): maximum index for synthetic data.
@@ -527,8 +563,8 @@ class PretrainPipelineBuilder:
         self.num_threads = num_threads
         self.device_id = device_id
         self.seed = seed + device_id
-        
-        print("seed", self.seed, flush = True)
+
+        print("seed", self.seed, flush=True)
 
         self.device = device
 
@@ -539,7 +575,9 @@ class PretrainPipelineBuilder:
             files = [data_path / f for f in sorted(os.listdir(data_path))]
             labels = [-1] * len(files)
         else:
-            labels = sorted(Path(entry.name) for entry in os.scandir(data_path) if entry.is_dir())
+            labels = sorted(
+                Path(entry.name) for entry in os.scandir(data_path) if entry.is_dir()
+            )
             data = [
                 (data_path / label / file, label_idx)
                 for label_idx, label in enumerate(labels)
@@ -548,7 +586,9 @@ class PretrainPipelineBuilder:
             files, labels = map(list, zip(*data))
 
         if data_fraction > 0:
-            assert data_fraction < 1, "Only use data_fraction for values smaller than 1."
+            assert (
+                data_fraction < 1
+            ), "Only use data_fraction for values smaller than 1."
 
             if no_labels:
                 labels = [-1] * len(files)
@@ -558,7 +598,11 @@ class PretrainPipelineBuilder:
             from sklearn.model_selection import train_test_split
 
             files, _, labels, _ = train_test_split(
-                files, labels, train_size=data_fraction, stratify=labels, random_state=42
+                files,
+                labels,
+                train_size=data_fraction,
+                stratify=labels,
+                random_state=42,
             )
 
         if encode_indexes_into_labels:
@@ -576,14 +620,14 @@ class PretrainPipelineBuilder:
             # use the encoded labels which will be decoded later
             labels = encoded_labels
         self.reader = ops.readers.File(
-                files=files,
-                labels=labels,
-                shard_id=shard_id,
-                num_shards=num_shards,
-                shuffle_after_epoch=random_shuffle,
-                seed=self.seed,
-            )
-        
+            files=files,
+            labels=labels,
+            shard_id=shard_id,
+            num_shards=num_shards,
+            shuffle_after_epoch=random_shuffle,
+            seed=self.seed,
+        )
+
         if synthetic_data_path:
             synthetic_files = [
                 get_random_synthetic_image_path(
@@ -593,7 +637,9 @@ class PretrainPipelineBuilder:
                     synthetic_index_max,
                     generative_augmentation_prob,
                     split="train",
-                )  for jpeg_filename in files]
+                )
+                for jpeg_filename in files
+            ]
 
             self.synth_reader = ops.readers.File(
                 files=synthetic_files,
@@ -624,12 +670,12 @@ class PretrainPipelineBuilder:
         # read images from memory
         inputs, labels = self.reader(name="Reader")
         images = self.decode(inputs)
-        
+
         if self.device == "gpu":
             labels = labels.gpu()
         # PyTorch expects labels as INT64
         labels = self.to_int64(labels)
-        
+
         if self.synthetic_data_path:
             synthetic_batch, synth_labels = self.synth_reader(name="SynthReader")
             synthetic_images = self.decode(synthetic_batch)
@@ -641,9 +687,7 @@ class PretrainPipelineBuilder:
             synthetic_images = None
             synth_labels = labels
 
-
         crops = self.transforms(images, synthetic_images)
-        
 
         return (*crops, labels, synth_labels)
 
@@ -741,13 +785,15 @@ class Wrapper(TempDALIGenericIterator):
         target = target.detach().clone()
         return x, target
 
+
 class Scheduler(pl.Callback):
     def _prepare_epoch(self, trainer):
-        trainer.datamodule.reset_train_loader(trainer.current_epoch+1)
+        trainer.datamodule.reset_train_loader(trainer.current_epoch + 1)
 
     def on_train_epoch_end(self, trainer, pl_module):
-        print("The epoch is finishing.", flush = True)
+        print("The epoch is finishing.", flush=True)
         self._prepare_epoch(trainer)
+
 
 class PretrainDALIDataModule(pl.LightningDataModule):
     def __init__(
@@ -773,7 +819,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         Args:
             dataset (str): dataset name.
             train_data_path (Union[str, Path]): path where the training data is located.
-            synthetic_data_path (Optional[Union[str, Path]]): path where the synthetic 
+            synthetic_data_path (Optional[Union[str, Path]]): path where the synthetic
             data is located.
             unique_augs (int): number of unique augmentation pielines
             transforms (List[Callable]): list of transformations.
@@ -782,11 +828,11 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             num_small_crops (int): total number of small crops.
             batch_size (int): batch size..
             num_workers (int, optional): number of parallel workers. Defaults to 4.
-            synthetic_index_min (int, optional): minimum index for synthetic data. 
+            synthetic_index_min (int, optional): minimum index for synthetic data.
             Defaults to 0.
             synthetic_index_max (int, optional): maximum index for synthetic data.
             Defaults to 0.
-            generative_augmentation_prob (float, optional): probability of using 
+            generative_augmentation_prob (float, optional): probability of using
             generative augmentation. Defaults to 0.0.
             data_fraction (Optional[float]): percentage of data to use.
                 Use all data when set to -1.0. Defaults to -1.0.
@@ -843,8 +889,8 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             cfg, "dali.encode_indexes_into_labels", False
         )
         return cfg
-    
-    def reset_train_loader(self, epoch = 0):
+
+    def reset_train_loader(self, epoch=0):
         print("Setting train loader.", flush=True)
         train_pipeline_builder = PretrainPipelineBuilder(
             self.train_data_path,
@@ -862,7 +908,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             no_labels=self.no_labels,
             encode_indexes_into_labels=self.encode_indexes_into_labels,
             data_fraction=self.data_fraction,
-            seed=self.num_shards*epoch,
+            seed=self.num_shards * epoch,
         )
         train_pipeline = train_pipeline_builder.pipeline(
             batch_size=train_pipeline_builder.batch_size,
@@ -881,7 +927,9 @@ class PretrainDALIDataModule(pl.LightningDataModule):
 
         policy = LastBatchPolicy.DROP
         conversion_map = (
-            train_pipeline_builder.conversion_map if self.encode_indexes_into_labels else None
+            train_pipeline_builder.conversion_map
+            if self.encode_indexes_into_labels
+            else None
         )
         self.train_loader = PretrainWrapper(
             model_batch_size=self.batch_size,
@@ -907,7 +955,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             self.device = torch.device(f"cuda:{torch.cuda.current_device()}")
         else:
             self.device = torch.device("cpu")
-            
+
         self.reset_train_loader()
 
     def train_dataloader(self):
@@ -962,7 +1010,9 @@ class ClassificationDALIDataModule(pl.LightningDataModule):
         elif dataset == "custom":
             self.pipeline_class = CustomNormalPipelineBuilder
         else:
-            raise ValueError(dataset, "is not supported, used [imagenet, imagenet100 or custom]")
+            raise ValueError(
+                dataset, "is not supported, used [imagenet, imagenet100 or custom]"
+            )
 
     @staticmethod
     def add_and_assert_specific_cfg(cfg: omegaconf.DictConfig) -> omegaconf.DictConfig:

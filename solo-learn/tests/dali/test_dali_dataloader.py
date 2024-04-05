@@ -69,7 +69,9 @@ def test_dali_dataloader():
             )
             transforms.append(
                 NCropAugmentation(
-                    build_transform_pipeline_dali("imagenet100", cfg, dali_device="cpu"),
+                    build_transform_pipeline_dali(
+                        "imagenet100", cfg, dali_device="cpu"
+                    ),
                     cfg.num_crops,
                 )
             )

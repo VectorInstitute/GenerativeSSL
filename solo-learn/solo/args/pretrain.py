@@ -58,7 +58,9 @@ def add_and_assert_dataset_cfg(cfg: omegaconf.DictConfig) -> omegaconf.DictConfi
     cfg.data.synthetic_path = omegaconf_select(cfg, "data.synthetic_path", None)
     cfg.data.synthetic_index_min = omegaconf_select(cfg, "data.synthetic_index_min", 0)
     cfg.data.synthetic_index_max = omegaconf_select(cfg, "data.synthetic_index_max", 0)
-    cfg.generative_augmentation_prob = omegaconf_select(cfg, "generative_augmentation_prob", 0.0)
+    cfg.generative_augmentation_prob = omegaconf_select(
+        cfg, "generative_augmentation_prob", 0.0
+    )
     cfg.data.format = omegaconf_select(cfg, "data.format", "image_folder")
     cfg.data.no_labels = omegaconf_select(cfg, "data.no_labels", False)
     cfg.data.fraction = omegaconf_select(cfg, "data.fraction", -1)
@@ -163,17 +165,25 @@ def parse_cfg(cfg: omegaconf.DictConfig):
     # extra optimizer kwargs
     cfg.optimizer.kwargs = omegaconf_select(cfg, "optimizer.kwargs", {})
     if cfg.optimizer.name == "sgd":
-        cfg.optimizer.kwargs.momentum = omegaconf_select(cfg, "optimizer.kwargs.momentum", 0.9)
+        cfg.optimizer.kwargs.momentum = omegaconf_select(
+            cfg, "optimizer.kwargs.momentum", 0.9
+        )
     elif cfg.optimizer.name == "lars":
-        cfg.optimizer.kwargs.momentum = omegaconf_select(cfg, "optimizer.kwargs.momentum", 0.9)
+        cfg.optimizer.kwargs.momentum = omegaconf_select(
+            cfg, "optimizer.kwargs.momentum", 0.9
+        )
         cfg.optimizer.kwargs.eta = omegaconf_select(cfg, "optimizer.kwargs.eta", 1e-3)
-        cfg.optimizer.kwargs.clip_lr = omegaconf_select(cfg, "optimizer.kwargs.clip_lr", False)
+        cfg.optimizer.kwargs.clip_lr = omegaconf_select(
+            cfg, "optimizer.kwargs.clip_lr", False
+        )
         cfg.optimizer.kwargs.exclude_bias_n_norm = omegaconf_select(
             cfg,
             "optimizer.kwargs.exclude_bias_n_norm",
             False,
         )
     elif cfg.optimizer.name == "adamw":
-        cfg.optimizer.kwargs.betas = omegaconf_select(cfg, "optimizer.kwargs.betas", [0.9, 0.999])
+        cfg.optimizer.kwargs.betas = omegaconf_select(
+            cfg, "optimizer.kwargs.betas", [0.9, 0.999]
+        )
 
     return cfg

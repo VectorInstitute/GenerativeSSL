@@ -75,6 +75,7 @@ class CustomDatasetWithoutLabels(Dataset):
     def __len__(self):
         return len(self.images)
 
+
 class GaussianBlur:
     def __init__(self, sigma: Sequence[float] = None):
         """Gaussian blur as a callable object.
@@ -163,12 +164,12 @@ class FullTransformPipeline:
         Args:
             x (Image): an image in the PIL.Image format.
             x_s (Optional[Image]): an image in the PIL.Image format.
-            
+
         Returns:
             List[torch.Tensor]: an image in the tensor format.
         """
         out = []
-        for i,transform in enumerate(self.transforms):
+        for i, transform in enumerate(self.transforms):
             if i > 0 and x_s is not None:
                 out.extend(transform(x_s))
             else:
@@ -216,7 +217,8 @@ def build_transform_pipeline(dataset, cfg):
     }
 
     mean, std = MEANS_N_STD.get(
-        dataset, (cfg.get("mean", IMAGENET_DEFAULT_MEAN), cfg.get("std", IMAGENET_DEFAULT_STD))
+        dataset,
+        (cfg.get("mean", IMAGENET_DEFAULT_MEAN), cfg.get("std", IMAGENET_DEFAULT_STD)),
     )
 
     augmentations = []
@@ -255,16 +257,24 @@ def build_transform_pipeline(dataset, cfg):
         augmentations.append(transforms.RandomGrayscale(p=cfg.grayscale.prob))
 
     if cfg.gaussian_blur.prob:
-        augmentations.append(transforms.RandomApply([GaussianBlur()], p=cfg.gaussian_blur.prob))
+        augmentations.append(
+            transforms.RandomApply([GaussianBlur()], p=cfg.gaussian_blur.prob)
+        )
 
     if cfg.solarization.prob:
-        augmentations.append(transforms.RandomApply([Solarization()], p=cfg.solarization.prob))
+        augmentations.append(
+            transforms.RandomApply([Solarization()], p=cfg.solarization.prob)
+        )
 
     if cfg.equalization.prob:
-        augmentations.append(transforms.RandomApply([Equalization()], p=cfg.equalization.prob))
+        augmentations.append(
+            transforms.RandomApply([Equalization()], p=cfg.equalization.prob)
+        )
 
     if cfg.horizontal_flip.prob:
-        augmentations.append(transforms.RandomHorizontalFlip(p=cfg.horizontal_flip.prob))
+        augmentations.append(
+            transforms.RandomHorizontalFlip(p=cfg.horizontal_flip.prob)
+        )
 
     augmentations.append(transforms.ToTensor())
     augmentations.append(transforms.Normalize(mean=mean, std=std))
@@ -319,7 +329,9 @@ def prepare_datasets(
     """
 
     if train_data_path is None:
-        sandbox_folder = Path(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+        sandbox_folder = Path(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        )
         train_data_path = sandbox_folder / "datasets"
 
     if dataset in ["cifar10", "cifar100"]:
@@ -342,7 +354,9 @@ def prepare_datasets(
     elif dataset in ["imagenet", "imagenet100"]:
         if data_format == "h5":
             assert _h5_available
-            train_dataset = dataset_with_index(H5Dataset)(dataset, train_data_path, transform)
+            train_dataset = dataset_with_index(H5Dataset)(
+                dataset, train_data_path, transform
+            )
         else:
             train_dataset = dataset_with_index(ImageFolder)(train_data_path, transform)
 
@@ -370,7 +384,11 @@ def prepare_datasets(
             files = [f for f, _ in data]
             labels = [l for _, l in data]
             files, _, labels, _ = train_test_split(
-                files, labels, train_size=data_fraction, stratify=labels, random_state=42
+                files,
+                labels,
+                train_size=data_fraction,
+                stratify=labels,
+                random_state=42,
             )
             train_dataset.samples = [tuple(p) for p in zip(files, labels)]
 

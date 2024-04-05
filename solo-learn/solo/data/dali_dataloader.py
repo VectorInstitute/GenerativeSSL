@@ -35,7 +35,6 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from solo.data.temp_dali_fix import TempDALIGenericIterator
 from solo.utils.misc import omegaconf_select
 
-from solo.data.dali_external_source import ExternalInputIterator
 import random
 
 class RandomGrayScaleConversion:

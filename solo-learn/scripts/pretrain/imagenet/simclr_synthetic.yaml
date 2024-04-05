@@ -43,7 +43,7 @@ scheduler:
   name: "warmup_cosine"
 checkpoint:
   enabled: True
-  dir: "trained_models"
+  dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/temp_trained_models"
   frequency: 1
 auto_resume:
   enabled: False

@@ -35,7 +35,6 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from solo.data.temp_dali_fix import TempDALIGenericIterator
 from solo.utils.misc import omegaconf_select
 
-from solo.data.dali_external_source import ExternalInputIterator
 import random
 
 class RandomGrayScaleConversion:
@@ -528,6 +527,8 @@ class PretrainPipelineBuilder:
         self.num_threads = num_threads
         self.device_id = device_id
         self.seed = seed + device_id
+        
+        print("seed", self.seed, flush = True)
 
         self.device = device
 
@@ -580,6 +581,7 @@ class PretrainPipelineBuilder:
                 shard_id=shard_id,
                 num_shards=num_shards,
                 shuffle_after_epoch=random_shuffle,
+                seed = self.seed,
             )
         
         if synthetic_data_path:
@@ -599,6 +601,7 @@ class PretrainPipelineBuilder:
                 shard_id=shard_id,
                 num_shards=num_shards,
                 shuffle_after_epoch=random_shuffle,
+                seed = self.seed,
             )
 
         decoder_device = "mixed" if self.device == "gpu" else "cpu"
@@ -621,21 +624,28 @@ class PretrainPipelineBuilder:
         # read images from memory
         inputs, labels = self.reader(name="Reader")
         images = self.decode(inputs)
-        if self.synthetic_data_path:
-            synthetic_batch, _ = self.synth_reader(name="SynthReader")
-            synthetic_images = self.decode(synthetic_batch)
-        else:
-            synthetic_images = None
-
-
-        crops = self.transforms(images, synthetic_images)
-
+        
         if self.device == "gpu":
             labels = labels.gpu()
         # PyTorch expects labels as INT64
         labels = self.to_int64(labels)
+        
+        if self.synthetic_data_path:
+            synthetic_batch, synth_labels = self.synth_reader(name="SynthReader")
+            synthetic_images = self.decode(synthetic_batch)
+            if self.device == "gpu":
+                synth_labels = synth_labels.gpu()
+            # PyTorch expects labels as INT64
+            synth_labels = self.to_int64(synth_labels)
+        else:
+            synthetic_images = None
+            synth_labels = labels
 
-        return (*crops, labels)
+
+        crops = self.transforms(images, synthetic_images)
+        
+
+        return (*crops, labels, synth_labels)
 
     def __repr__(self) -> str:
         return str(self.transforms)
@@ -686,11 +696,13 @@ class PretrainWrapper(TempDALIGenericIterator):
         # I think we don't need the .detach().clone() anymore,
         # but I'll keep it commented just to be sure.
         if self.conversion_map is not None:
-            *all_X, indexes = (batch[v] for v in self.output_map)
+            *all_X, indexes, synth_indexes = (batch[v] for v in self.output_map)
+            assert synth_indexes == indexes
             targets = self.conversion_map(indexes).flatten().long()  # .detach().clone()
             indexes = indexes.flatten().long()  # .detach().clone()
         else:
-            *all_X, targets = (batch[v] for v in self.output_map)
+            *all_X, targets, synth_targets = (batch[v] for v in self.output_map)
+            assert synth_targets == targets
             targets = targets.squeeze(-1).long()  # .detach().clone()
             # creates dummy indexes
             indexes = (
@@ -729,7 +741,7 @@ class Wrapper(TempDALIGenericIterator):
 
 class Scheduler(pl.Callback):
     def _prepare_epoch(self, trainer):
-        trainer.datamodule.reset_train_loader()
+        trainer.datamodule.reset_train_loader(trainer.current_epoch+1)
 
     def on_train_epoch_end(self, trainer, pl_module):
         print("The epoch is finishing.", flush = True)
@@ -830,7 +842,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         )
         return cfg
     
-    def reset_train_loader(self):
+    def reset_train_loader(self, epoch = 0):
         print("Setting train loader.", flush=True)
         train_pipeline_builder = PretrainPipelineBuilder(
             self.train_data_path,
@@ -848,6 +860,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             no_labels=self.no_labels,
             encode_indexes_into_labels=self.encode_indexes_into_labels,
             data_fraction=self.data_fraction,
+            seed = self.num_shards*epoch,
         )
         train_pipeline = train_pipeline_builder.pipeline(
             batch_size=train_pipeline_builder.batch_size,
@@ -861,6 +874,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             [f"large{i}" for i in range(self.num_large_crops)]
             + [f"small{i}" for i in range(self.num_small_crops)]
             + ["label"]
+            + ["Synth label"]
         )
 
         policy = LastBatchPolicy.DROP

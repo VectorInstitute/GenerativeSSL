@@ -41,12 +41,12 @@ from solo.utils.auto_resumer import AutoResumer
 from solo.utils.checkpointer import Checkpointer
 from solo.utils.misc import make_contiguous, omegaconf_select
 
-try:
-    from solo.data.dali_dataloader import PretrainDALIDataModule, build_transform_pipeline_dali
-except ImportError:
-    _dali_avaliable = False
-else:
-    _dali_avaliable = True
+# try:
+from solo.data.dali_dataloader import PretrainDALIDataModule, build_transform_pipeline_dali
+# except ImportError:
+#     _dali_avaliable = False
+# else:
+_dali_avaliable = True
 
 try:
     from solo.utils.auto_umap import AutoUMAP

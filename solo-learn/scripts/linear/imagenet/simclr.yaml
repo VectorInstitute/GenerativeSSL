@@ -10,11 +10,11 @@ hydra:
   run:
     dir: .
 
-name: "simsiam-linear"
-pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/trained_models/simsiam/5/simsiam-imagenet-5-ep=99.ckpt"
+name: "simclr-linear"
+pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/trained_models/simclr/h08uetth/simclr-imagenet-h08uetth-ep=86.ckpt"
 backbone:
   name: "resnet50"
-pretrain_method: "simsiam"
+pretrain_method: "simclr"
 data:
   dataset: imagenet
   train_path: "/datasets/imagenet/train"
@@ -24,7 +24,7 @@ data:
 optimizer:
   name: "sgd"
   batch_size: 256
-  lr: 30.0
+  lr: 1.0
   weight_decay: 0
 scheduler:
   name: "step"

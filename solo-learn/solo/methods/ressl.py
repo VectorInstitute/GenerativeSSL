@@ -89,7 +89,9 @@ class ReSSL(BaseMomentumMethod):
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.temperature_q")
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.temperature_k")
 
-        cfg.method_kwargs.queue_size = omegaconf_select(cfg, "method_kwargs.queue_size", 65536)
+        cfg.method_kwargs.queue_size = omegaconf_select(
+            cfg, "method_kwargs.queue_size", 65536
+        )
 
         return cfg
 
@@ -187,7 +189,9 @@ class ReSSL(BaseMomentumMethod):
 
         # ------- contrastive loss -------
         queue = self.queue.clone().detach()
-        ressl_loss = ressl_loss_func(q, k, queue, self.temperature_q, self.temperature_k)
+        ressl_loss = ressl_loss_func(
+            q, k, queue, self.temperature_q, self.temperature_k
+        )
 
         self.log("train_ressl_loss", ressl_loss, on_epoch=True, sync_dist=True)
 

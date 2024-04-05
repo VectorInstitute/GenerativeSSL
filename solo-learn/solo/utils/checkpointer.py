@@ -70,18 +70,30 @@ class Checkpointer(Callback):
         """
 
         cfg.checkpoint = omegaconf_select(cfg, "checkpoint", default={})
-        cfg.checkpoint.enabled = omegaconf_select(cfg, "checkpoint.enabled", default=False)
-        cfg.checkpoint.dir = omegaconf_select(cfg, "checkpoint.dir", default="trained_models")
-        cfg.checkpoint.frequency = omegaconf_select(cfg, "checkpoint.frequency", default=1)
-        cfg.checkpoint.keep_prev = omegaconf_select(cfg, "checkpoint.keep_prev", default=False)
+        cfg.checkpoint.enabled = omegaconf_select(
+            cfg, "checkpoint.enabled", default=False
+        )
+        cfg.checkpoint.dir = omegaconf_select(
+            cfg, "checkpoint.dir", default="trained_models"
+        )
+        cfg.checkpoint.frequency = omegaconf_select(
+            cfg, "checkpoint.frequency", default=1
+        )
+        cfg.checkpoint.keep_prev = omegaconf_select(
+            cfg, "checkpoint.keep_prev", default=False
+        )
 
         return cfg
 
     @staticmethod
     def random_string(letter_count=4, digit_count=4):
         tmp_random = random.Random(time.time())
-        rand_str = "".join(tmp_random.choice(string.ascii_lowercase) for _ in range(letter_count))
-        rand_str += "".join(tmp_random.choice(string.digits) for _ in range(digit_count))
+        rand_str = "".join(
+            tmp_random.choice(string.ascii_lowercase) for _ in range(letter_count)
+        )
+        rand_str += "".join(
+            tmp_random.choice(string.digits) for _ in range(digit_count)
+        )
         rand_str = list(rand_str)
         tmp_random.shuffle(rand_str)
         return "".join(rand_str)
@@ -128,7 +140,9 @@ class Checkpointer(Callback):
             args = OmegaConf.to_container(self.cfg)
             args["wandb_run_id"] = getattr(self, "wandb_run_id", None)
             json_path = self.path / "args.json"
-            json.dump(args, open(json_path, "w"), default=lambda o: "<not serializable>")
+            json.dump(
+                args, open(json_path, "w"), default=lambda o: "<not serializable>"
+            )
 
     def save(self, trainer: pl.Trainer):
         """Saves current checkpoint.

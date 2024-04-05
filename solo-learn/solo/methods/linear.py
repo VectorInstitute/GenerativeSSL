@@ -182,13 +182,21 @@ class LinearModel(pl.LightningModule):
         cfg.finetune = omegaconf_select(cfg, "finetune", False)
 
         # default for acc grad batches
-        cfg.accumulate_grad_batches = omegaconf_select(cfg, "accumulate_grad_batches", 1)
+        cfg.accumulate_grad_batches = omegaconf_select(
+            cfg, "accumulate_grad_batches", 1
+        )
 
         # default parameters for the scheduler
-        cfg.scheduler.lr_decay_steps = omegaconf_select(cfg, "scheduler.lr_decay_steps", None)
+        cfg.scheduler.lr_decay_steps = omegaconf_select(
+            cfg, "scheduler.lr_decay_steps", None
+        )
         cfg.scheduler.min_lr = omegaconf_select(cfg, "scheduler.min_lr", 0.0)
-        cfg.scheduler.warmup_start_lr = omegaconf_select(cfg, "scheduler.warmup_start_lr", 3e-5)
-        cfg.scheduler.warmup_epochs = omegaconf_select(cfg, "scheduler.warmup_epochs", 10)
+        cfg.scheduler.warmup_start_lr = omegaconf_select(
+            cfg, "scheduler.warmup_start_lr", 3e-5
+        )
+        cfg.scheduler.warmup_epochs = omegaconf_select(
+            cfg, "scheduler.warmup_epochs", 10
+        )
         cfg.scheduler.interval = omegaconf_select(cfg, "scheduler.interval", "step")
 
         # default parameters for performance optimization
@@ -220,7 +228,9 @@ class LinearModel(pl.LightningModule):
                 no_weight_decay_list=self.backbone.no_weight_decay(),
                 layer_decay=self.layer_decay,
             )
-            learnable_params.append({"name": "classifier", "params": self.classifier.parameters()})
+            learnable_params.append(
+                {"name": "classifier", "params": self.classifier.parameters()}
+            )
         else:
             learnable_params = (
                 self.classifier.parameters()
@@ -251,7 +261,8 @@ class LinearModel(pl.LightningModule):
 
         if self.scheduler == "warmup_cosine":
             max_warmup_steps = (
-                self.warmup_epochs * (self.trainer.estimated_stepping_batches / self.max_epochs)
+                self.warmup_epochs
+                * (self.trainer.estimated_stepping_batches / self.max_epochs)
                 if self.scheduler_interval == "step"
                 else self.warmup_epochs
             )
@@ -265,7 +276,9 @@ class LinearModel(pl.LightningModule):
                     optimizer,
                     warmup_epochs=max_warmup_steps,
                     max_epochs=max_scheduler_steps,
-                    warmup_start_lr=self.warmup_start_lr if self.warmup_epochs > 0 else self.lr,
+                    warmup_start_lr=self.warmup_start_lr
+                    if self.warmup_epochs > 0
+                    else self.lr,
                     eta_min=self.min_lr,
                 ),
                 "interval": self.scheduler_interval,

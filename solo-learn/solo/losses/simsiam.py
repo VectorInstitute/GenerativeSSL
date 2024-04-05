@@ -21,7 +21,9 @@ import torch
 import torch.nn.functional as F
 
 
-def simsiam_loss_func(p: torch.Tensor, z: torch.Tensor, simplified: bool = True) -> torch.Tensor:
+def simsiam_loss_func(
+    p: torch.Tensor, z: torch.Tensor, simplified: bool = True
+) -> torch.Tensor:
     """Computes SimSiam's loss given batch of predicted features p from view 1 and
     a batch of projected features z from view 2.
 

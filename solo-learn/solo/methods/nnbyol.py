@@ -103,7 +103,9 @@ class NNBYOL(BaseMomentumMethod):
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.proj_hidden_dim")
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.pred_hidden_dim")
 
-        cfg.method_kwargs.queue_size = omegaconf_select(cfg, "method_kwargs.queue_size", 65536)
+        cfg.method_kwargs.queue_size = omegaconf_select(
+            cfg, "method_kwargs.queue_size", 65536
+        )
 
         return cfg
 
@@ -231,7 +233,9 @@ class NNBYOL(BaseMomentumMethod):
         _, nn2_momentum = self.find_nn(z2_momentum)
 
         # ------- negative cosine similarity loss -------
-        neg_cos_sim = byol_loss_func(p1, nn2_momentum) + byol_loss_func(p2, nn1_momentum)
+        neg_cos_sim = byol_loss_func(p1, nn2_momentum) + byol_loss_func(
+            p2, nn1_momentum
+        )
 
         # compute nn accuracy
         b = targets.size(0)

@@ -60,7 +60,9 @@ class KMeans:
     @staticmethod
     def get_indices_sparse(data: np.ndarray):
         cols = np.arange(data.size)
-        M = csr_matrix((cols, (data.ravel(), cols)), shape=(int(data.max()) + 1, data.size))
+        M = csr_matrix(
+            (cols, (data.ravel(), cols)), shape=(int(data.max()) + 1, data.size)
+        )
         return [np.unravel_index(row.data, data.shape) for row in M]
 
     def cluster_memory(
@@ -89,7 +91,9 @@ class KMeans:
                 # run distributed k-means
 
                 # init centroids with elements from memory bank of rank 0
-                centroids = torch.empty(K, self.proj_features_dim).to(device, non_blocking=True)
+                centroids = torch.empty(K, self.proj_features_dim).to(
+                    device, non_blocking=True
+                )
                 if self.rank == 0:
                     random_idx = torch.randperm(len(local_memory_embeddings[j]))[:K]
                     assert len(random_idx) >= K, "please reduce the number of centroids"
@@ -107,9 +111,13 @@ class KMeans:
                         break
 
                     # M step
-                    where_helper = self.get_indices_sparse(local_assignments.cpu().numpy())
+                    where_helper = self.get_indices_sparse(
+                        local_assignments.cpu().numpy()
+                    )
                     counts = torch.zeros(K).to(device, non_blocking=True).int()
-                    emb_sums = torch.zeros(K, self.proj_features_dim).to(device, non_blocking=True)
+                    emb_sums = torch.zeros(K, self.proj_features_dim).to(
+                        device, non_blocking=True
+                    )
                     for k in range(len(where_helper)):
                         if len(where_helper[k][0]) > 0:
                             emb_sums[k] = torch.sum(
@@ -152,7 +160,9 @@ class KMeans:
                         device=local_memory_index.device,
                     )
                     indexes_all = list(indexes_all.unbind(0))
-                    dist_process = dist.all_gather(indexes_all, local_memory_index, async_op=True)
+                    dist_process = dist.all_gather(
+                        indexes_all, local_memory_index, async_op=True
+                    )
                     dist_process.wait()
                     indexes_all = torch.cat(indexes_all).cpu()
 

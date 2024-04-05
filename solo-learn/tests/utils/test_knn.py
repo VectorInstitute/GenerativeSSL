@@ -32,13 +32,19 @@ def test_knn():
 
     # test distances
     knn = WeightedKNNClassifier(
-        k=neighbors, distance_fx="cosine", max_distance_matrix_size=max_distance_matrix_size
+        k=neighbors,
+        distance_fx="cosine",
+        max_distance_matrix_size=max_distance_matrix_size,
     )
     knn.update(
         train_features=F.normalize(torch.randn(num_samples_train, features_dim)),
-        train_targets=torch.arange(end=num_classes).repeat(num_samples_train // num_classes),
+        train_targets=torch.arange(end=num_classes).repeat(
+            num_samples_train // num_classes
+        ),
         test_features=F.normalize(torch.randn(num_samples_test, features_dim)),
-        test_targets=torch.arange(end=num_classes).repeat(num_samples_test // num_classes),
+        test_targets=torch.arange(end=num_classes).repeat(
+            num_samples_test // num_classes
+        ),
     )
     acc1, acc5 = knn.compute()
     assert acc1 >= 0 and acc1 <= 100
@@ -47,13 +53,19 @@ def test_knn():
 
     # test distances
     knn = WeightedKNNClassifier(
-        k=neighbors, distance_fx="euclidean", max_distance_matrix_size=max_distance_matrix_size
+        k=neighbors,
+        distance_fx="euclidean",
+        max_distance_matrix_size=max_distance_matrix_size,
     )
     knn.update(
         train_features=torch.randn(num_samples_train, features_dim),
-        train_targets=torch.arange(end=num_classes).repeat(num_samples_train // num_classes),
+        train_targets=torch.arange(end=num_classes).repeat(
+            num_samples_train // num_classes
+        ),
         test_features=torch.randn(num_samples_test, features_dim),
-        test_targets=torch.arange(end=num_classes).repeat(num_samples_test // num_classes),
+        test_targets=torch.arange(end=num_classes).repeat(
+            num_samples_test // num_classes
+        ),
     )
     acc1, acc5 = knn.compute()
     assert acc1 >= 0 and acc1 <= 100

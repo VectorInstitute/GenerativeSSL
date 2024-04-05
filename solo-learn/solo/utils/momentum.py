@@ -83,5 +83,7 @@ class MomentumUpdater:
 
         self.cur_tau = (
             self.final_tau
-            - (self.final_tau - self.base_tau) * (math.cos(math.pi * cur_step / max_steps) + 1) / 2
+            - (self.final_tau - self.base_tau)
+            * (math.cos(math.pi * cur_step / max_steps) + 1)
+            / 2
         )

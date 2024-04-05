@@ -105,7 +105,9 @@ class All4One(BaseMomentumMethod):
         self.queue = F.normalize(self.queue, dim=1)
         self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))
         # NN index queue
-        self.register_buffer("queue_index", -torch.ones(self.queue_size, dtype=torch.long))
+        self.register_buffer(
+            "queue_index", -torch.ones(self.queue_size, dtype=torch.long)
+        )
 
     @staticmethod
     def add_and_assert_specific_cfg(cfg: omegaconf.DictConfig) -> omegaconf.DictConfig:
@@ -125,7 +127,9 @@ class All4One(BaseMomentumMethod):
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.pred_hidden_dim")
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.temperature")
 
-        cfg.method_kwargs.queue_size = omegaconf_select(cfg, "method_kwargs.queue_size", 65536)
+        cfg.method_kwargs.queue_size = omegaconf_select(
+            cfg, "method_kwargs.queue_size", 65536
+        )
 
         return cfg
 
@@ -272,14 +276,19 @@ class All4One(BaseMomentumMethod):
 
         """
 
-        with open(f"NNIDX/FirstNN/{self.current_epoch}__{self.global_step}__NNS.pickle", "wb") as f:
+        with open(
+            f"NNIDX/FirstNN/{self.current_epoch}__{self.global_step}__NNS.pickle", "wb"
+        ) as f:
             pickle.dump(nn1_idx.cpu().numpy(), f)
 
-        with open(f"NNIDX/FirstNN/{self.current_epoch}__{self.global_step}__IDX.pickle", "wb") as f:
+        with open(
+            f"NNIDX/FirstNN/{self.current_epoch}__{self.global_step}__IDX.pickle", "wb"
+        ) as f:
             pickle.dump(img_indexes.cpu().numpy(), f)
 
         with open(
-            f"NNIDX/FirstNN/{self.current_epoch}__{self.global_step}__Labels.pickle", "wb"
+            f"NNIDX/FirstNN/{self.current_epoch}__{self.global_step}__Labels.pickle",
+            "wb",
         ) as f:
             pickle.dump(nn1_lb.cpu().numpy(), f)
 

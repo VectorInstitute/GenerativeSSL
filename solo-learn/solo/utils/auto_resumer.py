@@ -57,8 +57,12 @@ class AutoResumer:
         """
 
         cfg.auto_resume = omegaconf_select(cfg, "auto_resume", default={})
-        cfg.auto_resume.enabled = omegaconf_select(cfg, "auto_resume.enabled", default=False)
-        cfg.auto_resume.max_hours = omegaconf_select(cfg, "auto_resume.max_hours", default=36)
+        cfg.auto_resume.enabled = omegaconf_select(
+            cfg, "auto_resume.enabled", default=False
+        )
+        cfg.auto_resume.max_hours = omegaconf_select(
+            cfg, "auto_resume.max_hours", default=36
+        )
 
         return cfg
 
@@ -77,12 +81,16 @@ class AutoResumer:
             if files:
                 # skip checkpoints that are empty
                 try:
-                    checkpoint_files = [rootdir / f for f in files if f.endswith(".ckpt")]
+                    checkpoint_files = [
+                        rootdir / f for f in files if f.endswith(".ckpt")
+                    ]
                 except:
                     continue
-                    
+
                 for checkpoint_file in checkpoint_files:
-                    creation_time = datetime.fromtimestamp(os.path.getctime(checkpoint_file))
+                    creation_time = datetime.fromtimestamp(
+                        os.path.getctime(checkpoint_file)
+                    )
                     if current_time - creation_time < self.max_hours:
                         ck = Checkpoint(
                             creation_time=creation_time,
@@ -90,10 +98,12 @@ class AutoResumer:
                             checkpoint=checkpoint_file,
                         )
                         candidates.append(ck)
-                    
+
         if candidates:
             # sort by most recent
-            candidates = sorted(candidates, key=lambda ck: ck.creation_time, reverse=True)
+            candidates = sorted(
+                candidates, key=lambda ck: ck.creation_time, reverse=True
+            )
             for candidate in candidates:
                 candidate_cfg = DictConfig(json.load(open(candidate.args)))
                 if all(

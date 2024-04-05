@@ -38,7 +38,7 @@ def G_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "upsample": [True] * 7,
         "resolution": [8, 16, 32, 64, 128, 256, 512],
         "attention": {
-            2**i: (2**i in [int(item) for item in attention.split("_")])
+            2**i: (2 ** i in [int(item) for item in attention.split("_")])
             for i in range(3, 10)
         },
     }
@@ -48,7 +48,7 @@ def G_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "upsample": [True] * 6,
         "resolution": [8, 16, 32, 64, 128, 256],
         "attention": {
-            2**i: (2**i in [int(item) for item in attention.split("_")])
+            2**i: (2 ** i in [int(item) for item in attention.split("_")])
             for i in range(3, 9)
         },
     }
@@ -58,7 +58,7 @@ def G_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "upsample": [True] * 5,
         "resolution": [8, 16, 32, 64, 128],
         "attention": {
-            2**i: (2**i in [int(item) for item in attention.split("_")])
+            2**i: (2 ** i in [int(item) for item in attention.split("_")])
             for i in range(3, 8)
         },
     }
@@ -68,7 +68,7 @@ def G_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "upsample": [True] * 4,
         "resolution": [8, 16, 32, 64],
         "attention": {
-            2**i: (2**i in [int(item) for item in attention.split("_")])
+            2**i: (2 ** i in [int(item) for item in attention.split("_")])
             for i in range(3, 7)
         },
     }
@@ -78,7 +78,7 @@ def G_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "upsample": [True] * 3,
         "resolution": [8, 16, 32],
         "attention": {
-            2**i: (2**i in [int(item) for item in attention.split("_")])
+            2**i: (2 ** i in [int(item) for item in attention.split("_")])
             for i in range(3, 6)
         },
     }
@@ -396,7 +396,7 @@ def D_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "downsample": [True] * 6 + [False],
         "resolution": [128, 64, 32, 16, 8, 4, 4],
         "attention": {
-            2**i: 2**i in [int(item) for item in attention.split("_")]
+            2**i: 2 ** i in [int(item) for item in attention.split("_")]
             for i in range(2, 8)
         },
     }
@@ -406,7 +406,7 @@ def D_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "downsample": [True] * 5 + [False],
         "resolution": [64, 32, 16, 8, 4, 4],
         "attention": {
-            2**i: 2**i in [int(item) for item in attention.split("_")]
+            2**i: 2 ** i in [int(item) for item in attention.split("_")]
             for i in range(2, 8)
         },
     }
@@ -416,7 +416,7 @@ def D_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "downsample": [True] * 4 + [False],
         "resolution": [32, 16, 8, 4, 4],
         "attention": {
-            2**i: 2**i in [int(item) for item in attention.split("_")]
+            2**i: 2 ** i in [int(item) for item in attention.split("_")]
             for i in range(2, 7)
         },
     }
@@ -426,7 +426,7 @@ def D_arch(ch=64, attention="64", ksize="333333", dilation="111111"):
         "downsample": [True, True, False, False],
         "resolution": [16, 16, 16, 16],
         "attention": {
-            2**i: 2**i in [int(item) for item in attention.split("_")]
+            2**i: 2 ** i in [int(item) for item in attention.split("_")]
             for i in range(2, 6)
         },
     }

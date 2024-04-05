@@ -65,11 +65,17 @@ def main(cfg: DictConfig):
         backbone.fc = nn.Identity()
         cifar = cfg.data.dataset in ["cifar10", "cifar100"]
         if cifar:
-            backbone.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=2, bias=False)
+            backbone.conv1 = nn.Conv2d(
+                3, 64, kernel_size=3, stride=1, padding=2, bias=False
+            )
             backbone.maxpool = nn.Identity()
 
     ckpt_path = cfg.pretrained_feature_extractor
-    assert ckpt_path.endswith(".ckpt") or ckpt_path.endswith(".pth") or ckpt_path.endswith(".pt")
+    assert (
+        ckpt_path.endswith(".ckpt")
+        or ckpt_path.endswith(".pth")
+        or ckpt_path.endswith(".pt")
+    )
 
     state = torch.load(ckpt_path, map_location="cpu")["state_dict"]
     for k in list(state.keys()):
@@ -197,7 +203,9 @@ def main(cfg: DictConfig):
     trainer_kwargs = OmegaConf.to_container(cfg)
     # we only want to pass in valid Trainer args, the rest may be user specific
     valid_kwargs = inspect.signature(Trainer.__init__).parameters
-    trainer_kwargs = {name: trainer_kwargs[name] for name in valid_kwargs if name in trainer_kwargs}
+    trainer_kwargs = {
+        name: trainer_kwargs[name] for name in valid_kwargs if name in trainer_kwargs
+    }
     trainer_kwargs.update(
         {
             "logger": wandb_logger if cfg.wandb.enabled else None,

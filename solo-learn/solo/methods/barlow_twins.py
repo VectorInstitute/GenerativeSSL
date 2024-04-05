@@ -75,7 +75,9 @@ class BarlowTwins(BaseMethod):
         assert not omegaconf.OmegaConf.is_missing(cfg, "method_kwargs.proj_output_dim")
 
         cfg.method_kwargs.lamb = omegaconf_select(cfg, "method_kwargs.lamb", 0.0051)
-        cfg.method_kwargs.scale_loss = omegaconf_select(cfg, "method_kwargs.scale_loss", 0.024)
+        cfg.method_kwargs.scale_loss = omegaconf_select(
+            cfg, "method_kwargs.scale_loss", 0.024
+        )
 
         return cfg
 
@@ -87,7 +89,9 @@ class BarlowTwins(BaseMethod):
             List[dict]: list of learnable parameters.
         """
 
-        extra_learnable_params = [{"name": "projector", "params": self.projector.parameters()}]
+        extra_learnable_params = [
+            {"name": "projector", "params": self.projector.parameters()}
+        ]
         return super().learnable_params + extra_learnable_params
 
     def forward(self, X):
@@ -122,7 +126,9 @@ class BarlowTwins(BaseMethod):
         z1, z2 = out["z"]
 
         # ------- barlow twins loss -------
-        barlow_loss = barlow_loss_func(z1, z2, lamb=self.lamb, scale_loss=self.scale_loss)
+        barlow_loss = barlow_loss_func(
+            z1, z2, lamb=self.lamb, scale_loss=self.scale_loss
+        )
 
         self.log("train_barlow_loss", barlow_loss, on_epoch=True, sync_dist=True)
 

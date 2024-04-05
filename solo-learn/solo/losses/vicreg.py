@@ -76,7 +76,9 @@ def covariance_loss(z1: torch.Tensor, z2: torch.Tensor) -> torch.Tensor:
     cov_z2 = (z2.T @ z2) / (N - 1)
 
     diag = torch.eye(D, device=z1.device)
-    cov_loss = cov_z1[~diag.bool()].pow_(2).sum() / D + cov_z2[~diag.bool()].pow_(2).sum() / D
+    cov_loss = (
+        cov_z1[~diag.bool()].pow_(2).sum() / D + cov_z2[~diag.bool()].pow_(2).sum() / D
+    )
     return cov_loss
 
 
@@ -110,5 +112,9 @@ def vicreg_loss_func(
     var_loss = variance_loss(z1, z2)
     cov_loss = covariance_loss(z1, z2)
 
-    loss = sim_loss_weight * sim_loss + var_loss_weight * var_loss + cov_loss_weight * cov_loss
+    loss = (
+        sim_loss_weight * sim_loss
+        + var_loss_weight * var_loss
+        + cov_loss_weight * cov_loss
+    )
     return loss

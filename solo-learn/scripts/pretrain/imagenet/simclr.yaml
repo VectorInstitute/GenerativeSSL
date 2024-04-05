@@ -39,10 +39,10 @@ scheduler:
   name: "warmup_cosine"
 checkpoint:
   enabled: True
-  dir: "trained_models"
+  dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models"
   frequency: 1
 auto_resume:
-  enabled: False
+  enabled: True
 
 # overwrite PL stuff
 max_epochs: 100

@@ -697,11 +697,13 @@ class PretrainWrapper(TempDALIGenericIterator):
         # but I'll keep it commented just to be sure.
         if self.conversion_map is not None:
             *all_X, indexes, synth_indexes = (batch[v] for v in self.output_map)
+            # makes sure that the indexes are the same
             assert synth_indexes == indexes
             targets = self.conversion_map(indexes).flatten().long()  # .detach().clone()
             indexes = indexes.flatten().long()  # .detach().clone()
         else:
             *all_X, targets, synth_targets = (batch[v] for v in self.output_map)
+            # makes sure that the targets are the same
             assert synth_targets == targets
             targets = targets.squeeze(-1).long()  # .detach().clone()
             # creates dummy indexes

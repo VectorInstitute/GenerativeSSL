@@ -11,33 +11,31 @@ hydra:
   run:
     dir: .
 
-name: "byol-imagenet"
-method: "byol"
+name: "simsiam-synthetic-imagenet"
+method: "simsiam"
 backbone:
   name: "resnet50"
 method_kwargs:
   proj_hidden_dim: 4096
-  proj_output_dim: 256
-  pred_hidden_dim: 4096
-momentum:
-  base_tau: 0.99
-  final_tau: 1.0
+  proj_output_dim: 4096
+  pred_hidden_dim: 512
+  temperature: 0.2
 data:
   dataset: imagenet
   train_path: "/datasets/imagenet/train"
   val_path: "/datasets/imagenet/val"
+  synthetic_path: "/projects/imagenet_synthetic/arashaf_stablediff_batched"
+  synthetic_index_min: 0
+  synthetic_index_max: 9
+  generative_augmentation_prob: 0.5
   format: "dali"
   num_workers: 4
 optimizer:
-  name: "lars"
+  name: "sgd"
   batch_size: 64
-  lr: 0.45
-  classifier_lr: 0.2
-  weight_decay: 1e-6
-  kwargs:
-    clip_lr: False
-    eta: 0.001
-    exclude_bias_n_norm: True
+  lr: 0.5
+  classifier_lr: 0.1
+  weight_decay: 1e-5
 scheduler:
   name: "warmup_cosine"
 checkpoint:
@@ -54,4 +52,3 @@ sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"
 precision: 16-mixed
-accumulate_grad_batches: 16

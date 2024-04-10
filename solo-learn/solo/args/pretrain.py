@@ -129,6 +129,11 @@ def parse_cfg(cfg: omegaconf.DictConfig):
     # default values for pytorch lightning stuff
     cfg = add_and_assert_lightning_cfg(cfg)
 
+    # load from pretrained model
+    cfg.pretrained_feature_extractor = omegaconf_select(
+        cfg, "pretrained_feature_extractor", None
+    )
+
     # extra processing
     if cfg.data.dataset in _N_CLASSES_PER_DATASET:
         cfg.data.num_classes = _N_CLASSES_PER_DATASET[cfg.data.dataset]

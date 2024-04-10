@@ -77,6 +77,29 @@ def main(cfg: DictConfig):
         assert cfg.method in ["wmse", "mae"]
 
     model = METHODS[cfg.method](cfg)
+
+    # load a pretrained feature extractor
+    if cfg.pretrained_feature_extractor:
+        ckpt_path = cfg.pretrained_feature_extractor
+        assert (
+            ckpt_path.endswith(".ckpt")
+            or ckpt_path.endswith(".pth")
+            or ckpt_path.endswith(".pt")
+            or ckpt_path.endswith(".pth.tar")
+        )
+
+        state = torch.load(ckpt_path, map_location="cpu")["state_dict"]
+
+        for k in list(state.keys()):
+            if "encoder" in k:
+                state[k.replace("encoder", "backbone")] = state[k]
+            if "backbone" in k:
+                state[k.replace("backbone.", "")] = state[k]
+            del state[k]
+
+        model.load_state_dict(state, strict=False)
+        print(f"Loaded {ckpt_path}")
+
     make_contiguous(model)
     # can provide up to ~20% speed up
     if not cfg.performance.disable_channel_last:

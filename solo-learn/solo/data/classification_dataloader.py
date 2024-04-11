@@ -28,6 +28,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.datasets import STL10, ImageFolder
+from SimCLR.data_aug.imagenet_synthetic_dataset import ImageNetSynthetic
 
 try:
     from solo.data.h5_dataset import H5Dataset
@@ -137,6 +138,7 @@ def prepare_transforms(dataset: str) -> Tuple[nn.Module, nn.Module]:
         "imagenet100": imagenet_pipeline,
         "imagenet": imagenet_pipeline,
         "custom": custom_pipeline,
+        "imagenet_synthetic": imagenet_pipeline
     }
 
     assert dataset in pipelines
@@ -185,7 +187,7 @@ def prepare_datasets(
         sandbox_folder = Path(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
         val_data_path = sandbox_folder / "datasets"
 
-    assert dataset in ["cifar10", "cifar100", "stl10", "imagenet", "imagenet100", "custom"]
+    assert dataset in ["cifar10", "cifar100", "stl10", "imagenet", "imagenet100", "custom", "imagenet_synthetic"]
 
     if dataset in ["cifar10", "cifar100"]:
         DatasetClass = vars(torchvision.datasets)[dataset.upper()]
@@ -225,6 +227,15 @@ def prepare_datasets(
         else:
             train_dataset = ImageFolder(train_data_path, T_train)
             val_dataset = ImageFolder(val_data_path, T_val)
+    elif dataset == "imagenet_synthetic":
+        # train_dataset = ImageNetSynthetic(imagenet_root="/scratch/ssd004/datasets/imagenet256", imagenet_synthetic_root=train_data_path, 
+        #                                   index_min=0, index_max=9, generative_augmentation_prob=0.5, load_one_real_image=False, 
+        #                                   split="train")
+        # val_dataset = ImageNetSynthetic(imagenet_root="/scratch/ssd004/datasets/imagenet256", imagenet_synthetic_root=train_data_path, 
+        #                                   index_min=0, index_max=9, generative_augmentation_prob=0.5, load_one_real_image=False, 
+        #                                   split="val")
+        train_dataset = ImageFolder("/scratch/ssd004/datasets/imagenet256/train", T_train)
+        val_dataset = ImageFolder("/scratch/ssd004/datasets/imagenet256/val", T_val)
 
     if data_fraction > 0:
         assert data_fraction < 1, "Only use data_fraction for values smaller than 1."

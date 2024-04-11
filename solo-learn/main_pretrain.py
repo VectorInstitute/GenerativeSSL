@@ -158,6 +158,7 @@ def main(cfg: DictConfig):
     # the argument is the same, but we need to pass it as ckpt_path to trainer.fit
     ckpt_path, wandb_run_id = None, None
     if cfg.auto_resume.enabled and cfg.resume_from_checkpoint is None:
+        print(1)
         auto_resumer = AutoResumer(
             checkpoint_dir=os.path.join(cfg.checkpoint.dir, cfg.method),
             max_hours=cfg.auto_resume.max_hours,
@@ -170,6 +171,7 @@ def main(cfg: DictConfig):
             )
             ckpt_path = resume_from_checkpoint
     elif cfg.resume_from_checkpoint is not None:
+        print(2)
         ckpt_path = cfg.resume_from_checkpoint
         del cfg.resume_from_checkpoint
 

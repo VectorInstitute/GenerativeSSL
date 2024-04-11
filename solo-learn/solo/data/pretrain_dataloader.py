@@ -30,6 +30,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 from torchvision import transforms
 from torchvision.datasets import STL10, ImageFolder
+from SimCLR.data_aug.imagenet_synthetic_dataset import ImageNetSynthetic
 
 try:
     from solo.data.h5_dataset import H5Dataset
@@ -209,6 +210,7 @@ def build_transform_pipeline(dataset, cfg):
         "stl10": ((0.4914, 0.4823, 0.4466), (0.247, 0.243, 0.261)),
         "imagenet100": (IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD),
         "imagenet": (IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD),
+        "imagenet_synthetic": (IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD),
     }
 
     mean, std = MEANS_N_STD.get(
@@ -349,6 +351,14 @@ def prepare_datasets(
             dataset_class = ImageFolder
 
         train_dataset = dataset_with_index(dataset_class)(train_data_path, transform)
+    
+    elif dataset == "imagenet_synthetic":
+        # train_dataset = ImageNetSynthetic(imagenet_root="/datasets/imagenet", imagenet_synthetic_root=train_data_path, 
+        #                                   index_min=0, index_max=9, generative_augmentation_prob=0.5, load_one_real_image=False, 
+        #                                   split="train")
+        train_dataset = ImageNetSynthetic(imagenet_root="/scratch/ssd004/datasets/imagenet256", imagenet_synthetic_root=train_data_path, 
+                                          index_min=0, index_max=9, generative_augmentation_prob=0.5, load_one_real_image=False, 
+                                          split="train", synthetic_transforms=transform.transforms[0], real_transforms=transform.transforms[1])
 
     if data_fraction > 0:
         assert data_fraction < 1, "Only use data_fraction for values smaller than 1."

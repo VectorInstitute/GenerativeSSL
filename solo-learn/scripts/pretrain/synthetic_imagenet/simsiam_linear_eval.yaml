@@ -41,8 +41,8 @@ checkpoint:
   dir: "trained_models"
   frequency: 1
 auto_resume:
-  enabled: False
-
+  enabled: True
+  max_hours: 100
 # overwrite PL stuff
 max_epochs: 100
 devices: 4

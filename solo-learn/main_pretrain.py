@@ -22,6 +22,7 @@ import os
 
 import hydra
 import torch
+import re
 from lightning.pytorch import Trainer, seed_everything
 from lightning.pytorch.callbacks import LearningRateMonitor
 from lightning.pytorch.loggers.wandb import WandbLogger
@@ -209,6 +210,14 @@ def main(cfg: DictConfig):
     elif cfg.resume_from_checkpoint is not None:
         ckpt_path = cfg.resume_from_checkpoint
         del cfg.resume_from_checkpoint
+
+    # Set seed in dali datamodule based on epoch number
+    if ckpt_path is not None and cfg.data.format == "dali":
+        match = re.search(r"ep=(\d+)", ckpt_path)
+
+        if match:
+            dali_datamodule.init_epoch = int(match.group(1))
+            print(f"Setting init seed in dali to {dali_datamodule}")
 
     callbacks = []
 

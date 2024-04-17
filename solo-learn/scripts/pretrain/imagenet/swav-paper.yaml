@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - augmentations: asymmetric.yaml
+  - augmentations: symmetric.yaml
   - wandb: private.yaml
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
@@ -11,31 +11,34 @@ hydra:
   run:
     dir: .
 
-name: "simsiam-all-synthetic-imagenet"
-method: "simsiam"
+name: "swav-imagenet"
+method: "swav"
 backbone:
   name: "resnet50"
 method_kwargs:
   proj_hidden_dim: 4096
-  proj_output_dim: 4096
-  pred_hidden_dim: 512
-  temperature: 0.2
+  queue_size: 3840
+  proj_output_dim: 128
+  num_prototypes: 3000
+  epoch_queue_starts: 50
+  freeze_prototypes_epochs: 2
+  temperature: 0.1
 data:
   dataset: imagenet
   train_path: "/datasets/imagenet/train"
   val_path: "/datasets/imagenet/val"
-  synthetic_path: "/projects/imagenet_synthetic/arashaf_stablediff_batched"
-  synthetic_index_min: 0
-  synthetic_index_max: 9
-  generative_augmentation_prob: 1.0
   format: "dali"
   num_workers: 4
 optimizer:
-  name: "sgd"
-  batch_size: 64
-  lr: 0.5
+  name: "lars"
+  batch_size: 128
+  lr: 0.6
   classifier_lr: 0.1
-  weight_decay: 1e-5
+  weight_decay: 1e-6
+  kwargs:
+    clip_lr: True
+    eta: 0.02
+    exclude_bias_n_norm: True
 scheduler:
   name: "warmup_cosine"
 checkpoint:
@@ -43,7 +46,7 @@ checkpoint:
   dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models"
   frequency: 1
 auto_resume:
-  enabled: false
+  enabled: True
 
 # overwrite PL stuff
 max_epochs: 100

@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - augmentations: asymmetric.yaml
+  - augmentations: synthetic_symmetric.yaml
   - wandb: private.yaml
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
@@ -11,14 +11,13 @@ hydra:
   run:
     dir: .
 
-name: "simsiam-all-synthetic-imagenet"
-method: "simsiam"
+name: "simclr-all-synthetic-imagenet"
+method: "simclr"
 backbone:
   name: "resnet50"
 method_kwargs:
   proj_hidden_dim: 4096
-  proj_output_dim: 4096
-  pred_hidden_dim: 512
+  proj_output_dim: 512
   temperature: 0.2
 data:
   dataset: imagenet
@@ -31,11 +30,15 @@ data:
   format: "dali"
   num_workers: 4
 optimizer:
-  name: "sgd"
+  name: "lars"
   batch_size: 64
-  lr: 0.5
+  lr: 0.3
   classifier_lr: 0.1
-  weight_decay: 1e-5
+  weight_decay: 1e-4
+  kwargs:
+    clip_lr: True
+    eta: 0.02
+    exclude_bias_n_norm: True
 scheduler:
   name: "warmup_cosine"
 checkpoint:
@@ -43,7 +46,7 @@ checkpoint:
   dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models"
   frequency: 1
 auto_resume:
-  enabled: false
+  enabled: True
 
 # overwrite PL stuff
 max_epochs: 100

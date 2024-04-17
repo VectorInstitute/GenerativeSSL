@@ -38,7 +38,7 @@ checkpoint:
   dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models"
   frequency: 1
 auto_resume:
-  enabled: False
+  enabled: false
 
 # overwrite PL stuff
 max_epochs: 100

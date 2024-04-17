@@ -185,3 +185,5 @@ solo-learn/lightning_logs/
 .DS_Store
 
 check.ipynb
+*.out
+*.err

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name="eval_simsiam_single"
+#SBATCH --job-name="eval_simclr"
 #SBATCH --partition=a40
 #SBATCH --qos=a40_arashaf
 #SBATCH --nodes=1
@@ -12,7 +12,7 @@
 #SBATCH --error=singlenode-eval-%j.err
 #SBATCH --open-mode=append
 #SBATCH --wait-all-nodes=1
-#SBATCH --time=72:00:00
+#SBATCH --time=20:00:00
 
 # load virtual environment
 source /ssd003/projects/aieng/envs/genssl3/bin/activate
@@ -27,4 +27,4 @@ nvidia-smi
 
 torchrun --nproc-per-node=4 --nnodes=1 solo-learn/main_linear.py \
     --config-path scripts/linear/imagenet/ \
-    --config-name simclr.yaml
+    --config-name simclr_synth_all.yaml

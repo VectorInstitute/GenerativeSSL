@@ -11,7 +11,7 @@ hydra:
     dir: .
 
 name: "mocov2plus-imagenet-linear"
-pretrained_feature_extractor: None
+pretrained_feature_extractor: "trained_models/mocov2plus/gjf2upj4/mocov2plus-imagenet-gjf2upj4-ep=99.ckpt"
 backbone:
   name: "resnet50"
 pretrain_method: "mocov2plus"
@@ -22,16 +22,17 @@ data:
   format: "dali"
   num_workers: 4
 optimizer:
-  name: "sgd"
-  batch_size: 256
-  lr: 3.0
+  name: "lars"
+  batch_size: 512
+  lr: 0.1
   weight_decay: 0
 scheduler:
-  name: "step"
-  lr_decay_steps: [60, 80]
+  name: "warmup_cosine"
+  warmup_epochs: 0
+  scheduler_interval: "epoch"
 checkpoint:
   enabled: True
-  dir: "trained_models"
+  dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models"
   frequency: 1
 auto_resume:
   enabled: True

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH --job-name="eval_simsiam_single"
+#SBATCH --job-name="eval_simsiam"
 #SBATCH --partition=a40
-#SBATCH --qos=m
+#SBATCH --qos=a40_arashaf
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:a40:4
 #SBATCH --ntasks-per-node=4
@@ -12,7 +12,7 @@
 #SBATCH --error=singlenode-eval-%j.err
 #SBATCH --open-mode=append
 #SBATCH --wait-all-nodes=1
-#SBATCH --time=12:00:00
+#SBATCH --time=24:00:00
 
 # load virtual environment
 source /ssd003/projects/aieng/envs/genssl3/bin/activate

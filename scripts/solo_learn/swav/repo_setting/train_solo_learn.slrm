@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name="swav_train"
+#SBATCH --job-name="swav_200_train"
 #SBATCH --partition=a40
 #SBATCH --qos=a40_arashaf
 #SBATCH --nodes=1
@@ -26,4 +26,4 @@ nvidia-smi
 
 torchrun --nproc-per-node=4 --nnodes=1 solo-learn/main_pretrain.py \
     --config-path scripts/pretrain/imagenet/ \
-    --config-name swav.yaml
+    --config-name swav_200epoch.yaml

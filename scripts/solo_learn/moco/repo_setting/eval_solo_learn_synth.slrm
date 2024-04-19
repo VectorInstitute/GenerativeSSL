@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name="simclr_single_train"
+#SBATCH --job-name="eval_synth_moco"
 #SBATCH --partition=a40
 #SBATCH --qos=a40_arashaf
 #SBATCH --nodes=1
@@ -8,11 +8,11 @@
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=0
-#SBATCH --output=singlenode-%j.out
-#SBATCH --error=singlenode-%j.err
+#SBATCH --output=singlenode-eval-%j.out
+#SBATCH --error=singlenode-eval-%j.err
 #SBATCH --open-mode=append
 #SBATCH --wait-all-nodes=1
-#SBATCH --time=96:00:00
+#SBATCH --time=24:00:00
 
 # load virtual environment
 source /ssd003/projects/aieng/envs/genssl3/bin/activate
@@ -24,6 +24,7 @@ export TORCH_NCCL_ASYNC_ERROR_HANDLING=1 # set to 1 for NCCL backend
 export PYTHONPATH="."
 nvidia-smi
 
-torchrun --nproc-per-node=4 --nnodes=1 solo-learn/main_pretrain.py \
-    --config-path scripts/pretrain/imagenet/ \
-    --config-name simclr_all_synthetic.yaml
+
+torchrun --nproc-per-node=4 --nnodes=1 solo-learn/main_linear.py \
+    --config-path scripts/linear/imagenet/ \
+    --config-name mocov2plus_synth.yaml

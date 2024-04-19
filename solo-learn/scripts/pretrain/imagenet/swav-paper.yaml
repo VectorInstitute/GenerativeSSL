@@ -11,7 +11,7 @@ hydra:
   run:
     dir: .
 
-name: "swav-imagenet"
+name: "swav-imagenet-paper"
 method: "swav"
 backbone:
   name: "resnet50"

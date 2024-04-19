@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name="eval_simsiam_single"
+#SBATCH --job-name="eval_moco"
 #SBATCH --partition=a40
 #SBATCH --qos=a40_arashaf
 #SBATCH --nodes=1
@@ -27,4 +27,4 @@ nvidia-smi
 
 torchrun --nproc-per-node=4 --nnodes=1 solo-learn/main_linear.py \
     --config-path scripts/linear/imagenet/ \
-    --config-name simsiam_all_synth.yaml
+    --config-name mocov2plus.yaml

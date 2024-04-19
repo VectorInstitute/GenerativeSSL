@@ -872,6 +872,8 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         # hack to encode image indexes into the labels
         self.encode_indexes_into_labels = encode_indexes_into_labels
 
+        self.init_epoch = 0
+
     @staticmethod
     def add_and_assert_specific_cfg(cfg: omegaconf.DictConfig) -> omegaconf.DictConfig:
         """Adds method specific default values/checks for config.
@@ -956,7 +958,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         else:
             self.device = torch.device("cpu")
 
-        self.reset_train_loader()
+        self.reset_train_loader(self.init_epoch)
 
     def train_dataloader(self):
         return self.train_loader

@@ -12,6 +12,7 @@ hydra:
 
 name: "simclr-synth-linear"
 pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simclr/athc14za/simclr-all-synthetic-imagenet-athc14za-ep=99.ckpt"
+# pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simclr/iwn9wgug/simclr-all-synthetic-imagenet-iwn9wgug-ep=99.ckpt"
 backbone:
   name: "resnet50"
 pretrain_method: "simclr"

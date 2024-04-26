@@ -17,8 +17,8 @@ backbone:
 pretrain_method: "mocov2plus"
 data:
   dataset: imagenet
-  train_path: "./datasets/imagenet/train"
-  val_path: "./datasets/imagenet/val"
+  train_path: "/datasets/imagenet/train"
+  val_path: "/datasets/imagenet/val"
   format: "dali"
   num_workers: 4
 optimizer:
@@ -39,7 +39,7 @@ auto_resume:
 
 # overwrite PL stuff
 max_epochs: 100
-devices: [0]
+devices: 4
 sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"

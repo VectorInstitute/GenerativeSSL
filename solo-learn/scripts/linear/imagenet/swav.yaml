@@ -11,7 +11,7 @@ hydra:
     dir: .
 
 name: "swav-imagenet-linear-eval"
-pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/swav/4h806hg4/swav-imagenet-4h806hg4-ep=99.ckpt"
+pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/swav/4d70jacv/swav-imagenet-4d70jacv-ep=199.ckpt"
 method: "swav"
 backbone:
   name: "resnet50"

@@ -1,6 +1,5 @@
 defaults:
   - _self_
-  - augmentations: symmetric.yaml
   - wandb: private.yaml
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
@@ -11,14 +10,11 @@ hydra:
   run:
     dir: .
 
-name: "paper-simclr-imagenet"
-method: "simclr"
+name: "simsiam-pretrain-linear"
+pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simsiam/kzo3800t/simsiam-pretrain-imagenet-kzo3800t-ep=99.ckpt"
 backbone:
   name: "resnet50"
-method_kwargs:
-  proj_hidden_dim: 4096
-  proj_output_dim: 512
-  temperature: 0.2
+pretrain_method: "simsiam"
 data:
   dataset: imagenet
   train_path: "/datasets/imagenet/train"
@@ -27,16 +23,13 @@ data:
   num_workers: 4
 optimizer:
   name: "lars"
-  batch_size: 256
-  lr: 0.3
-  classifier_lr: 0.1
-  weight_decay: 1e-6
-  kwargs:
-    clip_lr: True
-    eta: 0.02
-    exclude_bias_n_norm: True
+  batch_size: 512
+  lr: 0.1
+  weight_decay: 0
 scheduler:
   name: "warmup_cosine"
+  warmup_epochs: 0
+  scheduler_interval: "epoch"
 checkpoint:
   enabled: True
   dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models"
@@ -50,4 +43,4 @@ devices: 4
 sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"
-precision: 16-mixed
+precision: 16

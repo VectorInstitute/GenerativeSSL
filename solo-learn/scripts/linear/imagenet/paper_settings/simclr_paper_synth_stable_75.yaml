@@ -1,6 +1,5 @@
 defaults:
   - _self_
-  - augmentations: asymmetric.yaml
   - wandb: private.yaml
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
@@ -11,17 +10,11 @@ hydra:
   run:
     dir: .
 
-name: "paper-byol-imagenet"
-method: "byol"
+name: "75-simclr-synth-paper-linear"
+pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simclr/m3b0u0pb/75-paper-simclr-synth-imagenet-m3b0u0pb-ep=98.ckpt"
 backbone:
   name: "resnet50"
-method_kwargs:
-  proj_hidden_dim: 4096
-  proj_output_dim: 256
-  pred_hidden_dim: 4096
-momentum:
-  base_tau: 0.99
-  final_tau: 1.0
+pretrain_method: "simclr"
 data:
   dataset: imagenet
   train_path: "/datasets/imagenet/train"
@@ -30,22 +23,19 @@ data:
   num_workers: 4
 optimizer:
   name: "lars"
-  batch_size: 256
-  lr: 0.2
-  classifier_lr: 0.2
-  weight_decay: 15e-7
-  kwargs:
-    clip_lr: False
-    eta: 0.001
-    exclude_bias_n_norm: True
+  batch_size: 512
+  lr: 0.1
+  weight_decay: 0
 scheduler:
   name: "warmup_cosine"
+  warmup_epochs: 0
+  scheduler_interval: "epoch"
 checkpoint:
   enabled: True
   dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models"
   frequency: 1
 auto_resume:
-  enabled: False
+  enabled: True
 
 # overwrite PL stuff
 max_epochs: 100
@@ -53,5 +43,4 @@ devices: 4
 sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"
-precision: 16-mixed
-accumulate_grad_batches: 16
+precision: 16

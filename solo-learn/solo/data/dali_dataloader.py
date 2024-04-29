@@ -46,7 +46,6 @@ class RandomGrayScaleConversion:
             device (str, optional): device on which the operation will be performed.
                 Defaults to "gpu".
         """
-
         self.prob = prob
         self.grayscale = ops.ColorSpaceConversion(
             device=device, image_type=types.RGB, output_type=types.GRAY
@@ -590,10 +589,7 @@ class PretrainPipelineBuilder:
                 data_fraction < 1
             ), "Only use data_fraction for values smaller than 1."
 
-            if no_labels:
-                labels = [-1] * len(files)
-            else:
-                labels = [l for _, l in data]
+            labels = [-1] * len(files) if no_labels else [l for _, l in data]
 
             from sklearn.model_selection import train_test_split
 
@@ -624,7 +620,7 @@ class PretrainPipelineBuilder:
             labels=labels,
             shard_id=shard_id,
             num_shards=num_shards,
-            shuffle_after_epoch=random_shuffle,
+            random_shuffle=random_shuffle,
             seed=self.seed,
         )
 
@@ -646,7 +642,7 @@ class PretrainPipelineBuilder:
                 labels=labels,
                 shard_id=shard_id,
                 num_shards=num_shards,
-                shuffle_after_epoch=random_shuffle,
+                random_shuffle=random_shuffle,
                 seed=self.seed,
             )
 
@@ -788,7 +784,7 @@ class Wrapper(TempDALIGenericIterator):
 
 class Scheduler(pl.Callback):
     def _prepare_epoch(self, trainer):
-        trainer.datamodule.reset_train_loader(trainer.current_epoch + 1)
+        trainer.datamodule.set_train_loader(trainer.current_epoch + 1)
 
     def on_train_epoch_end(self, trainer, pl_module):
         print("The epoch is finishing.", flush=True)
@@ -892,7 +888,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         )
         return cfg
 
-    def reset_train_loader(self, epoch=0):
+    def set_train_loader(self, epoch=0):
         print("Setting train loader.", flush=True)
         train_pipeline_builder = PretrainPipelineBuilder(
             self.train_data_path,
@@ -958,7 +954,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         else:
             self.device = torch.device("cpu")
 
-        self.reset_train_loader(self.init_epoch)
+        self.set_train_loader(self.init_epoch)
 
     def train_dataloader(self):
         return self.train_loader

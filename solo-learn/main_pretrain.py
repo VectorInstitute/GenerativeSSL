@@ -19,10 +19,10 @@
 
 import inspect
 import os
+import re
 
 import hydra
 import torch
-import re
 from lightning.pytorch import Trainer, seed_everything
 from lightning.pytorch.callbacks import LearningRateMonitor
 from lightning.pytorch.loggers.wandb import WandbLogger
@@ -43,6 +43,7 @@ from solo.methods import METHODS
 from solo.utils.auto_resumer import AutoResumer
 from solo.utils.checkpointer import Checkpointer
 from solo.utils.misc import make_contiguous, omegaconf_select
+
 
 try:
     from solo.data.dali_dataloader import (
@@ -107,11 +108,12 @@ def main(cfg: DictConfig):
         model = model.to(memory_format=torch.channels_last)
 
     # validation dataloader for when it is available
-    if cfg.data.dataset == "custom" and (
-        cfg.data.no_labels or cfg.data.val_path is None
+    if (
+        cfg.data.dataset == "custom"
+        and (cfg.data.no_labels or cfg.data.val_path is None)
+        or cfg.data.dataset in ["imagenet100", "imagenet"]
+        and cfg.data.val_path is None
     ):
-        val_loader = None
-    elif cfg.data.dataset in ["imagenet100", "imagenet"] and cfg.data.val_path is None:
         val_loader = None
     else:
         if cfg.data.format == "dali":
@@ -141,7 +143,7 @@ def main(cfg: DictConfig):
                         cfg.data.dataset, aug_cfg, dali_device=cfg.dali.device
                     ),
                     aug_cfg.num_crops,
-                )
+                ),
             )
         transform = FullTransformPipeline(pipelines)
 
@@ -213,7 +215,7 @@ def main(cfg: DictConfig):
 
     # Set seed in dali datamodule based on epoch number
     if ckpt_path is not None and cfg.data.format == "dali":
-        match = re.search(r"ep=(\d+)", ckpt_path)
+        match = re.search(r"ep=(\d+)", ckpt_path.absolute().as_posix())
 
         if match:
             dali_datamodule.init_epoch = int(match.group(1))

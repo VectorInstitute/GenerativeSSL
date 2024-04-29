@@ -22,14 +22,13 @@ data:
   format: "dali"
   num_workers: 4
 optimizer:
-  name: "lars"
-  batch_size: 512
-  lr: 0.1
+  name: "sgd"
+  batch_size: 256
+  lr: 3.0
   weight_decay: 0
 scheduler:
-  name: "warmup_cosine"
-  warmup_epochs: 0
-  scheduler_interval: "epoch"
+  name: "step"
+  lr_decay_steps: [60, 80]
 checkpoint:
   enabled: True
   dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models"

@@ -2,7 +2,7 @@
 
 #SBATCH --job-name="simclr_single_train"
 #SBATCH --partition=a40
-#SBATCH --qos=a40_arashaf
+#SBATCH --qos=m
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:a40:4
 #SBATCH --ntasks-per-node=4

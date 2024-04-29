@@ -12,7 +12,7 @@
 #SBATCH --error=singlenode-eval-%j.err
 #SBATCH --open-mode=append
 #SBATCH --wait-all-nodes=1
-#SBATCH --time= 2:00:00
+#SBATCH --time=12:00:00
 
 # load virtual environment
 source /ssd003/projects/aieng/envs/genssl3/bin/activate

@@ -108,9 +108,12 @@ def main(cfg: DictConfig):
         model = model.to(memory_format=torch.channels_last)
 
     # validation dataloader for when it is available
-    if cfg.data.dataset == "custom" and (
-        cfg.data.no_labels or cfg.data.val_path is None
-    ) or cfg.data.dataset in ["imagenet100", "imagenet"] and cfg.data.val_path is None:
+    if (
+        cfg.data.dataset == "custom"
+        and (cfg.data.no_labels or cfg.data.val_path is None)
+        or cfg.data.dataset in ["imagenet100", "imagenet"]
+        and cfg.data.val_path is None
+    ):
         val_loader = None
     else:
         if cfg.data.format == "dali":

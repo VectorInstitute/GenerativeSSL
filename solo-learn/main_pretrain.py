@@ -19,6 +19,7 @@
 
 import inspect
 import os
+import re
 
 import hydra
 import torch
@@ -42,6 +43,7 @@ from solo.methods import METHODS
 from solo.utils.auto_resumer import AutoResumer
 from solo.utils.checkpointer import Checkpointer
 from solo.utils.misc import make_contiguous, omegaconf_select
+
 
 try:
     from solo.data.dali_dataloader import (
@@ -77,17 +79,41 @@ def main(cfg: DictConfig):
         assert cfg.method in ["wmse", "mae"]
 
     model = METHODS[cfg.method](cfg)
+
+    # load a pretrained feature extractor
+    if cfg.pretrained_feature_extractor:
+        ckpt_path = cfg.pretrained_feature_extractor
+        assert (
+            ckpt_path.endswith(".ckpt")
+            or ckpt_path.endswith(".pth")
+            or ckpt_path.endswith(".pt")
+            or ckpt_path.endswith(".pth.tar")
+        )
+
+        state = torch.load(ckpt_path, map_location="cpu")["state_dict"]
+
+        for k in list(state.keys()):
+            if "encoder" in k:
+                state[k.replace("encoder", "backbone")] = state[k]
+            if "backbone" in k:
+                state[k.replace("backbone.", "")] = state[k]
+            del state[k]
+
+        model.load_state_dict(state, strict=False)
+        print(f"Loaded {ckpt_path}")
+
     make_contiguous(model)
     # can provide up to ~20% speed up
     if not cfg.performance.disable_channel_last:
         model = model.to(memory_format=torch.channels_last)
 
     # validation dataloader for when it is available
-    if cfg.data.dataset == "custom" and (
-        cfg.data.no_labels or cfg.data.val_path is None
+    if (
+        cfg.data.dataset == "custom"
+        and (cfg.data.no_labels or cfg.data.val_path is None)
+        or cfg.data.dataset in ["imagenet100", "imagenet"]
+        and cfg.data.val_path is None
     ):
-        val_loader = None
-    elif cfg.data.dataset in ["imagenet100", "imagenet"] and cfg.data.val_path is None:
         val_loader = None
     else:
         if cfg.data.format == "dali":
@@ -117,13 +143,17 @@ def main(cfg: DictConfig):
                         cfg.data.dataset, aug_cfg, dali_device=cfg.dali.device
                     ),
                     aug_cfg.num_crops,
-                )
+                ),
             )
         transform = FullTransformPipeline(pipelines)
 
         dali_datamodule = PretrainDALIDataModule(
             dataset=cfg.data.dataset,
             train_data_path=cfg.data.train_path,
+            synthetic_data_path=cfg.data.synthetic_path,
+            synthetic_index_min=cfg.data.synthetic_index_min,
+            synthetic_index_max=cfg.data.synthetic_index_max,
+            generative_augmentation_prob=cfg.data.generative_augmentation_prob,
             transforms=transform,
             num_large_crops=cfg.data.num_large_crops,
             num_small_crops=cfg.data.num_small_crops,
@@ -183,6 +213,14 @@ def main(cfg: DictConfig):
         ckpt_path = cfg.resume_from_checkpoint
         del cfg.resume_from_checkpoint
 
+    # Set seed in dali datamodule based on epoch number
+    if ckpt_path is not None and cfg.data.format == "dali":
+        match = re.search(r"ep=(\d+)", ckpt_path.absolute().as_posix())
+
+        if match:
+            dali_datamodule.init_epoch = int(match.group(1))
+            print(f"Setting init seed in dali to {dali_datamodule}")
+
     callbacks = []
 
     if cfg.checkpoint.enabled:
@@ -238,11 +276,16 @@ def main(cfg: DictConfig):
             else cfg.strategy,
         }
     )
-    trainer = Trainer(**trainer_kwargs)
 
     if cfg.data.format == "dali":
+        from solo.data.dali_dataloader import Scheduler
+
+        trainer_kwargs["callbacks"].append(Scheduler())
+        trainer_kwargs["reload_dataloaders_every_n_epochs"] = 1
+        trainer = Trainer(**trainer_kwargs)
         trainer.fit(model, ckpt_path=ckpt_path, datamodule=dali_datamodule)
     else:
+        trainer = Trainer(**trainer_kwargs)
         trainer.fit(model, train_loader, val_loader, ckpt_path=ckpt_path)
 
 

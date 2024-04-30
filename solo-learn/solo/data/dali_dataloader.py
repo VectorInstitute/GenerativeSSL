@@ -18,6 +18,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import os
+import random
 from pathlib import Path
 from typing import Callable, List, Optional, Union
 
@@ -45,7 +46,6 @@ class RandomGrayScaleConversion:
             device (str, optional): device on which the operation will be performed.
                 Defaults to "gpu".
         """
-
         self.prob = prob
         self.grayscale = ops.ColorSpaceConversion(
             device=device, image_type=types.RGB, output_type=types.GRAY
@@ -482,10 +482,37 @@ def build_transform_pipeline_dali(dataset, cfg, dali_device):
     return AugWrapper(augmentations=augmentations, cmn=cmn, coin=coin)
 
 
+def get_random_synthetic_image_path(
+    filename,
+    imagenet_synthetic_root,
+    synthetic_index_min,
+    synthetic_index_max,
+    generative_augmentation_prob,
+    split="train",
+):
+    gen_prob = random.random()
+    if gen_prob > generative_augmentation_prob:
+        return filename
+    rand_int = random.randint(synthetic_index_min, synthetic_index_max)
+    filename_and_extension = filename.split("/")[-1]
+    filename_parent_dir = filename.split("/")[-2]
+    synth_filename = os.path.join(
+        imagenet_synthetic_root,
+        split,
+        filename_parent_dir,
+        filename_and_extension.split(".")[0] + f"_{rand_int}.JPEG",
+    )
+    return synth_filename
+
+
 class PretrainPipelineBuilder:
     def __init__(
         self,
         data_path: Union[str, Path],
+        synthetic_data_path: Optional[Union[str, Path]],
+        synthetic_index_min: int,
+        synthetic_index_max: int,
+        generative_augmentation_prob: float,
         batch_size: int,
         device: str,
         transforms: Callable,
@@ -503,6 +530,11 @@ class PretrainPipelineBuilder:
 
         Args:
             data_path (str): directory that contains the data.
+            synthetic_data_path (Optional[str]): directory that contains the synthetic
+            data.
+            synthetic_index_min (int): minimum index for synthetic data.
+            synthetic_index_max (int): maximum index for synthetic data.
+            generative_augmentation_prob (float): probability of using generative augmentation.
             batch_size (int): batch size.
             device (str): device on which the operation will be performed.
             transforms (Callable): list of transformations.
@@ -524,11 +556,14 @@ class PretrainPipelineBuilder:
         """
 
         super().__init__()
-
+        self.synthetic_data_path = synthetic_data_path
         self.batch_size = batch_size
+        self.shard_id = shard_id
         self.num_threads = num_threads
         self.device_id = device_id
         self.seed = seed + device_id
+
+        print("seed", self.seed, flush=True)
 
         self.device = device
 
@@ -554,10 +589,7 @@ class PretrainPipelineBuilder:
                 data_fraction < 1
             ), "Only use data_fraction for values smaller than 1."
 
-            if no_labels:
-                labels = [-1] * len(files)
-            else:
-                labels = [l for _, l in data]
+            labels = [-1] * len(files) if no_labels else [l for _, l in data]
 
             from sklearn.model_selection import train_test_split
 
@@ -567,13 +599,6 @@ class PretrainPipelineBuilder:
                 train_size=data_fraction,
                 stratify=labels,
                 random_state=42,
-            )
-            self.reader = ops.readers.File(
-                files=files,
-                labels=labels,
-                shard_id=shard_id,
-                num_shards=num_shards,
-                shuffle_after_epoch=random_shuffle,
             )
 
         if encode_indexes_into_labels:
@@ -590,14 +615,36 @@ class PretrainPipelineBuilder:
 
             # use the encoded labels which will be decoded later
             labels = encoded_labels
-
         self.reader = ops.readers.File(
             files=files,
             labels=labels,
             shard_id=shard_id,
             num_shards=num_shards,
-            shuffle_after_epoch=random_shuffle,
+            random_shuffle=random_shuffle,
+            seed=self.seed,
         )
+
+        if synthetic_data_path:
+            synthetic_files = [
+                get_random_synthetic_image_path(
+                    jpeg_filename.absolute().as_posix(),
+                    synthetic_data_path,
+                    synthetic_index_min,
+                    synthetic_index_max,
+                    generative_augmentation_prob,
+                    split="train",
+                )
+                for jpeg_filename in files
+            ]
+
+            self.synth_reader = ops.readers.File(
+                files=synthetic_files,
+                labels=labels,
+                shard_id=shard_id,
+                num_shards=num_shards,
+                random_shuffle=random_shuffle,
+                seed=self.seed,
+            )
 
         decoder_device = "mixed" if self.device == "gpu" else "cpu"
         device_memory_padding = 211025920 if decoder_device == "mixed" else 0
@@ -618,17 +665,27 @@ class PretrainPipelineBuilder:
 
         # read images from memory
         inputs, labels = self.reader(name="Reader")
-
         images = self.decode(inputs)
-
-        crops = self.transforms(images)
 
         if self.device == "gpu":
             labels = labels.gpu()
         # PyTorch expects labels as INT64
         labels = self.to_int64(labels)
 
-        return (*crops, labels)
+        if self.synthetic_data_path:
+            synthetic_batch, synth_labels = self.synth_reader(name="SynthReader")
+            synthetic_images = self.decode(synthetic_batch)
+            if self.device == "gpu":
+                synth_labels = synth_labels.gpu()
+            # PyTorch expects labels as INT64
+            synth_labels = self.to_int64(synth_labels)
+        else:
+            synthetic_images = None
+            synth_labels = labels
+
+        crops = self.transforms(images, synthetic_images)
+
+        return (*crops, labels, synth_labels)
 
     def __repr__(self) -> str:
         return str(self.transforms)
@@ -679,11 +736,15 @@ class PretrainWrapper(TempDALIGenericIterator):
         # I think we don't need the .detach().clone() anymore,
         # but I'll keep it commented just to be sure.
         if self.conversion_map is not None:
-            *all_X, indexes = (batch[v] for v in self.output_map)
+            *all_X, indexes, synth_indexes = (batch[v] for v in self.output_map)
+            # makes sure that the indexes are the same
+            assert torch.all(torch.eq(synth_indexes, indexes))
             targets = self.conversion_map(indexes).flatten().long()  # .detach().clone()
             indexes = indexes.flatten().long()  # .detach().clone()
         else:
-            *all_X, targets = (batch[v] for v in self.output_map)
+            *all_X, targets, synth_targets = (batch[v] for v in self.output_map)
+            # makes sure that the targets are the same
+            assert torch.all(torch.eq(synth_targets, targets))
             targets = targets.squeeze(-1).long()  # .detach().clone()
             # creates dummy indexes
             indexes = (
@@ -721,16 +782,29 @@ class Wrapper(TempDALIGenericIterator):
         return x, target
 
 
+class Scheduler(pl.Callback):
+    def _prepare_epoch(self, trainer):
+        trainer.datamodule.set_train_loader(trainer.current_epoch + 1)
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        print("The epoch is finishing.", flush=True)
+        self._prepare_epoch(trainer)
+
+
 class PretrainDALIDataModule(pl.LightningDataModule):
     def __init__(
         self,
         dataset: str,
         train_data_path: Union[str, Path],
+        synthetic_data_path: Optional[Union[str, Path]],
         transforms: List[Callable],
         num_large_crops: int,
         num_small_crops: int,
         batch_size: int,
         num_workers: int = 4,
+        synthetic_index_min: int = 0,
+        synthetic_index_max: int = 0,
+        generative_augmentation_prob: float = 0.0,
         no_labels=False,
         data_fraction: float = -1.0,
         dali_device: str = "gpu",
@@ -741,6 +815,8 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         Args:
             dataset (str): dataset name.
             train_data_path (Union[str, Path]): path where the training data is located.
+            synthetic_data_path (Optional[Union[str, Path]]): path where the synthetic
+            data is located.
             unique_augs (int): number of unique augmentation pielines
             transforms (List[Callable]): list of transformations.
             num_crops_per_aug (List[int]): number of crops per pipeline.
@@ -748,6 +824,12 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             num_small_crops (int): total number of small crops.
             batch_size (int): batch size..
             num_workers (int, optional): number of parallel workers. Defaults to 4.
+            synthetic_index_min (int, optional): minimum index for synthetic data.
+            Defaults to 0.
+            synthetic_index_max (int, optional): maximum index for synthetic data.
+            Defaults to 0.
+            generative_augmentation_prob (float, optional): probability of using
+            generative augmentation. Defaults to 0.0.
             data_fraction (Optional[float]): percentage of data to use.
                 Use all data when set to -1.0. Defaults to -1.0.
             dali_device (str, optional): device used by the dali pipeline.
@@ -763,7 +845,11 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         self.dataset = dataset
 
         # paths
-        self.train_data_path = Path(train_data_path)
+        self.train_data_path = train_data_path
+        self.synthetic_data_path = synthetic_data_path
+        self.synthetic_index_min = synthetic_index_min
+        self.synthetic_index_max = synthetic_index_max
+        self.generative_augmentation_prob = generative_augmentation_prob
 
         # augmentation-related
         self.transforms = transforms
@@ -781,6 +867,8 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         assert dali_device in ["gpu", "cpu"]
         # hack to encode image indexes into the labels
         self.encode_indexes_into_labels = encode_indexes_into_labels
+
+        self.init_epoch = 0
 
     @staticmethod
     def add_and_assert_specific_cfg(cfg: omegaconf.DictConfig) -> omegaconf.DictConfig:
@@ -800,20 +888,14 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         )
         return cfg
 
-    def setup(self, stage: Optional[str] = None):
-        # extra info about training
-        self.device_id = self.trainer.local_rank
-        self.shard_id = self.trainer.global_rank
-        self.num_shards = self.trainer.world_size
-
-        # get current device
-        if torch.cuda.is_available() and self.dali_device == "gpu":
-            self.device = torch.device(f"cuda:{torch.cuda.current_device()}")
-        else:
-            self.device = torch.device("cpu")
-
+    def set_train_loader(self, epoch=0):
+        print("Setting train loader.", flush=True)
         train_pipeline_builder = PretrainPipelineBuilder(
             self.train_data_path,
+            synthetic_data_path=self.synthetic_data_path,
+            synthetic_index_min=self.synthetic_index_min,
+            synthetic_index_max=self.synthetic_index_max,
+            generative_augmentation_prob=self.generative_augmentation_prob,
             batch_size=self.batch_size,
             transforms=self.transforms,
             device=self.dali_device,
@@ -824,6 +906,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             no_labels=self.no_labels,
             encode_indexes_into_labels=self.encode_indexes_into_labels,
             data_fraction=self.data_fraction,
+            seed=self.num_shards * epoch,
         )
         train_pipeline = train_pipeline_builder.pipeline(
             batch_size=train_pipeline_builder.batch_size,
@@ -837,6 +920,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             [f"large{i}" for i in range(self.num_large_crops)]
             + [f"small{i}" for i in range(self.num_small_crops)]
             + ["label"]
+            + ["synth label"]
         )
 
         policy = LastBatchPolicy.DROP
@@ -857,6 +941,20 @@ class PretrainDALIDataModule(pl.LightningDataModule):
             last_batch_policy=policy,
             auto_reset=True,
         )
+
+    def setup(self, stage: Optional[str] = None):
+        # extra info about training
+        self.device_id = self.trainer.local_rank
+        self.shard_id = self.trainer.global_rank
+        self.num_shards = self.trainer.world_size
+
+        # get current device
+        if torch.cuda.is_available() and self.dali_device == "gpu":
+            self.device = torch.device(f"cuda:{torch.cuda.current_device()}")
+        else:
+            self.device = torch.device("cpu")
+
+        self.set_train_loader(self.init_epoch)
 
     def train_dataloader(self):
         return self.train_loader

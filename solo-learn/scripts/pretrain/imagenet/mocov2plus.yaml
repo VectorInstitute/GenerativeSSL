@@ -45,7 +45,7 @@ auto_resume:
   enabled: True
 
 # overwrite PL stuff
-max_epochs: 400
+max_epochs: 100
 devices: 4
 sync_batchnorm: True
 accelerator: "gpu"

@@ -190,6 +190,9 @@ def test_dali_pretrain():
             dali_datamodule = PretrainDALIDataModule(
                 dataset=cfg.data.dataset,
                 train_data_path=cfg.data.train_path,
+                synthetic_data_path=cfg.data.synthetic_path,
+                synthetic_index_min=cfg.data.synthetic_index_min,
+                synthetic_index_max=cfg.data.synthetic_index_max,
                 transforms=transform,
                 num_large_crops=cfg.data.num_large_crops,
                 num_small_crops=cfg.data.num_small_crops,

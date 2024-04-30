@@ -1,6 +1,5 @@
 defaults:
   - _self_
-  - augmentations: asymmetric.yaml
   - wandb: private.yaml
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
@@ -11,32 +10,26 @@ hydra:
   run:
     dir: .
 
-name: "paper-simsiam-synth-imagenet"
-method: "simsiam"
+name: "simsiam-linear"
+pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/_original_simsiam/checkpoint_lightening_0099.pth.tar"
 backbone:
   name: "resnet50"
-method_kwargs:
-  proj_hidden_dim: 2048
-  proj_output_dim: 2048
-  pred_hidden_dim: 512
+pretrain_method: "simsiam"
 data:
   dataset: imagenet
   train_path: "/datasets/imagenet/train"
   val_path: "/datasets/imagenet/val"
-  synthetic_path: "/projects/imagenet_synthetic/arashaf_stablediff_batched"
-  synthetic_index_min: 0
-  synthetic_index_max: 9
-  generative_augmentation_prob: 1
   format: "dali"
   num_workers: 4
 optimizer:
-  name: "sgd"
-  batch_size: 128
-  lr: 0.05
-  classifier_lr: 0.1
-  weight_decay: 1e-4
+  name: "lars"
+  batch_size: 512
+  lr: 0.1
+  weight_decay: 0
 scheduler:
   name: "warmup_cosine"
+  warmup_epochs: 0
+  scheduler_interval: "epoch"
 checkpoint:
   enabled: True
   dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models"
@@ -50,4 +43,4 @@ devices: 4
 sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"
-precision: 16-mixed
+precision: 16

@@ -22,19 +22,20 @@ data:
   format: "image_folder"
   num_workers: 4
 optimizer:
-  name: "sgd"
-  batch_size: 256
-  lr: 1.0
+  name: "lars"
+  batch_size: 512
+  lr: 0.1
   weight_decay: 0
 scheduler:
-  name: "step"
-  lr_decay_steps: [60, 80]
+  name: "warmup_cosine"
+  warmup_epochs: 0
+  scheduler_interval: "epoch"
 checkpoint:
   enabled: True
-  dir: "trained_models"
+  dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models"
   frequency: 1
 auto_resume:
-  enabled: True
+  enabled: False
 
 # overwrite PL stuff
 max_epochs: 100

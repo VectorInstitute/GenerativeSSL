@@ -20,7 +20,7 @@
 import os
 import random
 from pathlib import Path
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union, Tuple
 
 import lightning.pytorch as pl
 import nvidia.dali.fn as fn
@@ -260,7 +260,26 @@ class NormalPipelineBuilder:
             ]
             files, labels = map(list, zip(*data))
         elif dataset == "places365":
-            pass
+            if not validation:
+                split = "train-standard"
+            else:
+                split = "val"
+            _FILE_LIST_META = {
+                "train-standard": ("places365_train_standard.txt", "30f37515461640559006b8329efbed1a", "data_large_standard"),
+                "train-challenge": ("places365_train_challenge.txt", "b2931dc997b8c33c27e7329c073a6b57", "data_large"),
+                "val": ("places365_val.txt", "e9f2fd57bfd9d07630173f4e8708e4b1", "val_large"),
+            }
+            def process(line: str, image_dir: str, sep="/") -> Tuple[Path, int]:
+                image, idx = line.split()
+                return Path(os.path.join(data_path, image_dir, image.lstrip(sep).replace(sep, os.sep))), int(idx)
+
+            file, md5, image_dir = _FILE_LIST_META[split]
+            file = os.path.join(data_path, file)
+
+            with open(file) as fh:
+                data = [process(line, image_dir) for line in fh]
+            files, labels = map(list, zip(*data))
+            print(files[0], labels[0], flush=True)
         elif dataset == "inaturalist":
             if not validation:
                 ann_file = os.path.join(data_path, "train2018.json")

@@ -262,7 +262,10 @@ class NormalPipelineBuilder:
         elif dataset == "places365":
             pass
         elif dataset == "inaturalist":
-            ann_file = os.path.join(data_path, "train2018.json")
+            if not validation:
+                ann_file = os.path.join(data_path, "train2018.json")
+            else:
+                ann_file = os.path.join(data_path, "val2018.json")
             # load annotations
             print("Loading annotations from: " + os.path.basename(ann_file))
             with open(ann_file) as data_file:
@@ -1092,6 +1095,7 @@ class ClassificationDALIDataModule(pl.LightningDataModule):
         )
 
         val_pipeline_builder = self.pipeline_class(
+            self.dataset,
             self.val_data_path,
             validation=True,
             batch_size=self.batch_size,

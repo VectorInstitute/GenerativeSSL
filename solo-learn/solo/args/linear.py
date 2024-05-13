@@ -169,7 +169,7 @@ def parse_cfg(cfg: omegaconf.DictConfig):
         )
 
     if cfg.data.format == "dali":
-        assert cfg.data.dataset in ["imagenet100", "imagenet", "custom"]
+        assert cfg.data.dataset in ["imagenet100", "imagenet", "inaturalist", "places365", "custom"]
 
     # adjust lr according to batch size
     cfg.num_nodes = omegaconf_select(cfg, "num_nodes", 1)

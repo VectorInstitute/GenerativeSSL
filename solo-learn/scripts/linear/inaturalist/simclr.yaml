@@ -19,7 +19,7 @@ data:
   dataset: inaturalist
   train_path: "/datasets/inat_comp/2018/"
   val_path: "/datasets/inat_comp/2018/"
-  format: "image_folder"
+  format: "dali"
   num_workers: 4
 optimizer:
   name: "lars"

@@ -32,7 +32,6 @@ import torch.nn as nn
 from nvidia.dali import pipeline_def
 from nvidia.dali.plugin.pytorch import DALIGenericIterator, LastBatchPolicy
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
-import json
 
 from solo.data.temp_dali_fix import TempDALIGenericIterator
 from solo.utils.misc import omegaconf_select
@@ -584,8 +583,7 @@ class PretrainPipelineBuilder:
         self.shard_id = shard_id
         self.num_threads = num_threads
         self.device_id = device_id
-        self.seed = seed + device_id
-
+        self.seed = seed + self.shard_id
         print("seed", self.seed, flush=True)
 
         self.device = device
@@ -612,7 +610,10 @@ class PretrainPipelineBuilder:
                 data_fraction < 1
             ), "Only use data_fraction for values smaller than 1."
 
-            labels = [-1] * len(files) if no_labels else [l for _, l in data]
+            if no_labels:
+                labels = [-1] * len(files)
+            else:
+                labels = [l for _, l in data]
 
             from sklearn.model_selection import train_test_split
 
@@ -638,13 +639,14 @@ class PretrainPipelineBuilder:
 
             # use the encoded labels which will be decoded later
             labels = encoded_labels
+        # shuffle_after_epoch=random_shuffle,
         self.reader = ops.readers.File(
             files=files,
             labels=labels,
             shard_id=shard_id,
             num_shards=num_shards,
             random_shuffle=random_shuffle,
-            seed=self.seed,
+            seed = self.seed,
         )
 
         if synthetic_data_path:
@@ -659,14 +661,14 @@ class PretrainPipelineBuilder:
                 )
                 for jpeg_filename in files
             ]
-
+            # shuffle_after_epoch=random_shuffle,
             self.synth_reader = ops.readers.File(
                 files=synthetic_files,
                 labels=labels,
                 shard_id=shard_id,
                 num_shards=num_shards,
                 random_shuffle=random_shuffle,
-                seed=self.seed,
+                seed = self.seed,
             )
 
         decoder_device = "mixed" if self.device == "gpu" else "cpu"
@@ -807,7 +809,7 @@ class Wrapper(TempDALIGenericIterator):
 
 class Scheduler(pl.Callback):
     def _prepare_epoch(self, trainer):
-        trainer.datamodule.set_train_loader(trainer.current_epoch + 1)
+        trainer.datamodule.reset_train_loader(trainer.current_epoch + 1)
 
     def on_train_epoch_end(self, trainer, pl_module):
         print("The epoch is finishing.", flush=True)
@@ -911,7 +913,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         )
         return cfg
 
-    def set_train_loader(self, epoch=0):
+    def reset_train_loader(self, epoch=0):
         print("Setting train loader.", flush=True)
         train_pipeline_builder = PretrainPipelineBuilder(
             self.train_data_path,
@@ -977,7 +979,7 @@ class PretrainDALIDataModule(pl.LightningDataModule):
         else:
             self.device = torch.device("cpu")
 
-        self.set_train_loader(self.init_epoch)
+        self.reset_train_loader(self.init_epoch)
 
     def train_dataloader(self):
         return self.train_loader

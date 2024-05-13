@@ -8,10 +8,10 @@ defaults:
 hydra:
   output_subdir: null
   run:
-    dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simclr/2fnyx7sf/paper-simclr-imagenet-2fnyx7sf-ep=99.ckpt"
+    dir: .
 
 name: "simclr-cifar10-linear"
-pretrained_feature_extractor: None
+pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simclr/2fnyx7sf/paper-simclr-imagenet-2fnyx7sf-ep=99.ckpt"
 backbone:
   name: "resnet50"
 pretrain_method: "simclr"

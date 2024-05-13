@@ -8,17 +8,17 @@ defaults:
 hydra:
   output_subdir: null
   run:
-    dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simclr/2fnyx7sf/paper-simclr-imagenet-2fnyx7sf-ep=99.ckpt"
+    dir: .
 
 name: "simclr-food101-linear"
-pretrained_feature_extractor: None
+pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simclr/2fnyx7sf/paper-simclr-imagenet-2fnyx7sf-ep=99.ckpt"
 backbone:
   name: "resnet50"
 pretrain_method: "simclr"
 data:
   dataset: food101
-  train_path: "/projects/imagenet_synthetic/fereshteh_datasets/food-101"
-  val_path: "/projects/imagenet_synthetic/fereshteh_datasets/food-101"
+  train_path: "/projects/imagenet_synthetic/fereshteh_datasets"
+  val_path: "/projects/imagenet_synthetic/fereshteh_datasets"
   format: "image_folder"
   num_workers: 4
 optimizer:

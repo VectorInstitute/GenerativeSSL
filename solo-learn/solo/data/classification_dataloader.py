@@ -28,7 +28,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.datasets import STL10, ImageFolder, Food101, Places365
-from inatural_dataset import INAT
+from solo.data.inatural_dataset import INAT
 
 try:
     from solo.data.h5_dataset import H5Dataset
@@ -211,7 +211,7 @@ def prepare_transforms(dataset: str) -> Tuple[nn.Module, nn.Module]:
         "stl10": stl_pipeline,
         "food101": food_pipeline,
         "places365": place_pipeline,
-        "INaturalist": inat_pipeline,  
+        "inaturalist": inat_pipeline,  
         "imagenet100": imagenet_pipeline,
         "imagenet": imagenet_pipeline,
         "custom": custom_pipeline,
@@ -273,7 +273,7 @@ def prepare_datasets(
         "stl10",
         "food101",
         "places365",
-        "INaturalist",
+        "inaturalist",
         "imagenet",
         "imagenet100",
         "custom",
@@ -318,7 +318,7 @@ def prepare_datasets(
             split="val",
             transform=T_val,
         )
-    elif dataset == "INaturalist":
+    elif dataset == "inaturalist":
         train_dataset = INAT(
             root=train_data_path,
             ann_file=os.path.join(train_data_path, "train2018.json"),

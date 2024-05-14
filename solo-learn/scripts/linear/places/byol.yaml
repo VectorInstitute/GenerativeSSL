@@ -10,15 +10,15 @@ hydra:
   run:
     dir: .
 
-name: "simclr-inaturalist-linear"
-pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simclr/2fnyx7sf/paper-simclr-imagenet-2fnyx7sf-ep=99.ckpt"
+name: "byol-places-linear"
+pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/byol/7aharenx/paper-byol-imagenet-7aharenx-ep=99.ckpt"
 backbone:
   name: "resnet50"
-pretrain_method: "simclr"
+pretrain_method: "byol"
 data:
-  dataset: inaturalist
-  train_path: "/datasets/inat_comp/2018/"
-  val_path: "/datasets/inat_comp/2018/"
+  dataset: places365
+  train_path: "/projects/imagenet_synthetic/fereshteh_datasets/places365"
+  val_path: "/projects/imagenet_synthetic/fereshteh_datasets/places365"
   format: "dali"
   num_workers: 4
 optimizer:
@@ -38,7 +38,7 @@ auto_resume:
   enabled: True
 
 # overwrite PL stuff
-max_epochs: 100
+max_epochs: 45
 devices: 4
 sync_batchnorm: True
 accelerator: "gpu"

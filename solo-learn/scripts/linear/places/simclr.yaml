@@ -10,7 +10,7 @@ hydra:
   run:
     dir: .
 
-name: "simclr-places365-linear"
+name: "simclr-places-linear"
 pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simclr/2fnyx7sf/paper-simclr-imagenet-2fnyx7sf-ep=99.ckpt"
 backbone:
   name: "resnet50"
@@ -19,7 +19,7 @@ data:
   dataset: places365
   train_path: "/projects/imagenet_synthetic/fereshteh_datasets/places365"
   val_path: "/projects/imagenet_synthetic/fereshteh_datasets/places365"
-  format: "image_folder"
+  format: "dali"
   num_workers: 4
 optimizer:
   name: "lars"
@@ -35,10 +35,10 @@ checkpoint:
   dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models"
   frequency: 1
 auto_resume:
-  enabled: False
+  enabled: True
 
 # overwrite PL stuff
-max_epochs: 100
+max_epochs: 45
 devices: 4
 sync_batchnorm: True
 accelerator: "gpu"

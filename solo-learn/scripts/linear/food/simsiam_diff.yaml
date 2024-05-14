@@ -10,16 +10,16 @@ hydra:
   run:
     dir: .
 
-name: "simclr-inaturalist-linear"
-pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simclr/2fnyx7sf/paper-simclr-imagenet-2fnyx7sf-ep=99.ckpt"
+name: "simsiam-food101-diff-linear"
+pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simsiam/8bfvfkvb/simsiam-all-synthetic-imagenet-8bfvfkvb-ep=99.ckpt"
 backbone:
   name: "resnet50"
-pretrain_method: "simclr"
+pretrain_method: "simsiam"
 data:
-  dataset: inaturalist
-  train_path: "/datasets/inat_comp/2018/"
-  val_path: "/datasets/inat_comp/2018/"
-  format: "dali"
+  dataset: food101
+  train_path: "/projects/imagenet_synthetic/fereshteh_datasets"
+  val_path: "/projects/imagenet_synthetic/fereshteh_datasets"
+  format: "image_folder"
   num_workers: 4
 optimizer:
   name: "lars"

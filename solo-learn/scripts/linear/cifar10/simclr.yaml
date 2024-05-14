@@ -17,8 +17,8 @@ backbone:
 pretrain_method: "simclr"
 data:
   dataset: cifar10
-  train_path: "./datasets"
-  val_path: "./datasets"
+  train_path: "/projects/imagenet_synthetic/fereshteh_datasets"
+  val_path: "/projects/imagenet_synthetic/fereshteh_datasets"
   format: "image_folder"
   num_workers: 4
 optimizer:
@@ -35,7 +35,7 @@ checkpoint:
   dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models"
   frequency: 1
 auto_resume:
-  enabled: False
+  enabled: True
 
 # overwrite PL stuff
 max_epochs: 100

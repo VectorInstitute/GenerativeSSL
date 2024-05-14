@@ -10,8 +10,8 @@ hydra:
   run:
     dir: .
 
-name: "simclr-inaturalist-linear"
-pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simclr/2fnyx7sf/paper-simclr-imagenet-2fnyx7sf-ep=99.ckpt"
+name: "simclr-inaturalist-diff-linear"
+pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simclr/8v8bp0d5/100-paper-simclr-synth-imagenet-8v8bp0d5-ep=99.ckpt"
 backbone:
   name: "resnet50"
 pretrain_method: "simclr"

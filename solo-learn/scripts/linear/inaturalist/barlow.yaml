@@ -10,11 +10,11 @@ hydra:
   run:
     dir: .
 
-name: "simclr-inaturalist-linear"
-pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simclr/2fnyx7sf/paper-simclr-imagenet-2fnyx7sf-ep=99.ckpt"
+name: "barlow-inaturalist-linear"
+pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/barlow_twins/06qt0v5k/barlow_twins-imagenet-06qt0v5k-ep=99.ckpt"
 backbone:
   name: "resnet50"
-pretrain_method: "simclr"
+pretrain_method: "barlow_twins"
 data:
   dataset: inaturalist
   train_path: "/datasets/inat_comp/2018/"

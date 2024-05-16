@@ -34,8 +34,8 @@ def lin_cka_dist(A, B):
 
 def opd(A, B):
     # Center and normalize the representations
-    A = center_and_normalize(A)
-    B = center_and_normalize(B)
+    A = center_and_normalize(A.T)
+    B = center_and_normalize(B.T)
 
     # Calculate norms
     frobenius_norm_A = np.linalg.norm(A, 'fro')**2
@@ -54,8 +54,8 @@ print('CKA between CLIP and SimCLR 1: {}'.format(lin_cka_dist(X.T, Y.T)))
 print('CKA between CLIP and SimCLR 2: {}'.format(lin_cka_dist(X.T, Z.T)))
 print('CKA between SimCLR 1 and SimCLR 2: {}'.format(lin_cka_dist(Y.T, Z.T)))
 
-# print("_"*50)
+print("_"*50)
 
-print("OPD between CLIP and SimCLR 1:", opd(X, Y))
-print("OPD between CLIP and SimCLR 2:", opd(X, Z))
-print("OPD between SimCLR 1 and SimCLR 2:", opd(Y, Z))
+print("OPD between CLIP and SimCLR 1:", opd(X.T, Y.T))
+print("OPD between CLIP and SimCLR 2:", opd(X.T, Z.T))
+print("OPD between SimCLR 1 and SimCLR 2:", opd(Y.T, Z.T))

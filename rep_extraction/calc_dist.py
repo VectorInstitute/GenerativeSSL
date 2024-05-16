@@ -1,36 +1,30 @@
 import numpy as np
 
 def center_and_normalize(X):
-    # Center the matrix
-    X_centered = X - np.mean(X, axis=1, keepdims=True)
-
+    X = X - np.mean(X, axis=1, keepdims=True)
+    coef = 100.0
+    X /= coef
     # Normalize the matrix
-    norm = np.linalg.norm(X_centered, ord='fro')
-    X_normalized = X_centered / norm
+    norm = np.linalg.norm(X, ord="fro")
+    return X / norm
 
-    return X_normalized
-
-def lin_cka_dist(A, B):
+def cka(A, B):
     # Center and normalize the representations
     A = center_and_normalize(A)
     B = center_and_normalize(B)
 
-    print(A.max())
-    print(B.max())
-
     # Compute the numerator
-    C = A @ B.T
-    print(C.shape)
-    sim_AB = np.linalg.norm(A @ B.T, ord='fro') ** 2
-    print("sim", sim_AB)
+    AB_T = A @ B.T
+    N_AB_T = np.linalg.norm(AB_T, ord='fro') ** 2
 
     # Compute the denominator
-    norm_A = np.linalg.norm(A @ A.T, ord='fro')
-    norm_B = np.linalg.norm(B @ B.T, ord='fro')
-    print(norm_A, norm_B)
+    AA_T = A @ A.T
+    BB_T = B @ B.T
+    N_AA_T = np.linalg.norm(AA_T, ord='fro')
+    N_BB_T = np.linalg.norm(BB_T, ord='fro')
 
     # Compute the Linear CKA distance
-    return 1 - sim_AB / (norm_A * norm_B)
+    return 1 - N_AB_T / (N_AA_T * N_BB_T)
 
 def opd(A, B):
     # Center and normalize the representations
@@ -42,17 +36,16 @@ def opd(A, B):
     frobenius_norm_B = np.linalg.norm(B, 'fro')**2
     nuclear_norm_ATB = np.linalg.norm(np.dot(A.T, B), ord='nuc')
     # Calculate the OPD
-    distance = frobenius_norm_A + frobenius_norm_B - 2 * nuclear_norm_ATB
-    return distance
+    return frobenius_norm_A + frobenius_norm_B - 2 * nuclear_norm_ATB
 
 # Load the representations
 X = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_clip_features.npy") # shape (50000, 512)
 Y = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_simclr_features.npy") # shape (50000, 2048)
 Z = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_simclr2_features.npy") # shape (50000, 2048)
 
-print('CKA between CLIP and SimCLR 1: {}'.format(lin_cka_dist(X.T, Y.T)))
-print('CKA between CLIP and SimCLR 2: {}'.format(lin_cka_dist(X.T, Z.T)))
-print('CKA between SimCLR 1 and SimCLR 2: {}'.format(lin_cka_dist(Y.T, Z.T)))
+print('CKA between CLIP and SimCLR 1: {}'.format(cka(X.T, Y.T)))
+print('CKA between CLIP and SimCLR 2: {}'.format(cka(X.T, Z.T)))
+print('CKA between SimCLR 1 and SimCLR 2: {}'.format(cka(Y.T, Z.T)))
 
 print("_"*50)
 

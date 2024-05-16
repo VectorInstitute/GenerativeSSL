@@ -11,7 +11,7 @@ hydra:
     dir: .
 
 name: "simsiam-cifar10-icgan-linear"
-pretrained_feature_extractor: "NONE"
+pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/simsiam/j02397wc/simsiam-synthetic-icgan-imagenet-j02397wc-ep=99.ckpt"
 backbone:
   name: "resnet50"
 pretrain_method: "simsiam"

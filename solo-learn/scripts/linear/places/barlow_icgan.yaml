@@ -11,7 +11,7 @@ hydra:
     dir: .
 
 name: "barlow-places-icgan-linear"
-pretrained_feature_extractor: "NONE"
+pretrained_feature_extractor: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models/barlow_twins/mrp2jwnd/barlow_twins-imagenet-all-synthetic-icgan-mrp2jwnd-ep=99.ckpt"
 backbone:
   name: "resnet50"
 pretrain_method: "barlow_twins"

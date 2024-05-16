@@ -1,14 +1,4 @@
 import numpy as np
-from scipy.linalg import orthogonal_procrustes
-import time
-
-def orthogonal_procrustes_distance(X, Y):
-    R, _ = orthogonal_procrustes(X, Y)
-    X_transformed = X @ R
-    distance = np.linalg.norm(X_transformed - Y, "fro")
-
-    return distance
-
 
 def center_and_normalize(X):
     # Center the matrix
@@ -25,44 +15,47 @@ def lin_cka_dist(A, B):
     A = center_and_normalize(A)
     B = center_and_normalize(B)
 
+    print(A.max())
+    print(B.max())
+
     # Compute the numerator
+    C = A @ B.T
+    print(C.shape)
     sim_AB = np.linalg.norm(A @ B.T, ord='fro') ** 2
+    print("sim", sim_AB)
 
     # Compute the denominator
     norm_A = np.linalg.norm(A @ A.T, ord='fro')
     norm_B = np.linalg.norm(B @ B.T, ord='fro')
+    print(norm_A, norm_B)
 
     # Compute the Linear CKA distance
     return 1 - sim_AB / (norm_A * norm_B)
 
+def opd(A, B):
+    # Center and normalize the representations
+    A = center_and_normalize(A)
+    B = center_and_normalize(B)
+
+    # Calculate norms
+    frobenius_norm_A = np.linalg.norm(A, 'fro')**2
+    frobenius_norm_B = np.linalg.norm(B, 'fro')**2
+    nuclear_norm_ATB = np.linalg.norm(np.dot(A.T, B), ord='nuc')
+    # Calculate the OPD
+    distance = frobenius_norm_A + frobenius_norm_B - 2 * nuclear_norm_ATB
+    return distance
 
 # Load the representations
-X = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_clip_features.npy").T
-Y = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_simclr_features.npy").T
-Z = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_simclr2_features.npy").T
+X = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_clip_features.npy") # shape (50000, 512)
+Y = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_simclr_features.npy") # shape (50000, 2048)
+Z = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_simclr2_features.npy") # shape (50000, 2048)
 
-print("Start of the CKA calculation")
-start_time = time.time()
-print('Linear CKA, between CLIP and SimCLR 1: {}'.format(lin_cka_dist(X, Y)))
-end_time = time.time()
-print("Time taken for first Linear CKA:", end_time - start_time, "seconds")
+print('CKA between CLIP and SimCLR 1: {}'.format(lin_cka_dist(X.T, Y.T)))
+print('CKA between CLIP and SimCLR 2: {}'.format(lin_cka_dist(X.T, Z.T)))
+print('CKA between SimCLR 1 and SimCLR 2: {}'.format(lin_cka_dist(Y.T, Z.T)))
 
-start_time = time.time()
-print('Linear CKA, between CLIP and SimCLR 2: {}'.format(lin_cka_dist(X, Z)))
-end_time = time.time()
-print("Time taken for second Linear CKA:", end_time - start_time, "seconds")
+# print("_"*50)
 
-print("Start of the Orthogonal Procrustes distance calculation")
-start_time = time.time()
-op_distance = orthogonal_procrustes_distance(X, Y)
-end_time = time.time()
-print("Orthogonal Procrustes distance between CLIP and SimCLR 1:", op_distance)
-print("Time taken for first Orthogonal Procrustes distance:", end_time - start_time, "seconds")
-
-
-print("Start of the Orthogonal Procrustes distance calculation")
-start_time = time.time()
-op_distance = orthogonal_procrustes_distance(X, Z)
-end_time = time.time()
-print("Orthogonal Procrustes distance between CLIP and SimCLR 2:", op_distance)
-print("Time taken for second Orthogonal Procrustes distance:", end_time - start_time, "seconds")
+print("OPD between CLIP and SimCLR 1:", opd(X, Y))
+print("OPD between CLIP and SimCLR 2:", opd(X, Z))
+print("OPD between SimCLR 1 and SimCLR 2:", opd(Y, Z))

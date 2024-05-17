@@ -1,6 +1,6 @@
 import numpy as np
-import random
 import pickle
+import argparse
 
 def center_and_normalize(X):
     X = X - np.mean(X, axis=1, keepdims=True)
@@ -25,37 +25,48 @@ def opd(A, B):
     nuclear_norm_ATB = np.linalg.norm(np.dot(A.T, B), ord='nuc')
     return frobenius_norm_A + frobenius_norm_B - 2 * nuclear_norm_ATB
 
-def bootstrap_cka_opd(X, Y, Z, runs=100, sample_size=50000):
+def bootstrap_cka_opd(X, Y, Z, runs):
     cka_results = {"X_Y": [], "X_Z": [], "Y_Z": []}
     opd_results = {"X_Y": [], "X_Z": [], "Y_Z": []}
 
-    for _ in range(runs):
-        indices = np.random.choice(range(X.shape[0]), size=sample_size, replace=True)
+    for r in range(runs):
+        print(f"Run {r+1}/{runs}")
+        indices = np.random.choice(range(X.shape[0]), size=X.shape[0], replace=True)
         X_sample = X[indices]
         Y_sample = Y[indices]
         Z_sample = Z[indices]
 
-        cka_results["X_Y"].append(cka(X_sample, Y_sample))
-        cka_results["X_Z"].append(cka(X_sample, Z_sample))
-        cka_results["Y_Z"].append(cka(Y_sample, Z_sample))
+        cka_results["X_Y"].append(cka(X_sample.T, Y_sample.T))
+        cka_results["X_Z"].append(cka(X_sample.T, Z_sample.T))
+        cka_results["Y_Z"].append(cka(Y_sample.T, Z_sample.T))
 
-        opd_results["X_Y"].append(opd(X_sample, Y_sample))
-        opd_results["X_Z"].append(opd(X_sample, Z_sample))
-        opd_results["Y_Z"].append(opd(Y_sample, Z_sample))
+        opd_results["X_Y"].append(opd(X_sample.T, Y_sample.T))
+        opd_results["X_Z"].append(opd(X_sample.T, Z_sample.T))
+        opd_results["Y_Z"].append(opd(Y_sample.T, Z_sample.T))
 
     return cka_results, opd_results
 
-# Load the representations
-X = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_clip_features.npy")
-Y = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_simclr_features.npy")
-Z = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_simclr2_features.npy")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Bootstrap CKA and OPD calculations")
+    parser.add_argument("--runs", type=int, default=20, help="Number of bootstrap runs")
 
-# Perform bootstrapping
-cka_results, opd_results = bootstrap_cka_opd(X, Y, Z, runs=20, sample_size=50000)
+    args = parser.parse_args()
+    runs = args.runs
 
-# Save the results as pickle files
-with open("cka_results.pkl", "wb") as f:
-    pickle.dump(cka_results, f)
+    # Load the representations
+    X = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_clip_features.npy")
+    Y = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_simclr_features.npy")
+    Z = np.load("/projects/imagenet_synthetic/extracted_representations/imagenet_val_simclr2_features.npy")
 
-with open("opd_results.pkl", "wb") as f:
-    pickle.dump(opd_results, f)
+    # Perform bootstrapping
+    cka_results, opd_results = bootstrap_cka_opd(X, Y, Z, runs)
+
+    # Save the results as pickle files
+    cka_filename = f"/h/vkhazaie/GenerativeSSL/rep_extraction/cka_results_{runs}.pkl"
+    opd_filename = f"/h/vkhazaie/GenerativeSSL/rep_extraction/opd_results_{runs}.pkl"
+
+    with open(cka_filename, "wb") as f:
+        pickle.dump(cka_results, f)
+
+    with open(opd_filename, "wb") as f:
+        pickle.dump(opd_results, f)

@@ -1,0 +1,61 @@
+defaults:
+  - _self_
+  - augmentations: symmetric.yaml
+  - wandb: private.yaml
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+
+# disable hydra outputs
+hydra:
+  output_subdir: null
+  run:
+    dir: .
+
+name: "swav-imagenet"
+method: "swav"
+backbone:
+  name: "resnet50"
+method_kwargs:
+  proj_hidden_dim: 4096
+  queue_size: 3840
+  proj_output_dim: 128
+  num_prototypes: 3000
+  epoch_queue_starts: 50
+  freeze_prototypes_epochs: 2
+  temperature: 0.1
+data:
+  dataset: imagenet
+  train_path: "/datasets/imagenet/train"
+  val_path: "/datasets/imagenet/val"
+  synthetic_path: "/projects/imagenet_synthetic/arashaf_stablediff_batched"
+  synthetic_index_min: 0
+  synthetic_index_max: 9
+  generative_augmentation_prob: 0.5
+  format: "dali"
+  num_workers: 4
+optimizer:
+  name: "lars"
+  batch_size: 128
+  lr: 0.6
+  classifier_lr: 0.1
+  weight_decay: 1e-6
+  kwargs:
+    clip_lr: True
+    eta: 0.02
+    exclude_bias_n_norm: True
+scheduler:
+  name: "warmup_cosine"
+checkpoint:
+  enabled: True
+  dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models"
+  frequency: 1
+auto_resume:
+  enabled: True
+
+# overwrite PL stuff
+max_epochs: 100
+devices: 4
+sync_batchnorm: True
+accelerator: "gpu"
+strategy: "ddp"
+precision: 16-mixed

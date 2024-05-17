@@ -27,3 +27,8 @@ nvidia-smi
 torchrun --nproc-per-node=4 --nnodes=1 solo-learn/main_pretrain.py \
     --config-path scripts/pretrain/imagenet/ \
     --config-name barlow_all_synthetic_icgan.yaml
+
+wait 
+
+cd ~/projects/GenerativeSSL
+sbatch scripts/solo_learn/barlow/repo_setting/train_synthetic_solo_learn.slrm

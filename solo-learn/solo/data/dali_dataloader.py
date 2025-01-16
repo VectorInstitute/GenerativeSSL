@@ -20,7 +20,7 @@
 import os
 import random
 from pathlib import Path
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union, Tuple
 
 import lightning.pytorch as pl
 import nvidia.dali.fn as fn
@@ -32,6 +32,7 @@ import torch.nn as nn
 from nvidia.dali import pipeline_def
 from nvidia.dali.plugin.pytorch import DALIGenericIterator, LastBatchPolicy
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+import json
 
 from solo.data.temp_dali_fix import TempDALIGenericIterator
 from solo.utils.misc import omegaconf_select
@@ -202,6 +203,7 @@ class RandomSolarize:
 class NormalPipelineBuilder:
     def __init__(
         self,
+        dataset: str,
         data_path: str,
         batch_size: int,
         device: str,
@@ -220,6 +222,7 @@ class NormalPipelineBuilder:
         are normalized.
 
         Args:
+            dataset (str): dataset name.
             data_path (str): directory that contains the data.
             batch_size (int): batch size.
             device (str): device on which the operation will be performed.
@@ -244,17 +247,59 @@ class NormalPipelineBuilder:
 
         self.device = device
         self.validation = validation
+        
+        if dataset in ["imagenet", "imagenet100"]:
+            # manually load files and labels
+            labels = sorted(
+                Path(entry.name) for entry in os.scandir(data_path) if entry.is_dir()
+            )
+            data = [
+                (data_path / label / file, label_idx)
+                for label_idx, label in enumerate(labels)
+                for file in sorted(os.listdir(data_path / label))
+            ]
+            files, labels = map(list, zip(*data))
+        elif dataset == "places365":
+            if not validation:
+                split = "train-standard"
+            else:
+                split = "val"
+            _FILE_LIST_META = {
+                "train-standard": ("places365_train_standard.txt", "30f37515461640559006b8329efbed1a", "data_large_standard"),
+                "train-challenge": ("places365_train_challenge.txt", "b2931dc997b8c33c27e7329c073a6b57", "data_large"),
+                "val": ("places365_val.txt", "e9f2fd57bfd9d07630173f4e8708e4b1", "val_large"),
+            }
+            def process(line: str, image_dir: str, sep="/") -> Tuple[Path, int]:
+                image, idx = line.split()
+                return Path(os.path.join(data_path, image_dir, image.lstrip(sep).replace(sep, os.sep))), int(idx)
 
-        # manually load files and labels
-        labels = sorted(
-            Path(entry.name) for entry in os.scandir(data_path) if entry.is_dir()
-        )
-        data = [
-            (data_path / label / file, label_idx)
-            for label_idx, label in enumerate(labels)
-            for file in sorted(os.listdir(data_path / label))
-        ]
-        files, labels = map(list, zip(*data))
+            file, md5, image_dir = _FILE_LIST_META[split]
+            file = os.path.join(data_path, file)
+
+            with open(file) as fh:
+                data = [process(line, image_dir) for line in fh]
+            files, labels = map(list, zip(*data))
+            print(files[0], labels[0], flush=True)
+        elif dataset == "inaturalist":
+            if not validation:
+                ann_file = os.path.join(data_path, "train2018.json")
+            else:
+                ann_file = os.path.join(data_path, "val2018.json")
+            # load annotations
+            print("Loading annotations from: " + os.path.basename(ann_file))
+            with open(ann_file) as data_file:
+                ann_data = json.load(data_file)
+
+            # set up the filenames and annotations
+            files: List[str] = [os.path.join(data_path, aa["file_name"]) for aa in ann_data["images"]]
+
+            # if we dont have class labels set them to '0'
+            if "annotations" in ann_data.keys():
+                labels = [aa["category_id"] for aa in ann_data["annotations"]]
+            else:
+                labels= [0] * len(files)
+        else:
+            raise NotImplementedError(f"Dataset {dataset} is not supported.")
 
         # sample data if needed
         if data_fraction > 0:
@@ -1003,7 +1048,7 @@ class ClassificationDALIDataModule(pl.LightningDataModule):
         assert dali_device in ["gpu", "cpu"]
 
         # handle custom data by creating the needed pipeline
-        if dataset in ["imagenet100", "imagenet"]:
+        if dataset in ["imagenet100", "imagenet", "places365", "inaturalist"]:
             self.pipeline_class = NormalPipelineBuilder
         elif dataset == "custom":
             self.pipeline_class = CustomNormalPipelineBuilder
@@ -1040,6 +1085,7 @@ class ClassificationDALIDataModule(pl.LightningDataModule):
             self.device = torch.device("cpu")
 
         train_pipeline_builder = self.pipeline_class(
+            self.dataset,
             self.train_data_path,
             validation=False,
             batch_size=self.batch_size,
@@ -1068,6 +1114,7 @@ class ClassificationDALIDataModule(pl.LightningDataModule):
         )
 
         val_pipeline_builder = self.pipeline_class(
+            self.dataset,
             self.val_data_path,
             validation=True,
             batch_size=self.batch_size,

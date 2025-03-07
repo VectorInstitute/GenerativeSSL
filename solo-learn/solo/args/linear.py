@@ -21,9 +21,6 @@ _N_CLASSES_PER_DATASET = {
     "stl10": 10,
     "imagenet": 1000,
     "imagenet100": 100,
-    "food101": 101,
-    "places365": 434,
-    "inaturalist": 8142,
 }
 
 
@@ -33,9 +30,6 @@ _SUPPORTED_DATASETS = [
     "stl10",
     "imagenet",
     "imagenet100",
-    "food101",
-    "places365",
-    "inaturalist",
     "custom",
 ]
 
@@ -169,7 +163,7 @@ def parse_cfg(cfg: omegaconf.DictConfig):
         )
 
     if cfg.data.format == "dali":
-        assert cfg.data.dataset in ["imagenet100", "imagenet", "inaturalist", "places365", "custom"]
+        assert cfg.data.dataset in ["imagenet100", "imagenet", "custom"]
 
     # adjust lr according to batch size
     cfg.num_nodes = omegaconf_select(cfg, "num_nodes", 1)

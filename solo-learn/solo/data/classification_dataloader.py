@@ -27,8 +27,7 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
-from torchvision.datasets import STL10, ImageFolder, Food101, Places365
-from solo.data.inatural_dataset import INAT
+from torchvision.datasets import STL10, ImageFolder
 
 try:
     from solo.data.h5_dataset import H5Dataset
@@ -137,81 +136,12 @@ def prepare_transforms(dataset: str) -> Tuple[nn.Module, nn.Module]:
         ),
     }
 
-    food_pipeline = {
-        "T_train": transforms.Compose(
-            [
-                transforms.RandomResizedCrop(size=224, scale=(0.08, 1.0)),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD
-                ),
-            ]
-        ),
-        "T_val": transforms.Compose(
-            [
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD
-                ),
-            ]
-        ),
-    }
-
-    place_pipeline = {
-        "T_train": transforms.Compose(
-            [
-                transforms.RandomResizedCrop(size=224, scale=(0.08, 1.0)),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD
-                ),
-            ]
-        ),
-        "T_val": transforms.Compose(
-            [
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD
-                ),
-            ]
-        ),
-    }
-
-    inat_pipeline = {
-        "T_train": transforms.Compose(
-            [
-                transforms.RandomResizedCrop(size=224, scale=(0.08, 1.0)),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD
-                ),
-            ]
-        ),
-        "T_val": transforms.Compose(
-            [
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD
-                ),
-            ]
-        ),
-    }
-
     custom_pipeline = build_custom_pipeline()
 
     pipelines = {
         "cifar10": cifar_pipeline,
         "cifar100": cifar_pipeline,
         "stl10": stl_pipeline,
-        "food101": food_pipeline,
-        "places365": place_pipeline,
-        "inaturalist": inat_pipeline,  
         "imagenet100": imagenet_pipeline,
         "imagenet": imagenet_pipeline,
         "custom": custom_pipeline,
@@ -271,9 +201,6 @@ def prepare_datasets(
         "cifar10",
         "cifar100",
         "stl10",
-        "food101",
-        "places365",
-        "inaturalist",
         "imagenet",
         "imagenet100",
         "custom",
@@ -294,41 +221,7 @@ def prepare_datasets(
             download=download,
             transform=T_val,
         )
-    elif dataset == "food101":
-        print("=> using food101 dataset.", flush=True)
-        train_dataset = Food101(
-            root=train_data_path,
-            split="train",
-            transform=T_train,
-        )
-        val_dataset = Food101(
-            root=val_data_path,
-            split="test",
-            transform=T_val,
-        )
 
-    elif dataset == "places365":
-        train_dataset = Places365(
-            root=train_data_path,
-            split="train-standard",
-            transform=T_train,
-        )
-        val_dataset = Places365(
-            root=val_data_path,
-            split="val",
-            transform=T_val,
-        )
-    elif dataset == "inaturalist":
-        train_dataset = INAT(
-            root=train_data_path,
-            ann_file=os.path.join(train_data_path, "train2018.json"),
-            transform=T_train,
-        )
-        val_dataset = INAT(
-            root=val_data_path,
-            ann_file=os.path.join(val_data_path, "val2018.json"),
-            transform=T_val,
-        )
     elif dataset == "stl10":
         train_dataset = STL10(
             train_data_path,

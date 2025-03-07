@@ -64,11 +64,14 @@ def main(cfg: DictConfig):
         # remove fc layer
         backbone.fc = nn.Identity()
         cifar = cfg.data.dataset in ["cifar10", "cifar100"]
-        if cifar:
-            backbone.conv1 = nn.Conv2d(
-                3, 64, kernel_size=3, stride=1, padding=2, bias=False
-            )
-            backbone.maxpool = nn.Identity()
+
+        # These lines was present in the original code, but it gave an error
+
+        # if cifar:
+        #     backbone.conv1 = nn.Conv2d(
+        #         3, 64, kernel_size=3, stride=1, padding=2, bias=False
+        #     )
+        #     backbone.maxpool = nn.Identity()
 
     ckpt_path = cfg.pretrained_feature_extractor
     assert (

@@ -14,7 +14,7 @@
 PY_ARGS=${@:1}
 
 # activate virtual environment
-source /ssd003/projects/aieng/envs/genssl2/bin/activate
+source YOUR_VENV_PATH/bin/activate
 
 export TORCH_NCCL_ASYNC_ERROR_HANDLING=1 # set to 1 for NCCL backend
 export CUDA_LAUNCH_BLOCKING=1
@@ -26,7 +26,7 @@ export PYTHONPATH="."
 nvidia-smi
 
 srun python data_generation/img2img_icgan.py \
---outdir /projects/imagenet_synthetic/synthetic_icgan \
+--outdir SAVE_DIR \
 --num_shards=7 \
 --shard_index=2 \
 --image_version=1 \

@@ -11,7 +11,7 @@ hydra:
   run:
     dir: .
 
-name: "barlow_twins-imagenet"
+name: "barlow-imagenet"
 method: "barlow_twins"
 backbone:
   name: "resnet50"
@@ -22,8 +22,8 @@ method_kwargs:
   scale_loss: 0.048
 data:
   dataset: imagenet
-  train_path: "/datasets/imagenet/train"
-  val_path: "/datasets/imagenet/val"
+  train_path: TRAIN_PATH
+  val_path: VAL_PATH
   format: "dali"
   num_workers: 4
 optimizer:
@@ -40,10 +40,10 @@ scheduler:
   name: "warmup_cosine"
 checkpoint:
   enabled: True
-  dir: "trained_models"
+  dir: SAVE_PATH
   frequency: 1
 auto_resume:
-  enabled: True
+  enabled: False
 
 # overwrite PL stuff
 max_epochs: 100

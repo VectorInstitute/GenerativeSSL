@@ -11,7 +11,7 @@ hydra:
   run:
     dir: .
 
-name: "byol-imagenet"
+name: "byol-imagenet-icgan"
 method: "byol"
 backbone:
   name: "resnet50"
@@ -26,6 +26,10 @@ data:
   dataset: imagenet
   train_path: TRAIN_PATH
   val_path: VAL_PATH
+  synthetic_path: ICGAN_SYNTHETIC_PATH
+  synthetic_index_min: 0
+  synthetic_index_max: 9
+  generative_augmentation_prob: 1
   format: "dali"
   num_workers: 4
 optimizer:

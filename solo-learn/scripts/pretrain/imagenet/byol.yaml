@@ -24,16 +24,16 @@ momentum:
   final_tau: 1.0
 data:
   dataset: imagenet
-  train_path: "/datasets/imagenet/train"
-  val_path: "/datasets/imagenet/val"
+  train_path: TRAIN_PATH
+  val_path: VAL_PATH
   format: "dali"
   num_workers: 4
 optimizer:
   name: "lars"
-  batch_size: 64
-  lr: 0.45
+  batch_size: 256
+  lr: 0.2
   classifier_lr: 0.2
-  weight_decay: 1e-6
+  weight_decay: 15e-7
   kwargs:
     clip_lr: False
     eta: 0.001
@@ -42,7 +42,7 @@ scheduler:
   name: "warmup_cosine"
 checkpoint:
   enabled: True
-  dir: "/projects/imagenet_synthetic/model_checkpoints/solo-learn/solo_trained_models"
+  dir: SAVE_PATH
   frequency: 1
 auto_resume:
   enabled: True

@@ -1,8 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name="simclr_single_train"
-#SBATCH --partition=a40
-#SBATCH --qos=a40_arashaf
+#SBATCH --qos=m
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:a40:4
 #SBATCH --ntasks-per-node=4
@@ -15,7 +14,7 @@
 #SBATCH --time=72:00:00
 
 # load virtual environment
-source /ssd003/projects/aieng/envs/genssl3/bin/activate
+source YOUR_VENV_PATH/bin/activate
 
 export NCCL_IB_DISABLE=1  # Our cluster does not have InfiniBand. We need to disable usage using this flag.
 export TORCH_NCCL_ASYNC_ERROR_HANDLING=1 # set to 1 for NCCL backend
